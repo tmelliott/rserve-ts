@@ -1,0 +1,3 @@
+[submodule "rserve-js"]
+	path = rserve-js
+	url = git@github.com:tmelliott/rserve-js
