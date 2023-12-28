@@ -2,6 +2,7 @@
 import _ from "underscore";
 import Rsrv from "./Rsrv";
 import WebSocket from "ws";
+import _is_little_endian from "./endian";
 
 // order
 // begin
@@ -12,6 +13,158 @@ import WebSocket from "ws";
 // rserve
 // error
 // write
+
+// buffer view
+type MyDataView = {
+  new (
+    buffer: ArrayBuffer,
+    byteOffset?: number,
+    byteLength?: number
+  ): MyDataView;
+  view: DataView;
+  setInt8: (i: number, v: number) => void;
+  setUint8: (i: number, v: number) => void;
+  getInt8: (i: number) => number;
+  getUint8: (i: number) => number;
+  setInt32: (byteOffset: number, value: number) => void;
+  setInt16: (byteOffset: number, value: number) => void;
+  setUint32: (byteOffset: number, value: number) => void;
+  setUint16: (byteOffset: number, value: number) => void;
+  setFloat32: (byteOffset: number, value: number) => void;
+  setFloat64: (byteOffset: number, value: number) => void;
+  getInt32: (byteOffset: number) => number;
+  getInt16: (byteOffset: number) => number;
+  getUint32: (byteOffset: number) => number;
+  getUint16: (byteOffset: number) => number;
+  getFloat32: (byteOffset: number) => number;
+  getFloat64: (byteOffset: number) => number;
+};
+
+const EndianAwareDataView = (() => {
+  function my_dataView(
+    this: MyDataView,
+    buffer: ArrayBuffer,
+    byteOffset?: number,
+    byteLength?: number
+  ) {
+    this.view = new DataView(buffer, byteOffset, byteLength);
+  }
+  my_dataView.prototype = {
+    setInt8: function (this: MyDataView, i: number, v: number) {
+      return this.view.setInt8(i, v);
+    },
+    setUint8: function (this: MyDataView, i: number, v: number) {
+      return this.view.setUint8(i, v);
+    },
+    getInt8: function (this: MyDataView, i: number) {
+      return this.view.getInt8(i);
+    },
+    getUint8: function (this: MyDataView, i: number) {
+      return this.view.getUint8(i);
+    },
+  };
+
+  const setters = [
+    "setInt32",
+    "setInt16",
+    "setUint32",
+    "setUint16",
+    "setFloat32",
+    "setFloat64",
+  ] as const;
+  const getters = [
+    "getInt32",
+    "getInt16",
+    "getUint32",
+    "getUint16",
+    "getFloat32",
+    "getFloat64",
+  ] as const;
+
+  for (var i = 0; i < setters.length; ++i) {
+    const name = setters[i];
+    my_dataView.prototype[name] = (function (name) {
+      return function (this: MyDataView, byteOffset: number, value: number) {
+        return this.view[name](byteOffset, value, _is_little_endian);
+      };
+    })(name);
+  }
+  for (i = 0; i < getters.length; ++i) {
+    const name = getters[i];
+    my_dataView.prototype[name] = (function (name) {
+      return function (this: MyDataView, byteOffset: number) {
+        return this.view[name](byteOffset, _is_little_endian);
+      };
+    })(name);
+  }
+
+  return my_dataView as any;
+})() as MyDataView;
+
+const my_ArrayBufferView = (b: ArrayBuffer, o?: number, l?: number) => {
+  const buffer = b;
+  const offset = o || 0;
+  const length = l || buffer.byteLength;
+
+  const data_view = () => {
+    return new EndianAwareDataView(
+      buffer,
+      offset,
+      length && offset && length - offset
+    );
+  };
+  const make = <T>(
+    ctor: ((b: ArrayBuffer, o?: number, n?: number) => T) & {
+      BYTES_PER_ELEMENT?: number;
+    },
+    new_offset: number,
+    new_length: number
+  ): T => {
+    new_offset = new_offset || 0;
+    new_length = new_length || length;
+    const element_size = ctor.BYTES_PER_ELEMENT || 1;
+    const n_els = new_length / element_size;
+
+    if ((offset + new_offset) % element_size !== 0) {
+      const view = new DataView(buffer, offset + new_offset, new_length);
+      const output_buffer = new ArrayBuffer(new_length);
+      const out_view = new DataView(output_buffer);
+      for (var i = 0; i < n_els; ++i) {
+        out_view.setUint8(i, view.getUint8(i));
+      }
+      return new (ctor as any)(output_buffer);
+    } else {
+      return new (ctor as any)(buffer, offset + new_offset, n_els);
+    }
+  };
+  const skip = (o: number) => {
+    return my_ArrayBufferView(buffer, offset + o, buffer.byteLength);
+  };
+  const view = (new_offset: number, new_length: number) => {
+    const ofs = offset + new_offset;
+    if (ofs + new_length > buffer.byteLength) {
+      throw new Error(
+        "Rserve.my_ArrayBufferView.view: bounds error: size: " +
+          buffer.byteLength +
+          " offset: " +
+          ofs +
+          " length: " +
+          new_length
+      );
+    }
+    return my_ArrayBufferView(buffer, ofs, new_length);
+  };
+
+  return {
+    buffer,
+    offset,
+    length,
+    data_view,
+    make,
+    skip,
+    view,
+  };
+};
 
 type CreateOptions = {
   host: string;
@@ -65,14 +218,17 @@ const _encode_command = (
 
   const length = buf.reduce((memo, val) => memo + val.byteLength, 0);
   const big_buffer = new ArrayBuffer(16 + length);
-  // const view = new Rserve.EndianAwareDataView(big_buffer);
-  // TODO: view stuff
+  const view: MyDataView = new (EndianAwareDataView as any)(big_buffer);
+  view.setInt32(0, command);
+  view.setInt32(4, length);
+  view.setInt32(8, msg_id || 0);
+  view.setInt32(12, 0);
 
   let offset = 16;
   buf.forEach((b) => {
     var source_array = new Uint8Array(b);
     for (var i = 0; i < source_array.length; ++i) {
-      // view.setUint8(offset + 1, source_array[i]);
+      view.setUint8(offset + 1, source_array[i]);
     }
     offset += b.byteLength;
   });
@@ -84,9 +240,11 @@ const _encode_string = (str: string) => {
   const strl = (str.length + 1 + 3) & ~3;
   const payload_length = strl + 4;
   const result = new ArrayBuffer(payload_length);
-  // const view = new Rserve.EndianAwareDataView(result);
-  // TODO: view stuff
-
+  const view: MyDataView = new (EndianAwareDataView as any)(result);
+  view.setInt32(0, Rsrv.DT_STRING + (strl << 8));
+  for (var i = 0; i < str.length; ++i) {
+    view.setUint8(4 + i, str.charCodeAt(i));
+  }
   return result;
 };
 
@@ -94,9 +252,9 @@ const _encode_bytes = (bytes: number[]) => {
   const payload_length = bytes.length + 4;
   const header_length = 4;
   const result = new ArrayBuffer(payload_length + header_length);
-  // const view = new Rserve.EndianAwareDataView(result);
-  // TODO: view stuff
-
+  const view: MyDataView = new (EndianAwareDataView as any)(result);
+  view.setInt32(0, Rsrv.DT_BYTESTREAM + (payload_length << 8));
+  for (var i = 0; i < bytes.length; ++i) view.setInt8(4 + i, bytes[i]);
   return result;
 };
 
@@ -135,12 +293,28 @@ const create = (opts: CreateOptions) => {
   };
 
   const _encode_value = (value: any, forced_type?: any) => {
-    const sz = 4; //Rserve.determine_size(value, forced_type);
-    const buffer = new ArrayBuffer(sz + 4);
-    // var view: BufferView = Rserve.my_ArrayBufferView(buffer);
-    // TODO: implement dataview
-
-    return buffer;
+    const sz = 4; // TODO: Rserve.determine_size(value, forced_type);
+    if (sz > 16777215) {
+      const buffer = new ArrayBuffer(sz + 8);
+      const view = my_ArrayBufferView(buffer);
+      // can't left shift value here because value will have bit 32 set and become signed..
+      view
+        .data_view()
+        .setInt32(
+          0,
+          Rsrv.DT_SEXP + (sz & 16777215) * Math.pow(2, 8) + Rsrv.DT_LARGE
+        );
+      // but *can* right shift because we assume sz is less than 2^31 or so to begin with
+      view.data_view().setInt32(4, sz >>> 24);
+      // TODO:  write_into_view(value, view.skip(8), forced_type, convert_to_hash);
+      return buffer;
+    } else {
+      var buffer = new ArrayBuffer(sz + 4);
+      var view = my_ArrayBufferView(buffer);
+      view.data_view().setInt32(0, Rsrv.DT_SEXP + (sz << 8));
+      // TODO: Rserve.write_into_view(value, view.skip(4), forced_type, convert_to_hash);
+      return buffer;
+    }
   };
 
   const hand_shake = (message: Message) => {
@@ -417,6 +591,7 @@ const wrap_all_ocaps = (s: ReturnType<typeof create>, v: Payload) => {
       result.r_type = obj.r_type;
       result.r_attributes = obj.r_attributes;
     } else if (_.isTypedArray(obj)) {
+      // in write.js
       return obj;
     } else if (_.isFunction(obj)) {
       return obj;
@@ -468,6 +643,8 @@ const Rserve = {
   // Robj: {},
   // Rsrv: Rsrv,
   create: create,
+  EndianAwareDataView: EndianAwareDataView,
+  my_ArrayBufferView: my_ArrayBufferView,
 };
 
 console.log(
