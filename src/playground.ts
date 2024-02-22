@@ -647,14 +647,16 @@ const Rserve = {
   my_ArrayBufferView: my_ArrayBufferView,
 };
 
-console.log(
-  create({
-    host: "http://localhost:8081",
-    on_connect: () => {
-      console.log("Connected");
-    },
-  })
-);
+const r = create({
+  host: "http://localhost:8081",
+  on_connect: () => {
+    console.log("Connected");
+
+    r.eval("1+1", (err: any, result: any) => {
+      console.log("Result: ", result);
+    });
+  },
+});
 
 // type Basic = {
 //   name: string;

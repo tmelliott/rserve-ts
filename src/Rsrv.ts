@@ -11,7 +11,7 @@ const Rsrv = {
   PAR_LENGTH: function (x: number) {
     return x >>> 8;
   },
-  par_parse: function (x: number) {
+  par_parse: function (x: number): [number, number] {
     return [Rsrv.PAR_TYPE(x), Rsrv.PAR_LEN(x)];
   },
   SET_PAR: function (ty: number, len: number) {
@@ -170,6 +170,12 @@ const Rsrv = {
     0x63: "ERR_cryptError",
     0x64: "ERR_securityClose",
   },
-};
+} as const;
 
 export default Rsrv;
+
+export type RsrvErrorCode = Extract<keyof typeof Rsrv, `ERR_${string}`>;
+export type RsrvCommandCode = Extract<keyof typeof Rsrv, `CMD_${string}`>;
+export type RsrvStatusCode = keyof typeof Rsrv.status_codes;
+export type RsrvDT = Extract<keyof typeof Rsrv, `DT_${string}`>;
+export type RsrvXT = Extract<keyof typeof Rsrv, `XT_${string}`>;
