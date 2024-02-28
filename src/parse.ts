@@ -81,6 +81,8 @@ const parse_websocket_frame = (msg: ArrayBuffer): ParseResult => {
   const msg_id = header[2];
   result.header = new Int32Array([resp, status_code, msg_id]);
 
+  console.log(result);
+
   if (length_high) {
     result.ok = false;
     result.message = "rserve.js cannot handle messages larger than 4GB";

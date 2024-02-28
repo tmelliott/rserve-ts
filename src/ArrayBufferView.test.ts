@@ -4,7 +4,7 @@ import { EndianAwareDataView, my_ArrayBufferView } from "./ArrayBufferView";
 describe("EndianDataView", () => {
   it("should have setters and getters", () => {
     const b = new ArrayBuffer(5);
-    const view = EndianAwareDataView(b);
+    const view = new EndianAwareDataView(b);
 
     expect(view.view).toBeDefined();
     view.setInt16(0, 1);

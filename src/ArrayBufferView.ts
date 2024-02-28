@@ -1,3 +1,6 @@
+import _ from "underscore";
+import _is_little_endian from "./endian";
+
 type Constructor<T> = {
   new (buffer: ArrayBuffer, offset?: number, length?: number): T;
   BYTES_PER_ELEMENT?: number;
@@ -64,8 +67,83 @@ export const my_ArrayBufferView = (b: ArrayBuffer, o?: number, l?: number) => {
 
 export type my_ArrayBufferView = ReturnType<typeof my_ArrayBufferView>;
 
+// type EndianAwareDataView = {
+//   view: DataView;
+// } & {
+//   [key: string]: (i: number, v: number) => void;
+// } & {
+//   [key: string]: (i: number) => number;
+// };
+
+// export const EndianAwareDataView = (function () {
+//   var proto = {
+//     setInt8: function (this: EndianAwareDataView, i: number, v: number) {
+//       return this.view.setInt8(i, v);
+//     },
+//     setUint8: function (this: EndianAwareDataView, i: number, v: number) {
+//       return this.view.setUint8(i, v);
+//     },
+//     getInt8: function (this: EndianAwareDataView, i: number) {
+//       return this.view.getInt8(i);
+//     },
+//     getUint8: function (this: EndianAwareDataView, i: number) {
+//       return this.view.getUint8(i);
+//     },
+//   };
+
+//   var setters = [
+//     "setInt32",
+//     "setInt16",
+//     "setUint32",
+//     "setUint16",
+//     "setFloat32",
+//     "setFloat64",
+//   ] as const;
+//   var getters = [
+//     "getInt32",
+//     "getInt16",
+//     "getUint32",
+//     "getUint16",
+//     "getFloat32",
+//     "getFloat64",
+//   ] as const;
+
+//   for (var i = 0; i < setters.length; ++i) {
+//     var name = setters[i];
+//     proto[name] = (function (name) {
+//       return function (byteOffset, value) {
+//         return this.view[name](byteOffset, value, _is_little_endian);
+//       };
+//     })(name);
+//   }
+//   for (i = 0; i < getters.length; ++i) {
+//     var name = getters[i];
+//     proto[name] = (function (name) {
+//       return function (byteOffset) {
+//         return this.view[name](byteOffset, _is_little_endian);
+//       };
+//     })(name);
+//   }
+
+//   function my_dataView(buffer, byteOffset, byteLength) {
+//     if (byteOffset === undefined) {
+//       // work around node.js bug https://github.com/joyent/node/issues/6051
+//       if (buffer.byteLength === 0) {
+//         this.view = {
+//           byteLength: 0,
+//           byteOffset: 0,
+//         };
+//       } else this.view = new DataView(buffer);
+//     } else {
+//       this.view = new DataView(buffer, byteOffset, byteLength);
+//     }
+//   }
+//   my_dataView.prototype = proto;
+//   return my_dataView;
+// })();
+
 export class EndianAwareDataView {
-  private view: DataView;
+  view: DataView;
 
   constructor(buffer: ArrayBuffer, byteOffset?: number, byteLength?: number) {
     this.view = new DataView(buffer, byteOffset, byteLength);
@@ -86,30 +164,30 @@ export class EndianAwareDataView {
   };
 
   setInt32 = (i: number, v: number) => {
-    this.view.setInt32(i, v);
+    this.view.setInt32(i, v, _is_little_endian);
   };
   setInt16 = (i: number, v: number) => {
-    this.view.setInt16(i, v);
+    this.view.setInt16(i, v, _is_little_endian);
   };
   setUint32 = (i: number, v: number) => {
-    this.view.setUint32(i, v);
+    this.view.setUint32(i, v, _is_little_endian);
   };
   setUint16 = (i: number, v: number) => {
-    this.view.setUint16(i, v);
+    this.view.setUint16(i, v, _is_little_endian);
   };
   setFloat32 = (i: number, v: number) => {
-    this.view.setFloat32(i, v);
+    this.view.setFloat32(i, v, _is_little_endian);
   };
   setFloat64 = (i: number, v: number) => {
-    this.view.setFloat64(i, v);
+    this.view.setFloat64(i, v, _is_little_endian);
   };
 
-  getInt32 = (i: number) => this.view.getInt32(i);
-  getInt16 = (i: number) => this.view.getInt16(i);
-  getUint32 = (i: number) => this.view.getUint32(i);
-  getUint16 = (i: number) => this.view.getUint16(i);
-  getFloat32 = (i: number) => this.view.getFloat32(i);
-  getFloat64 = (i: number) => this.view.getFloat64(i);
+  getInt32 = (i: number) => this.view.getInt32(i, _is_little_endian);
+  getInt16 = (i: number) => this.view.getInt16(i, _is_little_endian);
+  getUint32 = (i: number) => this.view.getUint32(i, _is_little_endian);
+  getUint16 = (i: number) => this.view.getUint16(i, _is_little_endian);
+  getFloat32 = (i: number) => this.view.getFloat32(i, _is_little_endian);
+  getFloat64 = (i: number) => this.view.getFloat64(i, _is_little_endian);
 }
 
-// export type EndianDataView = InstanceType<typeof EndianAwareDataView>;
+export type EndianDataView = InstanceType<typeof EndianAwareDataView>;
