@@ -81,8 +81,6 @@ const parse_websocket_frame = (msg: ArrayBuffer): ParseResult => {
   const msg_id = header[2];
   result.header = new Int32Array([resp, status_code, msg_id]);
 
-  console.log(result);
-
   if (length_high) {
     result.ok = false;
     result.message = "rserve.js cannot handle messages larger than 4GB";
@@ -152,14 +150,22 @@ type Payload = {
 };
 
 const parse_payload = (msg: ArrayBuffer): Payload | null => {
+  // TODO: something is wrong in here
+  console.log("MESSAGE: ", msg);
   const payload = my_ArrayBufferView(msg, 16, msg.byteLength - 16);
   if (payload.length === 0) return null;
 
+  console.log("THE PAYLOAD: ", payload);
+
   const reader = read(payload);
+  console.log("READER: ", reader);
 
   const d = reader.read_int();
+  console.log("D:", d);
   let [t, l] = Rsrv.par_parse(d);
+  console.log("Par parse: ", t, l);
   if (Rsrv.IS_LARGE(t)) {
+    console.log("ITS LARGE");
     const more_length = reader.read_int();
     l += more_length * Math.pow(2, 24);
     if (l > Math.pow(2, 32)) {
@@ -187,9 +193,12 @@ const parse_payload = (msg: ArrayBuffer): Payload | null => {
     };
   }
   if (t === Rsrv.DT_SEXP) {
+    console.log("Reading SEXP");
+    const [sexp, l2] = reader.read_sexp();
+    console.log("SEXP: ", sexp, l2);
     return {
       type: "sexp",
-      value: reader.read_sexp(),
+      value: sexp,
     };
   }
 

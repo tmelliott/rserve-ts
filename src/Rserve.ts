@@ -387,16 +387,22 @@ const create = (opts: RserveOptions) => {
       return;
     }
 
+    console.log("PArsing ...\n");
     const v = parse_websocket_frame(msg.data);
+    console.log(v);
     if (v.incomplete) return;
 
     const msg_id = v.header[2],
       cmd = v.header[0] & 0xffffff;
 
+    console.log(v.header);
+    console.log("cmd: ", cmd);
+
     let q = queues.find((q) => q.msg_id === msg_id) || queues[0];
     if (!v.ok) {
       q.result_callback!([v.message, v.status_code], undefined);
     } else if (cmd === Rsrv.RESP_OK) {
+      console.log(q);
       q.result_callback!(null, v.payload);
     } else if (Rsrv.IS_OOB_SEND(cmd)) {
       // opts.on_data && opts.on_data(v.payload);
@@ -510,7 +516,11 @@ var s = create({
 function test() {
   console.log(s);
   s.eval("1 + 1", (err, data) => {
-    console.log("result eval", err, data);
+    if (err) {
+      console.log("Error: ", err);
+    } else {
+      console.log("Result: ", data);
+    }
   });
 }
 

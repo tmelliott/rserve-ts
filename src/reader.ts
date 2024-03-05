@@ -74,7 +74,8 @@ const read = (m: my_ArrayBufferView) => {
   // replace 'that' with 'result';
   let result: ReadResult = {
     offset: 0,
-    data_view: new EndianAwareDataView(m.buffer),
+    // data_view: new EndianAwareDataView(m.buffer),
+    data_view: m.make(EndianAwareDataView),
     msg: m,
   };
 
@@ -102,8 +103,10 @@ const read = (m: my_ArrayBufferView) => {
     return result.msg.make(Int32Array, old_offset, length);
   };
   const read_double_vector = (length: number) => {
+    console.log("READ_DOUBLE_VECTOR - LENGTH: ", length);
     const old_offset = result.offset;
     result.offset += length;
+    console.log("THIS MESSAGE: ", result.msg);
     return result.msg.make(Float64Array, old_offset, length);
   };
   //////////////////////////////////////////////////////////////////////
@@ -150,11 +153,14 @@ const read = (m: my_ArrayBufferView) => {
   };
   const read_sexp = (): [RObject<any>, number] => {
     const d = read_int();
+    console.log("READ_SEXP - D: ", d);
     let [t, l] = Rsrv.par_parse(d);
+    console.log("READ_SEXP - [t, l]: ", [t, l]);
     let total_read = 4;
     let attributes: any;
 
     if (Rsrv.IS_LARGE(t)) {
+      console.log("ITS LARGE");
       const extra_length = read_int();
       total_read += 4;
       l += extra_length * Math.pow(2, 24);
@@ -162,6 +168,7 @@ const read = (m: my_ArrayBufferView) => {
     }
 
     if (t & Rsrv.XT_HAS_ATTR) {
+      console.log("HAS ATTR");
       t = t & ~Rsrv.XT_HAS_ATTR;
       const attr_result = read_sexp();
       attributes = attr_result[0];
@@ -172,7 +179,9 @@ const read = (m: my_ArrayBufferView) => {
     if (!handlers[t]) {
       throw new RserveError("Unimplemented " + t, -1);
     }
+    console.log("HANDLER: ", handlers[t]);
     const res = handlers[t].call(result, attributes, l);
+    console.log("RES: ", res);
     return [res[0], total_read + res[1]];
   };
 

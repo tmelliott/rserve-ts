@@ -30,10 +30,13 @@ export const my_ArrayBufferView = (b: ArrayBuffer, o?: number, l?: number) => {
       new_offset = new_offset ?? 0;
       new_length = new_length ?? length;
       const element_size = ctor.BYTES_PER_ELEMENT ?? 1;
-      const n_els = new_length;
+      const n_els = new_length / element_size;
+
+      console.log("MAKE- BUFFER: ", buffer);
 
       if ((offset + new_offset) % element_size !== 0) {
         const view = new DataView(buffer, offset + new_offset, new_length);
+        console.log("VIEW: ", view);
         const output_buffer = new ArrayBuffer(new_length);
         const out_view = new DataView(output_buffer);
         for (let i = 0; i < new_length; i++) {
@@ -41,7 +44,16 @@ export const my_ArrayBufferView = (b: ArrayBuffer, o?: number, l?: number) => {
         }
         return new ctor(output_buffer);
       } else {
-        console.log("make: ", buffer, offset + new_offset, n_els);
+        console.log(
+          "ctor: ",
+          ctor,
+          "; offset: ",
+          offset,
+          "; new_offset: ",
+          new_offset,
+          "; n_els: ",
+          n_els
+        );
         return new ctor(buffer, offset + new_offset, n_els);
       }
     },
@@ -66,81 +78,6 @@ export const my_ArrayBufferView = (b: ArrayBuffer, o?: number, l?: number) => {
 };
 
 export type my_ArrayBufferView = ReturnType<typeof my_ArrayBufferView>;
-
-// type EndianAwareDataView = {
-//   view: DataView;
-// } & {
-//   [key: string]: (i: number, v: number) => void;
-// } & {
-//   [key: string]: (i: number) => number;
-// };
-
-// export const EndianAwareDataView = (function () {
-//   var proto = {
-//     setInt8: function (this: EndianAwareDataView, i: number, v: number) {
-//       return this.view.setInt8(i, v);
-//     },
-//     setUint8: function (this: EndianAwareDataView, i: number, v: number) {
-//       return this.view.setUint8(i, v);
-//     },
-//     getInt8: function (this: EndianAwareDataView, i: number) {
-//       return this.view.getInt8(i);
-//     },
-//     getUint8: function (this: EndianAwareDataView, i: number) {
-//       return this.view.getUint8(i);
-//     },
-//   };
-
-//   var setters = [
-//     "setInt32",
-//     "setInt16",
-//     "setUint32",
-//     "setUint16",
-//     "setFloat32",
-//     "setFloat64",
-//   ] as const;
-//   var getters = [
-//     "getInt32",
-//     "getInt16",
-//     "getUint32",
-//     "getUint16",
-//     "getFloat32",
-//     "getFloat64",
-//   ] as const;
-
-//   for (var i = 0; i < setters.length; ++i) {
-//     var name = setters[i];
-//     proto[name] = (function (name) {
-//       return function (byteOffset, value) {
-//         return this.view[name](byteOffset, value, _is_little_endian);
-//       };
-//     })(name);
-//   }
-//   for (i = 0; i < getters.length; ++i) {
-//     var name = getters[i];
-//     proto[name] = (function (name) {
-//       return function (byteOffset) {
-//         return this.view[name](byteOffset, _is_little_endian);
-//       };
-//     })(name);
-//   }
-
-//   function my_dataView(buffer, byteOffset, byteLength) {
-//     if (byteOffset === undefined) {
-//       // work around node.js bug https://github.com/joyent/node/issues/6051
-//       if (buffer.byteLength === 0) {
-//         this.view = {
-//           byteLength: 0,
-//           byteOffset: 0,
-//         };
-//       } else this.view = new DataView(buffer);
-//     } else {
-//       this.view = new DataView(buffer, byteOffset, byteLength);
-//     }
-//   }
-//   my_dataView.prototype = proto;
-//   return my_dataView;
-// })();
 
 export class EndianAwareDataView {
   view: DataView;
