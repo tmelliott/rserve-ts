@@ -3,7 +3,7 @@ import Rsrv, { RsrvCommandCode } from "./Rsrv";
 import RserveError from "./RserveError";
 import { parse_websocket_frame } from "./parse";
 import { EndianAwareDataView, my_ArrayBufferView } from "./ArrayBufferView";
-import { Rtype, determine_size } from "./utils";
+import { Rtype, determine_size, write_into_view } from "./utils";
 import _ from "underscore";
 
 type RserveOptions = {
@@ -284,6 +284,7 @@ const create = (opts: RserveOptions) => {
           Rsrv.DT_SEXP + (sz & 16777215) * Math.pow(2, 8) + Rsrv.DT_LARGE
         );
       view.data_view().setInt32(4, sz >>> 24);
+      write_into_view(value, view.skip(8), forced_type, convert_to_hash);
       // write_into_view
       return buffer;
     }
@@ -291,7 +292,7 @@ const create = (opts: RserveOptions) => {
     const buffer = new ArrayBuffer(sz + 4);
     const view = my_ArrayBufferView(buffer);
     view.data_view().setInt32(0, Rsrv.DT_SEXP + (sz << 8));
-    // write_into_view
+    write_into_view(value, view.skip(4), forced_type, convert_to_hash);
     return buffer;
   };
 
@@ -387,22 +388,22 @@ const create = (opts: RserveOptions) => {
       return;
     }
 
-    console.log("PArsing ...\n");
+    // console.log("PArsing ...\n");
     const v = parse_websocket_frame(msg.data);
-    console.log(v);
+    // console.log(v);
     if (v.incomplete) return;
 
     const msg_id = v.header[2],
       cmd = v.header[0] & 0xffffff;
 
-    console.log(v.header);
-    console.log("cmd: ", cmd);
+    // console.log(v.header);
+    // console.log("cmd: ", cmd);
 
     let q = queues.find((q) => q.msg_id === msg_id) || queues[0];
     if (!v.ok) {
       q.result_callback!([v.message, v.status_code], undefined);
     } else if (cmd === Rsrv.RESP_OK) {
-      console.log(q);
+      // console.log(q);
       q.result_callback!(null, v.payload);
     } else if (Rsrv.IS_OOB_SEND(cmd)) {
       // opts.on_data && opts.on_data(v.payload);
@@ -521,6 +522,14 @@ function test() {
     } else {
       console.log("Result: ", data);
     }
+
+    s.set("x", 10, (err, data) => {
+      console.log("Set: ", err, data);
+
+      s.eval("x + 5", (err, data) => {
+        console.log("Result: ", data);
+      });
+    });
   });
 }
 
