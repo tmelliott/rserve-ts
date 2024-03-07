@@ -285,7 +285,6 @@ const create = (opts: RserveOptions) => {
         );
       view.data_view().setInt32(4, sz >>> 24);
       write_into_view(value, view.skip(8), forced_type, convert_to_hash);
-      // write_into_view
       return buffer;
     }
 

@@ -150,7 +150,6 @@ type Payload = {
 };
 
 const parse_payload = (msg: ArrayBuffer): Payload | null => {
-  // TODO: something is wrong in here
   console.log("MESSAGE: ", msg);
   const payload = my_ArrayBufferView(msg, 16, msg.byteLength - 16);
   if (payload.length === 0) return null;
