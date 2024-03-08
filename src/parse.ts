@@ -1,4 +1,5 @@
 import { my_ArrayBufferView } from "./ArrayBufferView";
+import { RObject } from "./Robj";
 import RserveError from "./RserveError";
 import Rsrv, { RsrvStatusCode } from "./Rsrv";
 import read from "./reader";
@@ -144,9 +145,9 @@ const parse_websocket_frame = (msg: ArrayBuffer): ParseResult => {
   return result as ParseResult;
 };
 
-type Payload = {
+export type Payload<T = any> = {
   type: string;
-  value: any;
+  value: T extends RObject<infer U> ? RObject<U> : T;
 };
 
 const parse_payload = (msg: ArrayBuffer): Payload | null => {

@@ -1,10 +1,11 @@
 import WebSocket from "ws";
 import Rsrv, { RsrvCommandCode } from "./Rsrv";
 import RserveError from "./RserveError";
-import { parse_websocket_frame } from "./parse";
+import { Payload, parse_websocket_frame } from "./parse";
 import { EndianAwareDataView, my_ArrayBufferView } from "./ArrayBufferView";
 import { Rtype, determine_size, write_into_view } from "./utils";
 import _ from "underscore";
+import { RObject } from "./Robj";
 
 type RserveOptions = {
   host: string;
@@ -40,7 +41,10 @@ type WSMessageEvent = Omit<WebSocket.MessageEvent, "data"> & {
   data: ArrayBuffer | string;
 };
 
-type Callback = (err: Error | [string, number?] | null, data: any) => void;
+type Callback<T = any> = (
+  err: Error | [string, number?] | null,
+  data: T extends {} ? Payload<T> : null | undefined
+) => void;
 
 type Rserve = {
   ocap_mode: boolean;
@@ -48,11 +52,11 @@ type Rserve = {
   closed: boolean;
   close: () => void;
   login: (command: string, k: Callback) => void;
-  eval: (command: string, k: Callback) => void;
+  eval: <T>(command: string, k: Callback<T>) => void;
   createFile: (command: string, k: Callback) => void;
   writeFile: (chunk: number[], k: Callback) => void;
   closeFile: (k: Callback) => void;
-  set: (key: string, value: Rtype, k: Callback) => void;
+  set: (key: string, value: Rtype, k: Callback<null>) => void;
   resolve_hash: (hash: string) => any;
 };
 
@@ -513,20 +517,27 @@ var s = create({
   },
 });
 
+// TODO: eval needs a run-time check that the callback is of the correct type,
+// with a warning that either there has been an error or the type is wrong.
+
 function test() {
   console.log(s);
-  s.eval("1 + 1", (err, data) => {
+  s.eval<RObject<Float64Array>>("1 + 1", (err, data) => {
     if (err) {
       console.log("Error: ", err);
     } else {
-      console.log("Result: ", data);
+      console.log("===== Result: ", data, "\n", data.value.value[0]);
     }
 
-    s.set("x", 10, (err, data) => {
-      console.log("Set: ", err, data);
+    s.set("x", 10, (err) => {
+      console.log("Set: ", err ?? "success");
 
-      s.eval("x + 5", (err, data) => {
-        console.log("Result: ", data);
+      s.eval<RObject<Float64Array>>("x + 5", (err, data) => {
+        if (err) {
+          console.log("Error: ", err);
+        } else {
+          console.log("Result: ", data.value.value[0]);
+        }
       });
     });
   });
