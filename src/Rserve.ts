@@ -152,8 +152,8 @@ function _encode_bytes(bytes: number[]) {
 }
 
 const create = (opts: RserveOptions) => {
-  const host = opts.host || "http://127.0.0.1:8081";
-  const onconnect = opts.on_connect || (() => {});
+  const host = opts.host ?? "http://127.0.0.1:8081";
+  const onconnect = opts.on_connect ?? (() => {});
 
   const socket = new WebSocket(host);
   socket.binaryType = "arraybuffer";
@@ -163,7 +163,7 @@ const create = (opts: RserveOptions) => {
   });
 
   const handle_error =
-    opts.on_error ||
+    opts.on_error ??
     ((error: string) => {
       throw new RserveError(error, -1);
     });
@@ -243,7 +243,7 @@ const create = (opts: RserveOptions) => {
     queue?: Queue
   ) => {
     if (!queue) queue = queues[0];
-    k = k || (() => {});
+    k = k ?? (() => {});
     const big_buffer = _encode_command(command, buffer, queue.msg_id);
     return enqueue(big_buffer, k, string, queue);
   };
@@ -402,7 +402,7 @@ const create = (opts: RserveOptions) => {
     // console.log(v.header);
     // console.log("cmd: ", cmd);
 
-    let q = queues.find((q) => q.msg_id === msg_id) || queues[0];
+    let q = queues.find((q) => q.msg_id === msg_id) ?? queues[0];
     if (!v.ok) {
       q.result_callback!([v.message, v.status_code], undefined);
     } else if (cmd === Rsrv.RESP_OK) {
