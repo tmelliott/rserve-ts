@@ -7,9 +7,11 @@ type Constructor<T> = {
 };
 
 export const my_ArrayBufferView = (b: ArrayBuffer, o?: number, l?: number) => {
+  console.log("ARGS: ", b, o, l);
   const buffer = b;
-  const offset = o || 0;
-  const length = l || b.byteLength;
+  const offset = o ?? 0;
+  const length = l ?? b.byteLength;
+  console.log("BUFFER: ", buffer, "OFFSET: ", offset, "LENGTH: ", length);
 
   return {
     buffer,

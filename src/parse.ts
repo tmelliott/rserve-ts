@@ -152,10 +152,10 @@ export type Payload<T = any> = {
 
 const parse_payload = (msg: ArrayBuffer): Payload | null => {
   console.log("MESSAGE: ", msg);
+  console.log("MESSAGE LENGTH: ", msg.byteLength);
   const payload = my_ArrayBufferView(msg, 16, msg.byteLength - 16);
-  if (payload.length === 0) return null;
-
   console.log("THE PAYLOAD: ", payload);
+  if (payload.length === 0) return null;
 
   const reader = read(payload);
   console.log("READER: ", reader);

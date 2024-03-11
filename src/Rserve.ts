@@ -19,7 +19,7 @@ type RserveOptions = {
     message_out?: (buffer: ArrayBuffer, command: any) => void;
   };
   //   on_raw_string?: (msg: string) => void;
-  on_data?: (payload: any) => void; // (return type of parse_websocket_frame).payload
+  on_data?: <TData>(payload: Payload<TData>) => void; // (return type of parse_websocket_frame).payload
   //   on_oob_message?: (
   //     payload: any,
   //     callback: (message: string, error: string) => void
@@ -43,7 +43,7 @@ type WSMessageEvent = Omit<WebSocket.MessageEvent, "data"> & {
 
 type Callback<T = any> = (
   err: Error | [string, number?] | null,
-  data: T extends {} ? Payload<T> : null | undefined
+  data: T extends RObject<any> ? Payload<T> : null | undefined
 ) => void;
 
 type Rserve = {
@@ -51,17 +51,17 @@ type Rserve = {
   running: boolean;
   closed: boolean;
   close: () => void;
-  login: (command: string, k: Callback) => void;
-  eval: <T>(command: string, k: Callback<T>) => void;
-  createFile: (command: string, k: Callback) => void;
-  writeFile: (chunk: number[], k: Callback) => void;
-  closeFile: (k: Callback) => void;
-  set: (key: string, value: Rtype, k: Callback<null>) => void;
-  resolve_hash: (hash: string) => any;
+  login: (command: string, k: Callback<null>) => void;
+  eval: <TResult>(command: string) => Promise<Payload<TResult>>;
+  createFile: (command: string, k: Callback<null>) => void;
+  writeFile: (chunk: number[], k: Callback<null>) => void;
+  closeFile: (k: Callback<null>) => void;
+  set: (key: string, value: Rtype) => Promise<void>;
+  resolve_hash: (hash: string) => any; // TODO: does this need exporting?
 };
 
 type CaptureFunctions = {
-  [key: string]: any;
+  [key: string]: string;
 };
 
 type Job = {
@@ -260,7 +260,7 @@ const create = (opts: RserveOptions) => {
     return big_buffer;
   };
 
-  const captured_functions: CaptureFunctions = [];
+  const captured_functions: CaptureFunctions = {};
   const fresh_hash = () => {
     let k;
     do {
@@ -270,7 +270,7 @@ const create = (opts: RserveOptions) => {
     return k;
   };
 
-  const convert_to_hash = (value: any) => {
+  const convert_to_hash = (value: string) => {
     var hash = fresh_hash();
     captured_functions[hash] = value;
     return hash;
@@ -472,9 +472,21 @@ const create = (opts: RserveOptions) => {
     login: (command, k) => {
       _cmd(Rsrv.CMD_login, _encode_string(command), k, command);
     },
-    eval: (command, k) => {
-      // console.log("Eval: ", command);
-      _cmd(Rsrv.CMD_eval, _encode_string(command), k, command);
+    eval: (command) => {
+      return new Promise((resolve, reject) => {
+        _cmd(
+          Rsrv.CMD_eval,
+          _encode_string(command),
+          (err, data) => {
+            if (err) {
+              reject(err);
+            } else {
+              data && resolve(data);
+            }
+          },
+          command
+        );
+      });
     },
     createFile: (command, k) => {
       _cmd(Rsrv.CMD_createFile, _encode_string(command), k, command);
@@ -485,13 +497,21 @@ const create = (opts: RserveOptions) => {
     closeFile: (k) => {
       _cmd(Rsrv.CMD_closeFile, new ArrayBuffer(0), k, "");
     },
-    set: (key, value, k) => {
-      _cmd(
-        Rsrv.CMD_setSEXP,
-        [_encode_string(key), _encode_value(value)],
-        k,
-        ""
-      );
+    set: (key, value) => {
+      return new Promise((resolve, reject) => {
+        _cmd(
+          Rsrv.CMD_setSEXP,
+          [_encode_string(key), _encode_value(value)],
+          (err) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          },
+          ""
+        );
+      });
     },
     resolve_hash: (hash: string) => {
       if (!(hash in captured_functions)) {
@@ -520,27 +540,41 @@ var s = create({
 // TODO: eval needs a run-time check that the callback is of the correct type,
 // with a warning that either there has been an error or the type is wrong.
 
-function test() {
+async function test() {
   console.log(s);
-  s.eval<RObject<Float64Array>>("1 + 1", (err, data) => {
-    if (err) {
-      console.log("Error: ", err);
-    } else {
-      console.log("===== Result: ", data, "\n", data.value.value[0]);
-    }
+  const result = await s.eval<Float64Array>("1 + 1");
+  console.log(result);
 
-    s.set("x", 10, (err) => {
-      console.log("Set: ", err ?? "success");
+  console.log("\n\n\n=========================\n\n\n");
+  await s.set("x", 10);
 
-      s.eval<RObject<Float64Array>>("x + 5", (err, data) => {
-        if (err) {
-          console.log("Error: ", err);
-        } else {
-          console.log("Result: ", data.value.value[0]);
-        }
-      });
-    });
-  });
+  console.log("\n\n\n=========================\n\n\n");
+  const result2 = await s.eval<Float64Array>("rnorm(x)");
+  console.log(result2);
+
+  // exit program
+
+  process.exit(0);
+
+  // s.eval<Float64Array>("1 + 1", (err, data) => {
+  //   if (err) {
+  //     console.log("Error: ", err);
+  //   } else {
+  //     console.log("===== Result: ", data, "\n", data.value.value[0]);
+  //   }
+
+  //   s.set("x", 10, (err) => {
+  //     console.log("Set: ", err ?? "success");
+
+  //     s.eval<Float64Array>("x + 5", (err, data) => {
+  //       if (err) {
+  //         console.log("Error: ", err);
+  //       } else {
+  //         console.log("Result: ", data.value.value[0]);
+  //       }
+  //     });
+  //   });
+  // });
 }
 
 // setTimeout(() => {
