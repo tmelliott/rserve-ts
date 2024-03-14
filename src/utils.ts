@@ -23,6 +23,7 @@ export type Rtype =
   | boolean
   | number
   | string
+  | object
   | TypedArray
   | Array<string | boolean | number>
   | ArrayBuffer;
@@ -135,7 +136,7 @@ export function determine_size<T extends Rtype>(
     case Rsrv.XT_VECTOR | Rsrv.XT_HAS_ATTR:
       const names_size_1 = final_size("names".length + 3);
       const names_size_2 = determine_size(Object.keys(value as object));
-      const names_size = names_size_1 + names_size_2;
+      const names_size = final_size(names_size_1 + names_size_2);
       return final_size(names_size + list_size(Object.values(value as object)));
 
     case Rsrv.XT_ARRAY_STR | Rsrv.XT_HAS_ATTR:
@@ -178,6 +179,8 @@ export function write_into_view(
     payload_start = 4;
     write_view.setInt32(0, t + ((size - 4) << 8));
   }
+
+  console.log("T = ", t);
 
   switch (t & ~Rsrv.XT_LARGE) {
     case Rsrv.XT_NULL:
@@ -278,8 +281,11 @@ export function write_into_view(
         Rsrv.XT_LIST_TAG + ((current_offset - (payload_start + 4)) << 8)
       );
 
+      console.log("WRITING OBJECT: ", vFun);
+
       Object.values(vFun).forEach((el) => {
         const sz = determine_size(el);
+        console.log("WRITING ELEMENT: ", el, sz, current_offset);
         write_into_view(
           el,
           array_buffer_view.skip(current_offset),
