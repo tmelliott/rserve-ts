@@ -8,22 +8,43 @@ type Rvalue<T> = {
   value: RObject<T>;
 };
 
-type Resolver = (value: any) => any;
+// always (?) the 'resolve_hash' function, which returns the object stored in 'captured_functions'
+type Resolver = (value: string) => string;
 
-type Proto<T> = {
-  json: (this: RObject<T>, resolver: Resolver) => any;
-};
+// type Proto<T, S extends {}> = {
+//   json: (this: RObject<T>, resolver: Resolver) => S;
+// };
 
-const make_basic = <T>(type: string, proto?: Proto<T>) => {
-  const json =
-    proto?.json ??
-    function (this: RObject<T>) {
-      throw new Error("json() unsupported for type " + this.type);
-    };
+// type ResultType<T> = Rvalue<T> & {
+//   r_type: string;
+//   r_attributes?: {
+//     [key: string]: any;
+//   };
+// };
+
+const make_basic = <T, S extends {}>(
+  type: string,
+  proto?: (this: RObject<T>, resolver: Resolver) => S
+) => {
+  // proto =
+  //   proto ??
+  //   function (this: RObject<T>) {
+  //     throw new Error("json() unsupported for type " + this.type);
+  //   };
 
   const wrapped_proto = {
     json: function (this: RObject<T>, resolver?: Resolver) {
-      const result = json.call(this, resolver ?? ((x) => x));
+      if (!proto) {
+        throw new Error("json() unsupported for type " + this.type);
+      }
+      const result = proto.call(this, resolver ?? ((x) => x)) as ReturnType<
+        typeof proto
+      > & {
+        r_type: string;
+        r_attributes?: {
+          [key: string]: any;
+        };
+      };
       result.r_type = this.type;
       if (this.attributes) {
         result.r_attributes = Object.fromEntries(
@@ -67,35 +88,36 @@ const Robj = {
     type: "clos",
     value: { formals, body },
     attributes: attributes,
-    json: (resolver?: Resolver) => {
+    json: () => {
       throw new Error("json() unsupported for type clos");
     },
   }),
-  vector: make_basic("vector", {
-    json: function (this: RObject<RObject<any>[]>, resolver: Resolver) {
-      const values = this.value.map((x) => x.json(resolver));
-      if (!this.attributes) return values;
-      if (this.attributes.value[0].name === "names") {
-        const keys = this.attributes.value[0].value.value;
-        let result: {
-          [key: string]: any;
-        } = {};
-        keys.map((k: string, i: number) => {
-          result[k] = values[i];
-        });
-        return result;
-      }
-      return values;
-    },
+  // these could be lists of different things, e.g., lm() output, or a data.frame ...
+  // RObject<[RObject<number[]>, RObject<string[]>, ...]>
+  vector: make_basic("vector", function <
+    T extends RObject<any>[]
+  >(this: RObject<T>, resolver?: Resolver) {
+    const values = this.value.map((x) => x.json(resolver));
+    if (!this.attributes) return values;
+    if (this.attributes.value[0].name === "names") {
+      const keys = this.attributes.value[0].value.value;
+      let result: {
+        [key: string]: any;
+      } = {};
+      keys.map((k: string, i: number) => {
+        result[k] = values[i];
+      });
+      return result;
+    }
+    return values;
   }),
-  symbol: make_basic("symbol", {
-    json: function (this: RObject<any>) {
-      return this.value;
-    },
+  symbol: make_basic("symbol", function <T extends {}>(this: RObject<T>) {
+    return this.value;
   }),
   list: make_basic("list"),
-  lang: make_basic("lang", {
-    json: function (this: RObject<RObject<any>[]>, resolver: Resolver) {
+  lang: make_basic(
+    "lang",
+    function (this: RObject<RObject<any>[]>, resolver: Resolver) {
       const values = this.value.map((x) => x.json(resolver));
       if (!this.attributes) return values;
       // FIXME: lang doens't have "names" attribute since
@@ -113,10 +135,12 @@ const Robj = {
       keys.map((k: string, i: number) => {
         result[k] = values[i];
       });
-    },
-  }),
-  tagged_list: make_basic("tagged_list", {
-    json: function (this: RObject<Rvalue<any>[]>, resolver: Resolver) {
+      return result;
+    }
+  ),
+  tagged_list: make_basic(
+    "tagged_list",
+    function (this: RObject<Rvalue<any>[]>, resolver: Resolver) {
       const classify_list = (list: Rvalue<any>[]) => {
         if (list.every((elt) => elt.name === null)) return "plain_list";
         if (list.every((elt) => elt.name !== null)) return "plain_object";
@@ -135,42 +159,40 @@ const Robj = {
         default:
           throw new Error("Internal Error");
       }
-    },
-  }),
-  tagged_lang: make_basic("tagged_lang", {
-    json: function (this: RObject<Rvalue<any>[]>, resolver: Resolver) {
+    }
+  ),
+  tagged_lang: make_basic(
+    "tagged_lang",
+    function (this: RObject<Rvalue<any>[]>, resolver: Resolver) {
       return this.value.map((x) => [x.name, x.value.json(resolver)]);
-    },
-  }),
+    }
+  ),
   vector_exp: make_basic("vector_exp"),
-  int_array: make_basic("int_array", {
-    json: function (this: RObject<number[]>) {
-      if (
-        this.attributes &&
-        this.attributes.type === "tagged_list" &&
-        this.attributes.value[0].name === "levels" &&
-        this.attributes.value[0].value.type === "string_array"
-      ) {
-        const levels = this.attributes.value[0].value.value as string[];
-        let arr: string[] & {
-          levels?: string[];
-        } = this.value.map((factor) => levels[factor - 1]);
-        arr.levels = levels;
-        return arr;
-      } else {
-        if (this.value.length === 1) return this.value[0];
-        return this.value;
-      }
-    },
-  }),
-  double_array: make_basic("double_array", {
-    json: function (this: RObject<number[]>) {
-      if (this.value.length === 1 && !this.attributes) return this.value[0];
+  int_array: make_basic("int_array", function (this: RObject<number[]>) {
+    if (
+      this.attributes &&
+      this.attributes.type === "tagged_list" &&
+      this.attributes.value[0].name === "levels" &&
+      this.attributes.value[0].value.type === "string_array"
+    ) {
+      const levels = this.attributes.value[0].value.value as string[];
+      let arr: string[] & {
+        levels?: string[];
+      } = this.value.map((factor) => levels[factor - 1]);
+      arr.levels = levels;
+      return arr;
+    } else {
+      if (this.value.length === 1) return this.value[0];
       return this.value;
-    },
+    }
   }),
-  string_array: make_basic("string_array", {
-    json: function (this: RObject<string[]>, resolver: Resolver) {
+  double_array: make_basic("double_array", function (this: RObject<number[]>) {
+    if (this.value.length === 1 && !this.attributes) return this.value[0];
+    return this.value;
+  }),
+  string_array: make_basic(
+    "string_array",
+    function (this: RObject<string[]>, resolver: Resolver) {
       if (this.value.length === 1) {
         if (!this.attributes) return this.value[0];
         if (
@@ -184,24 +206,18 @@ const Robj = {
         return this.value;
       }
       return this.value;
-    },
+    }
+  ),
+  bool_array: make_basic("bool_array", function (this: RObject<boolean[]>) {
+    if (this.value.length === 1 && !this.attributes) return this.value[0];
+    return this.value;
   }),
-  bool_array: make_basic("bool_array", {
-    json: function (this: RObject<boolean[]>) {
-      if (this.value.length === 1 && !this.attributes) return this.value[0];
-      return this.value;
-    },
+  raw: make_basic("raw", function (this: RObject<Uint8Array>) {
+    if (this.value.length === 1 && !this.attributes) return this.value[0];
+    return this.value;
   }),
-  raw: make_basic("raw", {
-    json: function (this: RObject<Uint8Array>) {
-      if (this.value.length === 1 && !this.attributes) return this.value[0];
-      return this.value;
-    },
-  }),
-  string: make_basic("string", {
-    json: function (this: RObject<string>) {
-      return this.value;
-    },
+  string: make_basic("string", function (this: RObject<string>) {
+    return this.value;
   }),
 } as const;
 
