@@ -139,10 +139,9 @@ const read = (m: my_ArrayBufferView) => {
   const read_bool_array = (attributes: Attributes, length: number) => {
     const l2 = read_int();
     const s = read_stream(length - 4);
-    const a = s
-      .make(Uint8Array)
-      .subarray(0, 12)
-      .map((v) => (v ? 1 : 0));
+    const a = Array.from(s.make(Uint8Array).subarray(0, l2)).map((v) =>
+      v ? true : false
+    );
     return [Robj.bool_array(a, attributes), length] as [RObject<any>, number];
   };
   const read_raw = (attributes: Attributes, length: number) => {

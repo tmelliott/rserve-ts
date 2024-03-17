@@ -278,7 +278,7 @@ const create = (opts: RserveOptions) => {
 
   const _encode_value = (value: Rtype, forced_type?: number) => {
     const sz = determine_size(value, forced_type);
-    console.log("ENCODE VALUE: SZ = ", sz);
+    // console.log("ENCODE VALUE: SZ = ", sz);
     if (sz > 16777215) {
       const buffer = new ArrayBuffer(sz + 8);
       const view = my_ArrayBufferView(buffer);
@@ -292,11 +292,14 @@ const create = (opts: RserveOptions) => {
       write_into_view(value, view.skip(8), forced_type, convert_to_hash);
       return buffer;
     }
-
     const buffer = new ArrayBuffer(sz + 4);
+    // console.log("LE BUFFERRR: ", buffer);
     const view = my_ArrayBufferView(buffer);
+    // console.log("LE VIEWWWW: ", view);
     view.data_view().setInt32(0, Rsrv.DT_SEXP + (sz << 8));
+    // console.log("LE VIEWWWW again: ", view);
     write_into_view(value, view.skip(4), forced_type, convert_to_hash);
+    // console.log("ENCODE VALUE: ", buffer);
     return buffer;
   };
 
@@ -572,9 +575,10 @@ async function test() {
   await s.set("x", { a: 1, b: 2 });
   await s.eval("x");
   await s.set("x", true);
-  // let myx = await s.eval("x");
-  // console.log(myx);
-  // if (myx.value.json() !== true) throw new Error("Expected true, got " + myx);
+  let myx = await s.eval<RObject<boolean[]>>("x");
+  console.log(myx);
+  myx.value.json();
+  if (myx.value.json() !== true) throw new Error("Expected true, got " + myx);
   // await s.set("a", 1);
   // await s.set("a", new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]).buffer);
   // await s.eval("print(a)");

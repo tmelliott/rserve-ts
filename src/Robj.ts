@@ -22,8 +22,8 @@ const make_basic = <T>(type: string, proto?: Proto<T>) => {
     };
 
   const wrapped_proto = {
-    json: function (this: RObject<T>, resolver: Resolver) {
-      const result = json.call(this, resolver);
+    json: function (this: RObject<T>, resolver?: Resolver) {
+      const result = json.call(this, resolver ?? ((x) => x));
       result.r_type = this.type;
       if (this.attributes) {
         result.r_attributes = Object.fromEntries(
@@ -40,15 +40,15 @@ const make_basic = <T>(type: string, proto?: Proto<T>) => {
   };
 };
 
-type Json = (this: RObject<any>, resolver: Resolver) => any;
+type Json<T = any> = (this: RObject<T>, resolver?: Resolver) => any;
 
 export class RObject<T> {
   type: string;
   value: T;
   attributes: Attributes;
-  json: Json;
+  json: Json<T>;
 
-  constructor(type: string, value: any, attributes: Attributes, json: Json) {
+  constructor(type: string, value: any, attributes: Attributes, json: Json<T>) {
     this.type = type;
     this.value = value;
     this.attributes = attributes;
@@ -67,7 +67,7 @@ const Robj = {
     type: "clos",
     value: { formals, body },
     attributes: attributes,
-    json: (resolver: Resolver) => {
+    json: (resolver?: Resolver) => {
       throw new Error("json() unsupported for type clos");
     },
   }),

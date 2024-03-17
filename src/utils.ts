@@ -160,6 +160,13 @@ export function write_into_view(
   forced_type: number | undefined,
   convert: (v: string) => string
 ) {
+  // console.log(
+  //   "~~~~~~~~~~~~\nWRITING INTO VIEW: ",
+  //   value,
+  //   array_buffer_view,
+  //   forced_type,
+  //   convert
+  // );
   const size = determine_size(value, forced_type);
   const is_large = size > 16777215;
 
@@ -167,6 +174,8 @@ export function write_into_view(
   let i: number, current_offset: number, lbl: string;
 
   if (is_large) t = t | Rsrv.XT_LARGE;
+
+  // console.log("SIZE: ", size, "IS_LARGE: ", is_large, "T: ", t);
 
   let read_view: EndianAwareDataView;
   const write_view = array_buffer_view.data_view();
@@ -180,7 +189,7 @@ export function write_into_view(
     write_view.setInt32(0, t + ((size - 4) << 8));
   }
 
-  console.log("T = ", t);
+  // console.log("SWTICHING ON: ", t & ~Rsrv.XT_LARGE);
 
   switch (t & ~Rsrv.XT_LARGE) {
     case Rsrv.XT_NULL:
@@ -197,6 +206,7 @@ export function write_into_view(
           write_view.setUint8(payload_start + 4 + i, v[i] ? 1 : 0);
         }
       }
+      break;
 
     case Rsrv.XT_ARRAY_STR:
       const vString = value as string | string[];
