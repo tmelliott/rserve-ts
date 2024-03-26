@@ -11,27 +11,13 @@ type Rvalue<T> = {
 // always (?) the 'resolve_hash' function, which returns the object stored in 'captured_functions'
 type Resolver = (value: string) => string;
 
-// type Proto<T, S extends {}> = {
-//   json: (this: RObject<T>, resolver: Resolver) => S;
-// };
+// partial inference problem....
 
-// type ResultType<T> = Rvalue<T> & {
-//   r_type: string;
-//   r_attributes?: {
-//     [key: string]: any;
-//   };
-// };
+// make_basic<"vector", RObject<any>[]>((x) => {x.value})
 
-const make_basic = <T, S extends {}>(
-  type: string,
-  proto?: (this: RObject<T>, resolver: Resolver) => S
+const make_basic = <T extends string, V>(
+  proto?: <R>(this: RObject<T>, resolver: Resolver) => R
 ) => {
-  // proto =
-  //   proto ??
-  //   function (this: RObject<T>) {
-  //     throw new Error("json() unsupported for type " + this.type);
-  //   };
-
   const wrapped_proto = {
     json: function (this: RObject<T>, resolver?: Resolver) {
       if (!proto) {
@@ -55,21 +41,44 @@ const make_basic = <T, S extends {}>(
     },
   };
 
-  return function (v: any, attrs: Attributes) {
-    const result = new RObject<T>(type, v, attrs, wrapped_proto.json);
+  return function (v: V, attrs: RObject<"tagged_list">) {
+    const result = new RObject(type, v, attrs, wrapped_proto.json);
     return result;
   };
 };
 
-type Json<T = any> = (this: RObject<T>, resolver?: Resolver) => any;
+// type Json<T = any> = (this: RObject<T>, resolver?: Resolver) => any;
 
-export class RObject<T> {
-  type: string;
-  value: T;
-  attributes: Attributes;
-  json: Json<T>;
+// TODO: infer this from final object?
+type Rtypes =
+  | "vector"
+  | "symbol"
+  | "list"
+  | "lang"
+  | "tagged_list"
+  | "tagged_lang"
+  | "vector_exp"
+  | "int_array"
+  | "double_array"
+  | "string_array"
+  | "bool_array"
+  | "raw"
+  | "string"
+  | "clos"
+  | "null";
 
-  constructor(type: string, value: any, attributes: Attributes, json: Json<T>) {
+export class RObject<T extends string, U = {}> {
+  type: T;
+  value: U; // infer from T
+  attributes?: RObject<"tagged_list">;
+  json: any;
+
+  constructor(
+    type: T,
+    value: U,
+    attributes?: RObject<"tagged_list">,
+    json?: any
+  ) {
     this.type = type;
     this.value = value;
     this.attributes = attributes;
@@ -77,7 +86,7 @@ export class RObject<T> {
   }
 }
 
-const Robj = {
+export const Robj = {
   null: (attributes: Attributes) => ({
     type: "null",
     value: null,
@@ -94,9 +103,7 @@ const Robj = {
   }),
   // these could be lists of different things, e.g., lm() output, or a data.frame ...
   // RObject<[RObject<number[]>, RObject<string[]>, ...]>
-  vector: make_basic("vector", function <
-    T extends RObject<any>[]
-  >(this: RObject<T>, resolver?: Resolver) {
+  vector: make_basic<"vector", RObject<any>[]>(function (resolver?: Resolver) {
     const values = this.value.map((x) => x.json(resolver));
     if (!this.attributes) return values;
     if (this.attributes.value[0].name === "names") {
@@ -115,29 +122,26 @@ const Robj = {
     return this.value;
   }),
   list: make_basic("list"),
-  lang: make_basic(
-    "lang",
-    function (this: RObject<RObject<any>[]>, resolver: Resolver) {
-      const values = this.value.map((x) => x.json(resolver));
-      if (!this.attributes) return values;
-      // FIXME: lang doens't have "names" attribute since
-      //        names are sent as tags (langs are pairlists)
-      //        so this seems superfluous (it is dangerous
-      //        if lang ever had attributes since there is
-      //        no reason to fail in that case)
-      if (this.attributes.value[0].name !== "names") {
-        throw new Error("expected names here");
-      }
-      const keys = this.attributes.value[0].value.value;
-      let result: {
-        [key: string]: any;
-      } = {};
-      keys.map((k: string, i: number) => {
-        result[k] = values[i];
-      });
-      return result;
+  lang: make_basic("lang", function (this, resolver: Resolver) {
+    const values = this.value.map((x) => x.json(resolver));
+    if (!this.attributes) return values;
+    // FIXME: lang doens't have "names" attribute since
+    //        names are sent as tags (langs are pairlists)
+    //        so this seems superfluous (it is dangerous
+    //        if lang ever had attributes since there is
+    //        no reason to fail in that case)
+    if (this.attributes.value[0].name !== "names") {
+      throw new Error("expected names here");
     }
-  ),
+    const keys = this.attributes.value[0].value.value;
+    let result: {
+      [key: string]: any;
+    } = {};
+    keys.map((k: string, i: number) => {
+      result[k] = values[i];
+    });
+    return result;
+  }),
   tagged_list: make_basic(
     "tagged_list",
     function (this: RObject<Rvalue<any>[]>, resolver: Resolver) {
