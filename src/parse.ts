@@ -1,5 +1,5 @@
 import { my_ArrayBufferView } from "./ArrayBufferView";
-import { RObject } from "./Robj";
+import Robj, { RObject } from "./Robj";
 import RserveError from "./RserveError";
 import Rsrv, { RsrvStatusCode } from "./Rsrv";
 import read from "./reader";
@@ -145,9 +145,20 @@ const parse_websocket_frame = (msg: ArrayBuffer): ParseResult => {
   return result as ParseResult;
 };
 
+type RobjTypes = {
+  [K in keyof typeof Robj]: ReturnType<(typeof Robj)[K]> extends RObject<
+    infer U1,
+    infer U2
+  >
+    ? { name: K; input: U1; json: U2 }
+    : never;
+}[keyof typeof Robj];
+
+type z = Extract<RobjTypes, { input: number[] }>["json"];
+
 export type Payload<T = any> = {
   type: string;
-  value: T extends RObject<infer U> ? RObject<U> : T;
+  value: T extends RObject<infer U1, infer U2> ? RObject<U1, U2> : T;
 };
 
 const parse_payload = (msg: ArrayBuffer): Payload | null => {

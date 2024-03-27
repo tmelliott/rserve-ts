@@ -46,7 +46,7 @@ async function test() {
   await s.set("x", { a: 1, b: 2 });
   await s.eval("x");
   await s.set("x", true);
-  let myx = await s.eval<RObject<boolean>>("x");
+  let myx = await s.eval<RObject<boolean, boolean>>("x");
   console.log(myx);
   myx.value.json();
   if (myx.value.json() !== true) throw new Error("Expected true, got " + myx);

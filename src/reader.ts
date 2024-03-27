@@ -25,7 +25,7 @@ type ReadHandlerArray = {
   [key in number]: (
     attributes: Attributes,
     length: number
-  ) => [RObject<any>, number];
+  ) => [RObject<any, any>, number];
 };
 
 type ReadResult = {
@@ -132,7 +132,7 @@ const read = (m: my_ArrayBufferView) => {
       }
     }
     return [Robj.string_array(res, attributes), length] as [
-      RObject<any>,
+      ReturnType<typeof Robj.string_array>,
       number
     ];
   };
@@ -142,15 +142,23 @@ const read = (m: my_ArrayBufferView) => {
     const a = Array.from(s.make(Uint8Array).subarray(0, l2)).map((v) =>
       v ? true : false
     );
-    return [Robj.bool_array(a, attributes), length] as [RObject<any>, number];
+    return [Robj.bool_array(a, attributes), length] as [
+      ReturnType<typeof Robj.bool_array>,
+      number
+    ];
   };
   const read_raw = (attributes: Attributes, length: number) => {
     const l2 = read_int();
     const s = read_stream(length - 4);
-    const a = new Uint8Array(s.make(Uint8Array).subarray(0, 12)).buffer;
-    return [Robj.raw(a, attributes), length] as [RObject<any>, number];
+    // TODO: check:
+    // can't read length of a buffer! removing `.buffer` from `a` below:
+    const a = new Uint8Array(s.make(Uint8Array).subarray(0, 12));
+    return [Robj.raw(a, attributes), length] as [
+      ReturnType<typeof Robj.raw>,
+      number
+    ];
   };
-  const read_sexp = (): [RObject<any>, number] => {
+  const read_sexp = (): [RObject, number] => {
     const d = read_int();
     console.log("READ_SEXP - D: ", d);
     let [t, l] = Rsrv.par_parse(d);
@@ -184,16 +192,16 @@ const read = (m: my_ArrayBufferView) => {
     return [res[0], total_read + res[1]];
   };
 
-  const read_clos = bind(read_sexp, (formals: RObject<any>) =>
-    bind(read_sexp, (body: RObject<any>) =>
+  const read_clos = bind(read_sexp, (formals: RObject) =>
+    bind(read_sexp, (body: RObject) =>
       lift((a, l) => Robj.clos(formals, body, a), 0)
     )
   );
 
   const read_list = unfold(read_sexp);
 
-  const read_symbol_value_pairs = <T>(lst: RObject<T>[]) => {
-    let res: { name: string | null; value: RObject<T> }[] = [];
+  const read_symbol_value_pairs = <T, U>(lst: RObject<T, U>[]) => {
+    let res: { name: string | null; value: RObject<T, U> }[] = [];
     for (let i = 0; i < lst.length; i += 2) {
       const value = lst[i],
         tag = lst[i + 1];
@@ -212,20 +220,20 @@ const read = (m: my_ArrayBufferView) => {
     }
   };
 
-  const read_list_tag = bind(read_list, (lst: RObject<any>[]) =>
+  const read_list_tag = bind(read_list, (lst: RObject[]) =>
     lift((attributes: Attributes, length: number) => {
       const res = read_symbol_value_pairs(lst);
-      return Robj.tagged_lang(res, attributes);
+      return Robj.tagged_lang(res ?? [], attributes);
     }, 0)
   );
-  const read_lang_tag = bind(read_list, (lst: RObject<any>[]) =>
+  const read_lang_tag = bind(read_list, (lst: RObject[]) =>
     lift((attributes: Attributes, length: number) => {
       const res = read_symbol_value_pairs(lst);
-      return Robj.tagged_lang(res, attributes);
+      return Robj.tagged_lang(res ?? [], attributes);
     }, 0)
   );
 
-  const xf = <T extends [RObject<any>, number], L>(
+  const xf = <T, L>(
     f: (attributes: Attributes, length: number) => [T, number],
     g: (t: T, a: Attributes) => L
   ) => bind(f, (t) => lift((a, l) => g(t, a), 0));
