@@ -151,383 +151,391 @@ function _encode_bytes(bytes: number[]) {
   return result;
 }
 
-const create = (opts: RserveOptions) => {
-  const host = opts.host ?? "http://127.0.0.1:8081";
-  const onconnect = opts.on_connect ?? (() => {});
+const create = async (opts: RserveOptions) => {
+  return new Promise<Rserve>((resolve, reject) => {
+    const host = opts.host ?? "http://127.0.0.1:8081";
+    const onconnect = () => {
+      console.log("CONNECTING ...");
+      resolve(result);
+      opts.on_connect && opts.on_connect();
+    };
 
-  const socket = new WebSocket(host);
-  socket.binaryType = "arraybuffer";
+    const socket = new WebSocket(host);
+    socket.binaryType = "arraybuffer";
 
-  socket.on("send", (data: ArrayBuffer) => {
-    console.log("sending data", data);
-  });
-
-  const handle_error =
-    opts.on_error ??
-    ((error: string) => {
-      throw new RserveError(error, -1);
+    socket.on("send", (data: ArrayBuffer) => {
+      console.log("sending data", data);
     });
 
-  let received_handshake = false;
-  let result: Rserve;
-  let command_counter = 0;
+    const handle_error =
+      opts.on_error ??
+      ((error: string) => {
+        throw new RserveError(error, -1);
+      });
 
-  const ctrl_queue: Queue = {
-    queue: [],
-    in_oob_message: false,
-    awaiting_result: false,
-    msg_id: 0,
-    name: "control",
-  };
+    let received_handshake = false;
+    let result: Rserve;
+    let command_counter = 0;
 
-  const compute_queue: Queue = {
-    queue: [],
-    in_oob_message: false,
-    awaiting_result: false,
-    msg_id: 0,
-    name: "compute",
-  };
+    const ctrl_queue: Queue = {
+      queue: [],
+      in_oob_message: false,
+      awaiting_result: false,
+      msg_id: 0,
+      name: "control",
+    };
 
-  const queues = [ctrl_queue, compute_queue];
+    const compute_queue: Queue = {
+      queue: [],
+      in_oob_message: false,
+      awaiting_result: false,
+      msg_id: 0,
+      name: "compute",
+    };
 
-  const queue_can_send = (queue: Queue) =>
-    !queue.in_oob_message && !queue.awaiting_result && queue.queue.length > 0;
+    const queues = [ctrl_queue, compute_queue];
 
-  const bump_queues = () => {
-    // console.log("bumping queue");
-    const available = queues.filter(queue_can_send);
-    if (available.length === 0) return;
-    if (result.closed) {
-      handle_error("Cannot send messages on a closed socket!", -1);
-      return;
-    }
-    const q = available.sort(
-      (a, b) => a.queue[0].timestamp - b.queue[0].timestamp
-    )[0];
-    // can we be sure that the queue is not empty?
-    const lst = q.queue.shift() as Job;
-    q.result_callback = lst.callback;
-    q.awaiting_result = true;
-    if (opts.debug)
-      opts.debug.message_out && opts.debug.message_out(lst.buffer, lst.command);
+    const queue_can_send = (queue: Queue) =>
+      !queue.in_oob_message && !queue.awaiting_result && queue.queue.length > 0;
 
-    socket.send(lst.buffer);
-  };
-
-  const enqueue = (
-    buffer: ArrayBuffer,
-    k: Callback,
-    command: string,
-    queue: Queue
-  ) => {
-    queue.queue.push({
-      buffer,
-      callback: (error, result) => {
-        queue.awaiting_result = false;
-        bump_queues();
-        k(error, result);
-      },
-      command,
-      timestamp: Date.now(),
-    });
-    bump_queues();
-  };
-
-  const _cmd = (
-    command: number,
-    buffer:
-      | ArrayBuffer
-      | [ReturnType<typeof _encode_string>, ReturnType<typeof _encode_value>],
-    k: Callback,
-    string: string,
-    queue?: Queue
-  ) => {
-    if (!queue) queue = queues[0];
-    k = k ?? (() => {});
-    const big_buffer = _encode_command(command, buffer, queue.msg_id);
-    return enqueue(big_buffer, k, string, queue);
-  };
-
-  const _send_cmd_now = (
-    command: number,
-    buffer: ArrayBuffer,
-    msg_id?: number
-  ) => {
-    var big_buffer = _encode_command(command, buffer, msg_id);
-    // if (opts.debug)
-    //   opts.debug.message_out && opts.debug.message_out(big_buffer[0], command);
-    socket.send(big_buffer);
-    return big_buffer;
-  };
-
-  const captured_functions: CaptureFunctions = {};
-  const fresh_hash = () => {
-    let k;
-    do {
-      k = Math.random().toString(36).substring(2);
-    } while (captured_functions[k]);
-    if (k.length !== 10) throw new Error("Bad rng, no cookie");
-    return k;
-  };
-
-  const convert_to_hash = (value: string) => {
-    var hash = fresh_hash();
-    captured_functions[hash] = value;
-    return hash;
-  };
-
-  const _encode_value = (value: Rtype, forced_type?: number) => {
-    const sz = determine_size(value, forced_type);
-    // console.log("ENCODE VALUE: SZ = ", sz);
-    if (sz > 16777215) {
-      const buffer = new ArrayBuffer(sz + 8);
-      const view = my_ArrayBufferView(buffer);
-      view
-        .data_view()
-        .setInt32(
-          0,
-          Rsrv.DT_SEXP + (sz & 16777215) * Math.pow(2, 8) + Rsrv.DT_LARGE
-        );
-      view.data_view().setInt32(4, sz >>> 24);
-      write_into_view(value, view.skip(8), forced_type, convert_to_hash);
-      return buffer;
-    }
-    const buffer = new ArrayBuffer(sz + 4);
-    // console.log("LE BUFFERRR: ", buffer);
-    const view = my_ArrayBufferView(buffer);
-    // console.log("LE VIEWWWW: ", view);
-    view.data_view().setInt32(0, Rsrv.DT_SEXP + (sz << 8));
-    // console.log("LE VIEWWWW again: ", view);
-    write_into_view(value, view.skip(4), forced_type, convert_to_hash);
-    // console.log("ENCODE VALUE: ", buffer);
-    return buffer;
-  };
-
-  const hand_shake = (event: WSMessageEvent) => {
-    if (typeof event.data === "string") {
-      console.log("Received string:", event.data);
-
-      const id = event.data;
-      const RserverID = id.slice(0, 4);
-      if (RserverID !== "Rsrv") {
-        throw new Error("Server is not an Rserve instance");
-      }
-      const protocolVersion = id.slice(4, 8);
-      if (protocolVersion !== "0103") {
-        throw new Error(
-          "Sorry, Rserve only speaks the 0103 version of the R server protocol"
-        );
-      }
-      const protocol = id.slice(8, 12);
-      if (protocol !== "QAP1") {
-        throw new Error("Sorry, Rserve only speaks QAP1");
-      }
-      //   const additionalAttributes = id.slice(12);
-
-      received_handshake = true;
-      result.running = true;
-      onconnect && onconnect.call(result);
-      return;
-    }
-
-    const view = new DataView(event.data);
-    const header =
-      String.fromCharCode(view.getUint8(0)) +
-      String.fromCharCode(view.getUint8(1)) +
-      String.fromCharCode(view.getUint8(2)) +
-      String.fromCharCode(view.getUint8(3));
-
-    if (header !== "RsOC") {
-      handle_error("Unrecognised server answer: " + header, -1);
-    }
-
-    received_handshake = true;
-    result.ocap_mode = true;
-    result.running = true;
-    onconnect && onconnect.call(result);
-  };
-
-  socket.onclose = (event) => {
-    result.running = false;
-    result.closed = true;
-    opts.on_close && opts.on_close(event);
-  };
-
-  socket.onopen = function (e) {
-    console.log("[open] Connection established");
-  };
-
-  socket.onclose = function (event) {
-    if (event.wasClean) {
-      console.log(
-        `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
-      );
-    } else {
-      // e.g. server process killed or network down
-      // event.code is usually 1006 in this case
-      console.log("[close] Connection died");
-    }
-  };
-
-  socket.onerror = function (error) {
-    console.log(`[error]`);
-  };
-
-  socket.onmessage = (message) => {
-    console.log(`[message] Data received from server: ${message.data}`);
-
-    // console.log("Message: ", message);
-    // console.log("message received");
-
-    // node.js Buffer vs ArrayBuffer workaround
-    const msg = asBuffer(message);
-    // console.log(msg);
-
-    // console.log("Recevied handshake: ", received_handshake);
-
-    if (!received_handshake) {
-      hand_shake(msg);
-      return;
-    }
-
-    if (typeof msg.data === "string") {
-      console.log("Raw string: ", msg.data);
-      return;
-    }
-
-    // console.log("PArsing ...\n");
-    const v = parse_websocket_frame(msg.data);
-    // console.log(v);
-    if (v.incomplete) return;
-
-    const msg_id = v.header[2],
-      cmd = v.header[0] & 0xffffff;
-
-    // console.log(v.header);
-    // console.log("cmd: ", cmd);
-
-    let q = queues.find((q) => q.msg_id === msg_id) ?? queues[0];
-    if (!v.ok) {
-      q.result_callback!([v.message, v.status_code], undefined);
-    } else if (cmd === Rsrv.RESP_OK) {
-      // console.log(q);
-      q.result_callback!(null, v.payload);
-    } else if (Rsrv.IS_OOB_SEND(cmd)) {
-      // opts.on_data && opts.on_data(v.payload);
-    } else if (Rsrv.IS_OOB_MSG(cmd)) {
-      q = Rsrv.OOB_USR_CODE(cmd) > 255 ? compute_queue : ctrl_queue;
-      let p: any[] = [];
-      try {
-        // p = wrap_all_ocaps(result, v.payload)
-      } catch (e) {
-        _send_cmd_now(Rsrv.RESP_ERR | cmd, _encode_string(String(e)), msg_id);
+    const bump_queues = () => {
+      // console.log("bumping queue");
+      const available = queues.filter(queue_can_send);
+      if (available.length === 0) return;
+      if (result.closed) {
+        handle_error("Cannot send messages on a closed socket!", -1);
         return;
       }
-      if (typeof p[0] === "string") {
-        if (false) {
-          //!opts.on_oob_message) {
-          // handle
-        } else {
-          q.in_oob_message = true;
-          // opts.on_oob_message(p, (message, error)
+      const q = available.sort(
+        (a, b) => a.queue[0].timestamp - b.queue[0].timestamp
+      )[0];
+      // can we be sure that the queue is not empty?
+      const lst = q.queue.shift() as Job;
+      q.result_callback = lst.callback;
+      q.awaiting_result = true;
+      if (opts.debug)
+        opts.debug.message_out &&
+          opts.debug.message_out(lst.buffer, lst.command);
+
+      socket.send(lst.buffer);
+    };
+
+    const enqueue = (
+      buffer: ArrayBuffer,
+      k: Callback,
+      command: string,
+      queue: Queue
+    ) => {
+      queue.queue.push({
+        buffer,
+        callback: (error, result) => {
+          queue.awaiting_result = false;
+          bump_queues();
+          k(error, result);
+        },
+        command,
+        timestamp: Date.now(),
+      });
+      bump_queues();
+    };
+
+    const _cmd = (
+      command: number,
+      buffer:
+        | ArrayBuffer
+        | [ReturnType<typeof _encode_string>, ReturnType<typeof _encode_value>],
+      k: Callback,
+      string: string,
+      queue?: Queue
+    ) => {
+      if (!queue) queue = queues[0];
+      k = k ?? (() => {});
+      const big_buffer = _encode_command(command, buffer, queue.msg_id);
+      return enqueue(big_buffer, k, string, queue);
+    };
+
+    const _send_cmd_now = (
+      command: number,
+      buffer: ArrayBuffer,
+      msg_id?: number
+    ) => {
+      var big_buffer = _encode_command(command, buffer, msg_id);
+      // if (opts.debug)
+      //   opts.debug.message_out && opts.debug.message_out(big_buffer[0], command);
+      socket.send(big_buffer);
+      return big_buffer;
+    };
+
+    const captured_functions: CaptureFunctions = {};
+    const fresh_hash = () => {
+      let k;
+      do {
+        k = Math.random().toString(36).substring(2);
+      } while (captured_functions[k]);
+      if (k.length !== 10) throw new Error("Bad rng, no cookie");
+      return k;
+    };
+
+    const convert_to_hash = (value: string) => {
+      var hash = fresh_hash();
+      captured_functions[hash] = value;
+      return hash;
+    };
+
+    const _encode_value = (value: Rtype, forced_type?: number) => {
+      const sz = determine_size(value, forced_type);
+      // console.log("ENCODE VALUE: SZ = ", sz);
+      if (sz > 16777215) {
+        const buffer = new ArrayBuffer(sz + 8);
+        const view = my_ArrayBufferView(buffer);
+        view
+          .data_view()
+          .setInt32(
+            0,
+            Rsrv.DT_SEXP + (sz & 16777215) * Math.pow(2, 8) + Rsrv.DT_LARGE
+          );
+        view.data_view().setInt32(4, sz >>> 24);
+        write_into_view(value, view.skip(8), forced_type, convert_to_hash);
+        return buffer;
+      }
+      const buffer = new ArrayBuffer(sz + 4);
+      // console.log("LE BUFFERRR: ", buffer);
+      const view = my_ArrayBufferView(buffer);
+      // console.log("LE VIEWWWW: ", view);
+      view.data_view().setInt32(0, Rsrv.DT_SEXP + (sz << 8));
+      // console.log("LE VIEWWWW again: ", view);
+      write_into_view(value, view.skip(4), forced_type, convert_to_hash);
+      // console.log("ENCODE VALUE: ", buffer);
+      return buffer;
+    };
+
+    const hand_shake = (event: WSMessageEvent) => {
+      if (typeof event.data === "string") {
+        console.log("Received string:", event.data);
+
+        const id = event.data;
+        const RserverID = id.slice(0, 4);
+        if (RserverID !== "Rsrv") {
+          throw new Error("Server is not an Rserve instance");
         }
-      } else if (typeof p[0] === "function") {
-        if (!result.ocap_mode) {
+        const protocolVersion = id.slice(4, 8);
+        if (protocolVersion !== "0103") {
+          throw new Error(
+            "Sorry, Rserve only speaks the 0103 version of the R server protocol"
+          );
+        }
+        const protocol = id.slice(8, 12);
+        if (protocol !== "QAP1") {
+          throw new Error("Sorry, Rserve only speaks QAP1");
+        }
+        //   const additionalAttributes = id.slice(12);
+
+        received_handshake = true;
+        result.running = true;
+        onconnect && onconnect.call(result);
+        return;
+      }
+
+      const view = new DataView(event.data);
+      const header =
+        String.fromCharCode(view.getUint8(0)) +
+        String.fromCharCode(view.getUint8(1)) +
+        String.fromCharCode(view.getUint8(2)) +
+        String.fromCharCode(view.getUint8(3));
+
+      if (header !== "RsOC") {
+        handle_error("Unrecognised server answer: " + header, -1);
+      }
+
+      received_handshake = true;
+      result.ocap_mode = true;
+      result.running = true;
+      onconnect && onconnect.call(result);
+    };
+
+    socket.onclose = (event) => {
+      result.running = false;
+      result.closed = true;
+      opts.on_close && opts.on_close(event);
+    };
+
+    socket.onopen = function (e) {
+      console.log("[open] Connection established");
+    };
+
+    socket.onclose = function (event) {
+      if (event.wasClean) {
+        console.log(
+          `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
+        );
+      } else {
+        // e.g. server process killed or network down
+        // event.code is usually 1006 in this case
+        console.log("[close] Connection died");
+        reject();
+      }
+    };
+
+    socket.onerror = function (error) {
+      console.log(`[error]`);
+    };
+
+    socket.onmessage = (message) => {
+      console.log(`[message] Data received from server: ${message.data}`);
+
+      // console.log("Message: ", message);
+      // console.log("message received");
+
+      // node.js Buffer vs ArrayBuffer workaround
+      const msg = asBuffer(message);
+      // console.log(msg);
+
+      // console.log("Recevied handshake: ", received_handshake);
+
+      if (!received_handshake) {
+        hand_shake(msg);
+        return;
+      }
+
+      if (typeof msg.data === "string") {
+        console.log("Raw string: ", msg.data);
+        return;
+      }
+
+      // console.log("PArsing ...\n");
+      const v = parse_websocket_frame(msg.data);
+      // console.log(v);
+      if (v.incomplete) return;
+
+      const msg_id = v.header[2],
+        cmd = v.header[0] & 0xffffff;
+
+      // console.log(v.header);
+      // console.log("cmd: ", cmd);
+
+      let q = queues.find((q) => q.msg_id === msg_id) ?? queues[0];
+      if (!v.ok) {
+        q.result_callback!([v.message, v.status_code], undefined);
+      } else if (cmd === Rsrv.RESP_OK) {
+        // console.log(q);
+        q.result_callback!(null, v.payload);
+      } else if (Rsrv.IS_OOB_SEND(cmd)) {
+        // opts.on_data && opts.on_data(v.payload);
+      } else if (Rsrv.IS_OOB_MSG(cmd)) {
+        q = Rsrv.OOB_USR_CODE(cmd) > 255 ? compute_queue : ctrl_queue;
+        let p: any[] = [];
+        try {
+          // p = wrap_all_ocaps(result, v.payload)
+        } catch (e) {
+          _send_cmd_now(Rsrv.RESP_ERR | cmd, _encode_string(String(e)), msg_id);
+          return;
+        }
+        if (typeof p[0] === "string") {
+          if (false) {
+            //!opts.on_oob_message) {
+            // handle
+          } else {
+            q.in_oob_message = true;
+            // opts.on_oob_message(p, (message, error)
+          }
+        } else if (typeof p[0] === "function") {
+          if (!result.ocap_mode) {
+            _send_cmd_now(
+              Rsrv.RESP_ERR | cmd,
+              _encode_string(
+                "JavaScript function calls only allowed in ocap mode"
+              ),
+              msg_id
+            );
+          } else {
+            const captured_function = p[0] as Function;
+            const params = p.slice(1);
+            params.push((err: string | undefined, result: any) => {
+              if (err) {
+                _send_cmd_now(Rsrv.RESP_ERR | cmd, _encode_string(err), msg_id);
+              } else {
+                _send_cmd_now(cmd, _encode_value(result), msg_id);
+              }
+            });
+            captured_function.apply(undefined, params);
+          }
+        } else {
           _send_cmd_now(
             Rsrv.RESP_ERR | cmd,
-            _encode_string(
-              "JavaScript function calls only allowed in ocap mode"
-            ),
-            msg_id
+            _encode_string("Unknown oob message type: " + typeof p[0])
           );
-        } else {
-          const captured_function = p[0] as Function;
-          const params = p.slice(1);
-          params.push((err: string | undefined, result: any) => {
-            if (err) {
-              _send_cmd_now(Rsrv.RESP_ERR | cmd, _encode_string(err), msg_id);
-            } else {
-              _send_cmd_now(cmd, _encode_value(result), msg_id);
-            }
-          });
-          captured_function.apply(undefined, params);
         }
       } else {
-        _send_cmd_now(
-          Rsrv.RESP_ERR | cmd,
-          _encode_string("Unknown oob message type: " + typeof p[0])
+        handle_error(
+          "Internal Error, parse returned unexpected type " + v.header[0],
+          -1
         );
       }
-    } else {
-      handle_error(
-        "Internal Error, parse returned unexpected type " + v.header[0],
-        -1
-      );
-    }
-  };
+    };
 
-  result = {
-    running: false,
-    closed: false,
-    ocap_mode: false,
-    close: () => {
-      socket.close();
-    },
-    login: (command, k) => {
-      _cmd(Rsrv.CMD_login, _encode_string(command), k, command);
-    },
-    eval: (command) => {
-      console.log("\n\n======================\nEVAL: ", command);
-      return new Promise((resolve, reject) => {
-        _cmd(
-          Rsrv.CMD_eval,
-          _encode_string(command),
-          (err, data) => {
-            if (err) {
-              reject(err);
-            } else {
-              data && resolve(data);
-            }
-          },
-          command
-        );
-      });
-    },
-    createFile: (command, k) => {
-      _cmd(Rsrv.CMD_createFile, _encode_string(command), k, command);
-    },
-    writeFile: (chunk, k) => {
-      _cmd(Rsrv.CMD_writeFile, _encode_bytes(chunk), k, "");
-    },
-    closeFile: (k) => {
-      _cmd(Rsrv.CMD_closeFile, new ArrayBuffer(0), k, "");
-    },
-    set: (key, value) => {
-      console.log("\n\n======================\nSET: ", key, value);
-      return new Promise((resolve, reject) => {
-        _cmd(
-          Rsrv.CMD_setSEXP,
-          [_encode_string(key), _encode_value(value)],
-          (err) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve();
-            }
-          },
-          ""
-        );
-      });
-    },
-    resolve_hash: (hash: string) => {
-      if (!(hash in captured_functions)) {
-        throw new Error("hash " + hash + " not found");
-      }
-      return captured_functions[hash];
-    },
-  };
+    result = {
+      running: false,
+      closed: false,
+      ocap_mode: false,
+      close: () => {
+        socket.close();
+      },
+      login: (command, k) => {
+        _cmd(Rsrv.CMD_login, _encode_string(command), k, command);
+      },
+      eval: (command) => {
+        console.log("\n\n======================\nEVAL: ", command);
+        return new Promise((resolve, reject) => {
+          _cmd(
+            Rsrv.CMD_eval,
+            _encode_string(command),
+            (err, data) => {
+              if (err) {
+                reject(err);
+              } else {
+                data && resolve(data);
+              }
+            },
+            command
+          );
+        });
+      },
+      createFile: (command, k) => {
+        _cmd(Rsrv.CMD_createFile, _encode_string(command), k, command);
+      },
+      writeFile: (chunk, k) => {
+        _cmd(Rsrv.CMD_writeFile, _encode_bytes(chunk), k, "");
+      },
+      closeFile: (k) => {
+        _cmd(Rsrv.CMD_closeFile, new ArrayBuffer(0), k, "");
+      },
+      set: (key, value) => {
+        console.log("\n\n======================\nSET: ", key, value);
+        return new Promise((resolve, reject) => {
+          _cmd(
+            Rsrv.CMD_setSEXP,
+            [_encode_string(key), _encode_value(value)],
+            (err) => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve();
+              }
+            },
+            ""
+          );
+        });
+      },
+      resolve_hash: (hash: string) => {
+        if (!(hash in captured_functions)) {
+          throw new Error("hash " + hash + " not found");
+        }
+        return captured_functions[hash];
+      },
+    };
 
-  return result;
+    return result;
+  });
 };
 
 export default create;
