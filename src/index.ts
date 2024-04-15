@@ -22,14 +22,6 @@ function range(x: number) {
   for (var i = 0; i < x; ++i) result[i] = i + 1; // R arrays are 1-based. wat
   return result;
 }
-function expect_equals(x: any) {
-  return function (v: RObject<any>) {
-    if (v.value.json() !== x)
-      throw new Error(
-        "Expected value to be " + String(x) + ", got " + String(v.value.json())
-      );
-  };
-}
 
 async function test() {
   await s.set("a", 1);
@@ -81,45 +73,3 @@ async function test() {
   console.log("All run!");
   process.exit(0);
 }
-
-// async function test() {
-//   console.log(s);
-//   const result = await s.eval<Float64Array>("1 + 1");
-//   console.log(result);
-
-//   console.log("\n\n\n=========================\n\n\n");
-//   await s.set("x", 10);
-
-//   console.log("\n\n\n=========================\n\n\n");
-//   const result2 = await s.eval<Float64Array>("rnorm(x)");
-//   console.log(result2);
-
-//   // exit program
-
-//   process.exit(0);
-
-//   // s.eval<Float64Array>("1 + 1", (err, data) => {
-//   //   if (err) {
-//   //     console.log("Error: ", err);
-//   //   } else {
-//   //     console.log("===== Result: ", data, "\n", data.value.value[0]);
-//   //   }
-
-//   //   s.set("x", 10, (err) => {
-//   //     console.log("Set: ", err ?? "success");
-
-//   //     s.eval<Float64Array>("x + 5", (err, data) => {
-//   //       if (err) {
-//   //         console.log("Error: ", err);
-//   //       } else {
-//   //         console.log("Result: ", data.value.value[0]);
-//   //       }
-//   //     });
-//   //   });
-//   // });
-// }
-
-// setTimeout(() => {
-//   console.log("timeout");
-//   // s.close();
-// }, 5000);
