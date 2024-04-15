@@ -103,6 +103,8 @@ export function determine_size<T extends Rtype>(
   const header_size = 4;
   const t = forced_type ?? type_id(value);
 
+  // console.log("DETERMINE SIZE: ", value, forced_type, t);
+
   switch (t & ~Rsrv.XT_LARGE) {
     case Rsrv.XT_NULL:
       return final_size(0);
@@ -127,7 +129,7 @@ export function determine_size<T extends Rtype>(
       return final_size(8 * (value as number[]).length);
 
     case Rsrv.XT_RAW:
-      return final_size((value as ArrayBuffer).byteLength);
+      return final_size(4 + (value as ArrayBuffer).byteLength);
 
     case Rsrv.XT_VECTOR:
     case Rsrv.XT_LANG_NOTAG:

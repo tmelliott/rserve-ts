@@ -3,7 +3,7 @@ import create from "./Rserve";
 
 var s = create({
   host: "ws://localhost:8081",
-  //   on_connect: test,
+  on_connect: test,
   //   debug: {
   //     message_in: (msg) => {
   //       console.log("message in", msg);
@@ -48,31 +48,36 @@ async function test() {
   await s.set("x", true);
   let myx = await s.eval<RObject<boolean, boolean>>("x");
   console.log(myx);
-  myx.value.json();
   if (myx.value.json() !== true) throw new Error("Expected true, got " + myx);
-  // await s.set("a", 1);
-  // await s.set("a", new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]).buffer);
-  // await s.eval("print(a)");
-  // await s.eval('attr(Orange, "formula")');
-  // await s.eval("rnorm(3000000)");
-  // await s.set("a", new Float64Array(2500000));
-  // // function () {
-  // //   return s.eval("mean(a)").then(expect_equals(0));
-  // // },
-  // await s.set("a", range(2500000));
+  await s.set("a", 1);
+  await s.set("a", new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]).buffer);
+  await s.eval("print(a)");
+  await s.eval('attr(Orange, "formula")');
+  await s.eval("rnorm(3000000)");
+  await s.set("a", new Float64Array(2500000));
 
-  // function () {
-  //   return s.eval("a[1]").then(expect_equals(1));
-  // },
-  // function () {
-  //   return s.eval("a[100]").then(expect_equals(100));
-  // },
-  // function () {
-  //   return s.eval("a[1000]").then(expect_equals(1000));
-  // },
-  // function () {
-  //   return s.eval("a[2499999]").then(expect_equals(2499999));
-  // },
+  let mya = await s.eval<RObject<number, number>>("mean(a)");
+  if (mya.value.json() !== 0) throw new Error("Expected 0, got " + mya);
+
+  await s.set("a", range(2500000));
+  let mya2 = await s.eval<RObject<number, number>>("a[1]");
+  if (mya2.value.json() !== 1) throw new Error("Expected 1, got " + mya2);
+
+  let mya100 = await s.eval<RObject<number, number>>("a[100]");
+  if (mya100.value.json() !== 100)
+    throw new Error("Expected 100, got " + mya100);
+
+  let mya1000 = await s.eval<RObject<number, number>>("a[1000]");
+  if (mya1000.value.json() !== 1000)
+    throw new Error("Expected 1000, got " + mya1000);
+
+  let mya2499999 = await s.eval<RObject<number, number>>("a[2499999]");
+  if (mya2499999.value.json() !== 2499999)
+    throw new Error("Expected 2499999, got " + mya2499999);
+
+  const smry = await s.eval<RObject<number, number>>("summary(a)");
+  console.log(smry.value.json());
+
   console.log("All run!");
   process.exit(0);
 }
