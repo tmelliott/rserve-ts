@@ -1,8 +1,9 @@
+import { debug } from "./utils";
 import {
   EndianAwareDataView,
   type my_ArrayBufferView,
 } from "./ArrayBufferView";
-import Robj, { Attributes, RObject } from "./Robj";
+import Robj, { Attributes, NamedList, RObject } from "./Robj";
 import RserveError from "./RserveError";
 import Rsrv, { RsrvXT } from "./Rsrv";
 
@@ -103,10 +104,10 @@ const read = (m: my_ArrayBufferView) => {
     return result.msg.make(Int32Array, old_offset, length);
   };
   const read_double_vector = (length: number) => {
-    console.log("READ_DOUBLE_VECTOR - LENGTH: ", length);
+    debug("READ_DOUBLE_VECTOR - LENGTH: ", length);
     const old_offset = result.offset;
     result.offset += length;
-    console.log("THIS MESSAGE: ", result.msg);
+    debug("THIS MESSAGE: ", result.msg);
     return result.msg.make(Float64Array, old_offset, length);
   };
   //////////////////////////////////////////////////////////////////////
@@ -160,14 +161,14 @@ const read = (m: my_ArrayBufferView) => {
   };
   const read_sexp = (): [RObject, number] => {
     const d = read_int();
-    console.log("READ_SEXP - D: ", d);
+    debug("READ_SEXP - D: ", d);
     let [t, l] = Rsrv.par_parse(d);
-    console.log("READ_SEXP - [t, l]: ", [t, l]);
+    debug("READ_SEXP - [t, l]: ", [t, l]);
     let total_read = 4;
     let attributes: any;
 
     if (Rsrv.IS_LARGE(t)) {
-      console.log("ITS LARGE");
+      debug("ITS LARGE");
       const extra_length = read_int();
       total_read += 4;
       l += extra_length * Math.pow(2, 24);
@@ -175,7 +176,7 @@ const read = (m: my_ArrayBufferView) => {
     }
 
     if (t & Rsrv.XT_HAS_ATTR) {
-      console.log("HAS ATTR");
+      debug("HAS ATTR");
       t = t & ~Rsrv.XT_HAS_ATTR;
       const attr_result = read_sexp();
       attributes = attr_result[0];
@@ -186,9 +187,9 @@ const read = (m: my_ArrayBufferView) => {
     if (!handlers[t]) {
       throw new RserveError("Unimplemented " + t, -1);
     }
-    console.log("HANDLER: ", handlers[t]);
+    debug("HANDLER: ", handlers[t]);
     const res = handlers[t].call(result, attributes, l);
-    console.log("RES: ", res);
+    debug("RES: ", res);
     return [res[0], total_read + res[1]];
   };
 
@@ -201,7 +202,8 @@ const read = (m: my_ArrayBufferView) => {
   const read_list = unfold(read_sexp);
 
   const read_symbol_value_pairs = <T, U>(lst: RObject<T, U>[]) => {
-    let res: { name: string | null; value: RObject<T, U> }[] = [];
+    // let res: { name: string | null; value: RObject<T, U> }[] = [];
+    let res: NamedList<RObject<T, U>> = [];
     for (let i = 0; i < lst.length; i += 2) {
       const value = lst[i],
         tag = lst[i + 1];
@@ -216,14 +218,14 @@ const read = (m: my_ArrayBufferView) => {
           value: value,
         });
       }
-      return res;
     }
+    return res;
   };
 
   const read_list_tag = bind(read_list, (lst: RObject[]) =>
     lift((attributes: Attributes, length: number) => {
       const res = read_symbol_value_pairs(lst);
-      return Robj.tagged_lang(res ?? [], attributes);
+      return Robj.tagged_list(res, attributes);
     }, 0)
   );
   const read_lang_tag = bind(read_list, (lst: RObject[]) =>

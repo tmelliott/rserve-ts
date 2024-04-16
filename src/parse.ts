@@ -1,3 +1,4 @@
+import { debug } from "./utils";
 import { my_ArrayBufferView } from "./ArrayBufferView";
 import Robj, { RObject } from "./Robj";
 import RserveError from "./RserveError";
@@ -162,21 +163,21 @@ export type Payload<T = any> = {
 };
 
 const parse_payload = (msg: ArrayBuffer): Payload | null => {
-  console.log("MESSAGE: ", msg);
-  console.log("MESSAGE LENGTH: ", msg.byteLength);
+  debug("MESSAGE: ", msg);
+  debug("MESSAGE LENGTH: ", msg.byteLength);
   const payload = my_ArrayBufferView(msg, 16, msg.byteLength - 16);
-  console.log("THE PAYLOAD: ", payload);
+  debug("THE PAYLOAD: ", payload);
   if (payload.length === 0) return null;
 
   const reader = read(payload);
-  console.log("READER: ", reader);
+  debug("READER: ", reader);
 
   const d = reader.read_int();
-  console.log("D:", d);
+  debug("D:", d);
   let [t, l] = Rsrv.par_parse(d);
-  console.log("Par parse: ", t, l);
+  debug("Par parse: ", t, l);
   if (Rsrv.IS_LARGE(t)) {
-    console.log("ITS LARGE");
+    debug("ITS LARGE");
     const more_length = reader.read_int();
     l += more_length * Math.pow(2, 24);
     if (l > Math.pow(2, 32)) {
@@ -204,9 +205,9 @@ const parse_payload = (msg: ArrayBuffer): Payload | null => {
     };
   }
   if (t === Rsrv.DT_SEXP) {
-    console.log("Reading SEXP");
+    debug("Reading SEXP");
     const [sexp, l2] = reader.read_sexp();
-    console.log("SEXP: ", sexp, l2);
+    debug("SEXP: ", sexp, l2);
     return {
       type: "sexp",
       value: sexp,

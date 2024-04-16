@@ -1,8 +1,13 @@
-import { verify } from "crypto";
 import { EndianAwareDataView, my_ArrayBufferView } from "./ArrayBufferView";
 import RserveError from "./RserveError";
 import Rsrv from "./Rsrv";
-import { as } from "vitest/dist/reporters-O4LBziQ_";
+
+// Arguments of console.log
+type DebugArguments = Parameters<typeof console.log>;
+
+export const debug = (...args: DebugArguments) => {
+  if (process.env.DEBUG && process.env.DEBUG === "true") console.log(...args);
+};
 
 type TypedArray = ArrayBufferView & {
   BYTES_PER_ELEMENT: number;
@@ -103,7 +108,7 @@ export function determine_size<T extends Rtype>(
   const header_size = 4;
   const t = forced_type ?? type_id(value);
 
-  // console.log("DETERMINE SIZE: ", value, forced_type, t);
+  // debug("DETERMINE SIZE: ", value, forced_type, t);
 
   switch (t & ~Rsrv.XT_LARGE) {
     case Rsrv.XT_NULL:
@@ -162,7 +167,7 @@ export function write_into_view(
   forced_type: number | undefined,
   convert: (v: string) => string
 ) {
-  // console.log(
+  // debug(
   //   "~~~~~~~~~~~~\nWRITING INTO VIEW: ",
   //   value,
   //   array_buffer_view,
@@ -177,7 +182,7 @@ export function write_into_view(
 
   if (is_large) t = t | Rsrv.XT_LARGE;
 
-  // console.log("SIZE: ", size, "IS_LARGE: ", is_large, "T: ", t);
+  // debug("SIZE: ", size, "IS_LARGE: ", is_large, "T: ", t);
 
   let read_view: EndianAwareDataView;
   const write_view = array_buffer_view.data_view();
@@ -191,7 +196,7 @@ export function write_into_view(
     write_view.setInt32(0, t + ((size - 4) << 8));
   }
 
-  // console.log("SWTICHING ON: ", t & ~Rsrv.XT_LARGE);
+  // debug("SWTICHING ON: ", t & ~Rsrv.XT_LARGE);
 
   switch (t & ~Rsrv.XT_LARGE) {
     case Rsrv.XT_NULL:
@@ -293,11 +298,11 @@ export function write_into_view(
         Rsrv.XT_LIST_TAG + ((current_offset - (payload_start + 4)) << 8)
       );
 
-      console.log("WRITING OBJECT: ", vFun);
+      debug("WRITING OBJECT: ", vFun);
 
       Object.values(vFun).forEach((el) => {
         const sz = determine_size(el);
-        console.log("WRITING ELEMENT: ", el, sz, current_offset);
+        debug("WRITING ELEMENT: ", el, sz, current_offset);
         write_into_view(
           el,
           array_buffer_view.skip(current_offset),

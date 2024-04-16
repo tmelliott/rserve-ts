@@ -22,6 +22,32 @@ const make_basic =
     // type is the named type of the object
 
     // wrap the proto json function here
+    const wrapped_proto = {
+      json: function (
+        this: RObject<TObject, R>,
+        resolver?: (value: string) => string
+      ) {
+        if (!proto) throw new Error("json() unsupported for type " + type);
+
+        // if R is an array, then we can add attributes
+        const res = proto.json.call(this, resolver);
+        if (!Array.isArray(res) && !ArrayBuffer.isView(res)) return res;
+
+        let result = res as R & {
+          r_type: string;
+          r_attributes?: {
+            [key: string]: any;
+          };
+        };
+        result.r_type = type;
+        if (this.attributes) {
+          result.r_attributes = Object.fromEntries(
+            this.attributes.value.map((v) => [v.name, v.value.json(resolver)])
+          );
+        }
+        return result;
+      },
+    };
 
     return function (value: TObject, attributes?: any) {
       function r_object(this: RObject<TObject>) {
@@ -29,7 +55,7 @@ const make_basic =
         this.value = value;
         this.attributes = attributes;
       }
-      r_object.prototype = proto;
+      r_object.prototype = wrapped_proto;
       const result: RObject<TObject, R> = new (r_object as any)();
       return result;
     };
@@ -48,7 +74,7 @@ export type Attributes = {
 };
 
 export type NamedList<T = RObject> = {
-  name: string;
+  name: string | null;
   value: T;
 }[];
 
@@ -95,10 +121,8 @@ const Robj = {
     json: function (resolver?: (value: string) => string) {
       const values = this.value.map((x) => x.json(resolver));
       if (!this.attributes) return values;
-      this.attributes.value;
-
       if (this.attributes.value[0].name !== "names")
-        throw new Error("expected named here");
+        throw new Error("expected names here");
 
       // TODO: is it possible to infer attributes type?
       const keys = this.attributes.value[0].value.value as string[];

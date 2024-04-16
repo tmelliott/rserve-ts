@@ -1,5 +1,6 @@
 import _ from "underscore";
 import _is_little_endian from "./endian";
+import { debug } from "./utils";
 
 type Constructor<T> = {
   new (buffer: ArrayBuffer, offset?: number, length?: number): T;
@@ -7,11 +8,11 @@ type Constructor<T> = {
 };
 
 export const my_ArrayBufferView = (b: ArrayBuffer, o?: number, l?: number) => {
-  console.log("ARGS: ", b, o, l);
+  debug("ARGS: ", b, o, l);
   const buffer = b;
   const offset = o ?? 0;
   const length = l ?? b.byteLength;
-  console.log("BUFFER: ", buffer, "OFFSET: ", offset, "LENGTH: ", length);
+  debug("BUFFER: ", buffer, "OFFSET: ", offset, "LENGTH: ", length);
 
   return {
     buffer,
@@ -34,11 +35,11 @@ export const my_ArrayBufferView = (b: ArrayBuffer, o?: number, l?: number) => {
       const element_size = ctor.BYTES_PER_ELEMENT ?? 1;
       const n_els = new_length / element_size;
 
-      console.log("MAKE- BUFFER: ", buffer);
+      debug("MAKE- BUFFER: ", buffer);
 
       if ((offset + new_offset) % element_size !== 0) {
         const view = new DataView(buffer, offset + new_offset, new_length);
-        console.log("VIEW: ", view);
+        debug("VIEW: ", view);
         const output_buffer = new ArrayBuffer(new_length);
         const out_view = new DataView(output_buffer);
         for (let i = 0; i < new_length; i++) {
@@ -46,7 +47,7 @@ export const my_ArrayBufferView = (b: ArrayBuffer, o?: number, l?: number) => {
         }
         return new ctor(output_buffer);
       } else {
-        console.log(
+        debug(
           "ctor: ",
           ctor,
           "; offset: ",

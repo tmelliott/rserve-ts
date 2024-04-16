@@ -1,11 +1,11 @@
 import WebSocket from "ws";
-import Rsrv, { RsrvCommandCode } from "./Rsrv";
+import Rsrv from "./Rsrv";
 import RserveError from "./RserveError";
 import { Payload, parse_websocket_frame } from "./parse";
 import { EndianAwareDataView, my_ArrayBufferView } from "./ArrayBufferView";
 import { Rtype, determine_size, write_into_view } from "./utils";
-import _ from "underscore";
 import { RObject } from "./Robj";
+import { debug } from "./utils";
 
 type RserveOptions = {
   host: string;
@@ -92,7 +92,7 @@ const _encode_command = (
   var length = buffer.reduce(function (memo, val) {
     return memo + val.byteLength;
   }, 0);
-  console.log(
+  debug(
     "command: ",
     command,
     ", msg_id: ",
@@ -103,9 +103,9 @@ const _encode_command = (
     buffer
   );
   const big_buffer = new ArrayBuffer(16 + length);
-  console.log(big_buffer);
+  debug(big_buffer);
   const view = new EndianAwareDataView(big_buffer);
-  console.log(view.view);
+  debug(view.view);
   view.setInt32(0, command);
   view.setInt32(4, length);
   view.setInt32(8, msg_id);
@@ -118,26 +118,26 @@ const _encode_command = (
       view.setUint8(offset + i, source_array[i]);
     offset += b.byteLength;
   });
-  console.log("big_buffer", big_buffer);
-  console.log(view.view);
+  debug("big_buffer", big_buffer);
+  debug(view.view);
 
   return big_buffer;
 };
 
 function _encode_string(str: string) {
-  // console.log("ENCODING STRING: ", str);
+  // debug("ENCODING STRING: ", str);
   var strl = (str.length + 1 + 3) & ~3; // pad to 4-byte boundaries.
-  // console.log("strl: ", strl, ", str.length: ", str.length, ", str: ", str);
+  // debug("strl: ", strl, ", str.length: ", str.length, ", str: ", str);
   var payload_length = strl + 4;
   var result = new ArrayBuffer(payload_length);
-  // console.log(result);
+  // debug(result);
   var view = new EndianAwareDataView(result);
-  // console.log("VIEW: ", view.view);
+  // debug("VIEW: ", view.view);
   view.setInt32(0, Rsrv.DT_STRING + (strl << 8));
   for (var i = 0; i < str.length; ++i) view.setInt8(4 + i, str.charCodeAt(i));
 
-  // console.log("string: ", str);
-  // console.log("result: ", result);
+  // debug("string: ", str);
+  // debug("result: ", result);
   return result;
 }
 
@@ -155,7 +155,7 @@ const create = async (opts: RserveOptions) => {
   return new Promise<Rserve>((resolve, reject) => {
     const host = opts.host ?? "http://127.0.0.1:8081";
     const onconnect = () => {
-      console.log("CONNECTING ...");
+      debug("CONNECTING ...");
       resolve(result);
       opts.on_connect && opts.on_connect();
     };
@@ -164,7 +164,7 @@ const create = async (opts: RserveOptions) => {
     socket.binaryType = "arraybuffer";
 
     socket.on("send", (data: ArrayBuffer) => {
-      console.log("sending data", data);
+      debug("sending data", data);
     });
 
     const handle_error =
@@ -199,7 +199,7 @@ const create = async (opts: RserveOptions) => {
       !queue.in_oob_message && !queue.awaiting_result && queue.queue.length > 0;
 
     const bump_queues = () => {
-      // console.log("bumping queue");
+      // debug("bumping queue");
       const available = queues.filter(queue_can_send);
       if (available.length === 0) return;
       if (result.closed) {
@@ -284,7 +284,7 @@ const create = async (opts: RserveOptions) => {
 
     const _encode_value = (value: Rtype, forced_type?: number) => {
       const sz = determine_size(value, forced_type);
-      // console.log("ENCODE VALUE: SZ = ", sz);
+      // debug("ENCODE VALUE: SZ = ", sz);
       if (sz > 16777215) {
         const buffer = new ArrayBuffer(sz + 8);
         const view = my_ArrayBufferView(buffer);
@@ -299,19 +299,19 @@ const create = async (opts: RserveOptions) => {
         return buffer;
       }
       const buffer = new ArrayBuffer(sz + 4);
-      // console.log("LE BUFFERRR: ", buffer);
+      // debug("LE BUFFERRR: ", buffer);
       const view = my_ArrayBufferView(buffer);
-      // console.log("LE VIEWWWW: ", view);
+      // debug("LE VIEWWWW: ", view);
       view.data_view().setInt32(0, Rsrv.DT_SEXP + (sz << 8));
-      // console.log("LE VIEWWWW again: ", view);
+      // debug("LE VIEWWWW again: ", view);
       write_into_view(value, view.skip(4), forced_type, convert_to_hash);
-      // console.log("ENCODE VALUE: ", buffer);
+      // debug("ENCODE VALUE: ", buffer);
       return buffer;
     };
 
     const hand_shake = (event: WSMessageEvent) => {
       if (typeof event.data === "string") {
-        console.log("Received string:", event.data);
+        debug("Received string:", event.data);
 
         const id = event.data;
         const RserverID = id.slice(0, 4);
@@ -360,37 +360,37 @@ const create = async (opts: RserveOptions) => {
     };
 
     socket.onopen = function (e) {
-      console.log("[open] Connection established");
+      debug("[open] Connection established");
     };
 
     socket.onclose = function (event) {
       if (event.wasClean) {
-        console.log(
+        debug(
           `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
         );
       } else {
         // e.g. server process killed or network down
         // event.code is usually 1006 in this case
-        console.log("[close] Connection died");
+        debug("[close] Connection died");
         reject();
       }
     };
 
     socket.onerror = function (error) {
-      console.log(`[error]`);
+      debug(`[error]`);
     };
 
     socket.onmessage = (message) => {
-      console.log(`[message] Data received from server: ${message.data}`);
+      debug(`[message] Data received from server: ${message.data}`);
 
-      // console.log("Message: ", message);
-      // console.log("message received");
+      // debug("Message: ", message);
+      // debug("message received");
 
       // node.js Buffer vs ArrayBuffer workaround
       const msg = asBuffer(message);
-      // console.log(msg);
+      // debug(msg);
 
-      // console.log("Recevied handshake: ", received_handshake);
+      // debug("Recevied handshake: ", received_handshake);
 
       if (!received_handshake) {
         hand_shake(msg);
@@ -398,26 +398,26 @@ const create = async (opts: RserveOptions) => {
       }
 
       if (typeof msg.data === "string") {
-        console.log("Raw string: ", msg.data);
+        debug("Raw string: ", msg.data);
         return;
       }
 
-      // console.log("PArsing ...\n");
+      // debug("PArsing ...\n");
       const v = parse_websocket_frame(msg.data);
-      // console.log(v);
+      // debug(v);
       if (v.incomplete) return;
 
       const msg_id = v.header[2],
         cmd = v.header[0] & 0xffffff;
 
-      // console.log(v.header);
-      // console.log("cmd: ", cmd);
+      // debug(v.header);
+      // debug("cmd: ", cmd);
 
       let q = queues.find((q) => q.msg_id === msg_id) ?? queues[0];
       if (!v.ok) {
         q.result_callback!([v.message, v.status_code], undefined);
       } else if (cmd === Rsrv.RESP_OK) {
-        // console.log(q);
+        // debug(q);
         q.result_callback!(null, v.payload);
       } else if (Rsrv.IS_OOB_SEND(cmd)) {
         // opts.on_data && opts.on_data(v.payload);
@@ -484,7 +484,7 @@ const create = async (opts: RserveOptions) => {
         _cmd(Rsrv.CMD_login, _encode_string(command), k, command);
       },
       eval: (command) => {
-        console.log("\n\n======================\nEVAL: ", command);
+        debug("\n\n======================\nEVAL: ", command);
         return new Promise((resolve, reject) => {
           _cmd(
             Rsrv.CMD_eval,
@@ -510,7 +510,7 @@ const create = async (opts: RserveOptions) => {
         _cmd(Rsrv.CMD_closeFile, new ArrayBuffer(0), k, "");
       },
       set: (key, value) => {
-        console.log("\n\n======================\nSET: ", key, value);
+        debug("\n\n======================\nSET: ", key, value);
         return new Promise((resolve, reject) => {
           _cmd(
             Rsrv.CMD_setSEXP,
