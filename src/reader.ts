@@ -202,7 +202,6 @@ const read = (m: my_ArrayBufferView) => {
   const read_list = unfold(read_sexp);
 
   const read_symbol_value_pairs = <T, U>(lst: RObject<T, U>[]) => {
-    // let res: { name: string | null; value: RObject<T, U> }[] = [];
     let res: NamedList<RObject<T, U>> = [];
     for (let i = 0; i < lst.length; i += 2) {
       const value = lst[i],
