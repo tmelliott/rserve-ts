@@ -11,10 +11,22 @@ type NumberVector = Vector<number>;
 type Bool = RObject<boolean, boolean>;
 type BoolVector = Vector<boolean>;
 
-type ListType<T> = {
-  [K in keyof T]: RObject<T[K], T[K]>;
-};
-type List<T> = RObject<ListType<T>, ListType<T>>;
+type List<
+  T = {
+    [key: string]: unknown;
+  }
+> = RObject<
+  {
+    [K in keyof T]: RObject<T[K], T>;
+  },
+  {
+    [K in keyof T]: T[K];
+  }
+>;
+
+type lmType = List<{
+  coefficients: NumberVector;
+}>;
 
 const run = async () => {
   const r = await create({
@@ -40,11 +52,22 @@ const run = async () => {
   console.log(util.inspect(list, false, null, true));
 
   // a list with attributes
-  const lmFit = await r.eval<List<unknown>>(
+  const lmFit = await r.eval<List>(
     "lm(Sepal.Length ~ Sepal.Width, data = iris)"
   );
-  console.log("lmFit: ", util.inspect(lmFit, false, null, true));
-  console.log("lmFit: ", lmFit.value.json());
+  //   console.log("lmFit: ", util.inspect(lmFit, false, null, true));
+  //   const lmFitValue = lmFit.value.json();
+  //   console.log("lmFitValue: ", lmFitValue);
+
+  // but e.g., if all I want are the coefficients, I can do this:
+
+  const lmFit2 = await r.eval<List<{ coefficients: NumberVector }>>(
+    "lm(Sepal.Length ~ Sepal.Width, data = iris)"
+  );
+  // and get nice typescript completion:
+  console.log("COEFS: ", lmFit2);
+  const coefs = lmFit2.value.json().coefficients;
+  console.log("coefficients: ", coefs);
 
   process.exit(0);
 };

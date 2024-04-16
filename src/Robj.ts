@@ -121,10 +121,12 @@ const Robj = {
     json: function (resolver?: (value: string) => string) {
       const values = this.value.map((x) => x.json(resolver));
       if (!this.attributes) return values;
-      if (this.attributes.value[0].name !== "names")
-        throw new Error("expected names here");
+      //// TODO: is it safe to just ... comment this out?
+      if (this.attributes.value[0].name !== "names") return values;
+      //   throw new Error("expected names here");
 
       // TODO: is it possible to infer attributes type?
+      console.log(values);
       const keys = this.attributes.value[0].value.value as string[];
       let result: {
         [key: string]: any;
