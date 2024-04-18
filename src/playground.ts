@@ -1,7 +1,41 @@
-import { RObject } from "./Robj";
+import { Attributes, NamedList, RObject } from "./Robj";
 import create from "./Rserve";
 import util from "util";
+import { RobjTypes } from "./parse";
 
+type RTypes = RobjTypes["name"];
+
+type X = Extract<RobjTypes, { name: "string_array" }>["json"];
+
+type Robject<
+  TType extends RTypes,
+  TArrs extends Record<string, {}> | undefined = undefined
+> = {
+  type: TType;
+  value: Extract<RobjTypes, { name: TType }>["input"];
+  attributes: {
+    type: "tagged_list";
+    value: {
+      [K in keyof TArrs]: {
+        name: K;
+        value: RObject<TArrs[K], TArrs[K]>;
+      };
+    }[keyof TArrs][];
+  };
+  // add r_type and r_attributes onto the json output *iff* its an array?
+  json: () => Extract<RobjTypes, { name: TType }>["json"];
+};
+
+type RString = Robject<"string">;
+type RCharacter = Robject<
+  "string_array",
+  {
+    names?: string[];
+    class?: string;
+  }
+>;
+
+// type Rvector<TObj, TArgs> = Robject<TObj[], TArgs | TArgs[]>;
 type Vector<TValue> = RObject<TValue[], TValue | TValue[]>;
 
 type String = RObject<string, string>;
@@ -14,7 +48,8 @@ type BoolVector = Vector<boolean>;
 type List<
   T = {
     [key: string]: unknown;
-  }
+  },
+  A extends Attributes | undefined = undefined
 > = RObject<
   Vector<
     {
@@ -39,8 +74,20 @@ const run = async () => {
   const version = await r.eval<String>("R.version.string");
   console.log("Connected to ", version.value.json());
 
-  const letters = await r.eval<StringVector>("letters");
+  function attr<TValue extends string>(value: TValue) {
+    return function <T extends { name: string }>(
+      v: T | undefined
+    ): v is Extract<T, { name: TValue }> {
+      return v?.name === value;
+    };
+  }
+
+  const letters = await r.eval<RCharacter>("letters |> setNames(LETTERS)");
   const lettersValue = letters.value.json();
+  const names = letters.value.attributes?.value.find(attr("names"));
+  if (names) {
+    console.log("names: ", names.value.json());
+  }
   console.log("letters: ", lettersValue);
 
   const namedVector = await r.eval<NumberVector>("c(a = 1, b = 2)");

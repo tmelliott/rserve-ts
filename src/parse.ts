@@ -146,7 +146,7 @@ const parse_websocket_frame = (msg: ArrayBuffer): ParseResult => {
   return result as ParseResult;
 };
 
-type RobjTypes = {
+export type RobjTypes = {
   [K in keyof typeof Robj]: ReturnType<(typeof Robj)[K]> extends RObject<
     infer U1,
     infer U2

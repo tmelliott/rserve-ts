@@ -189,7 +189,7 @@ const create = async (opts: RserveOptions) => {
       queue: [],
       in_oob_message: false,
       awaiting_result: false,
-      msg_id: 0,
+      msg_id: 1,
       name: "compute",
     };
 
@@ -413,6 +413,7 @@ const create = async (opts: RserveOptions) => {
       // debug(v.header);
       // debug("cmd: ", cmd);
 
+      // can we get the return type from the queue?
       let q = queues.find((q) => q.msg_id === msg_id) ?? queues[0];
       if (!v.ok) {
         q.result_callback!([v.message, v.status_code], undefined);
