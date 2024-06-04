@@ -5,8 +5,6 @@ import { RobjTypes } from "./parse";
 
 type RTypes = RobjTypes["name"];
 
-type X = Extract<RobjTypes, { name: "string_array" }>["json"];
-
 type Robject<
   TType extends RTypes,
   TArrs extends Record<string, {}> | undefined = undefined
@@ -34,6 +32,12 @@ type RCharacter = Robject<
     class?: string;
   }
 >;
+type RNumeric = Robject<"double_array" | "int_array">;
+type RFactor<TLevels extends string[] = string[]> = Robject<
+  "int_array",
+  { levels: TLevels }
+>;
+type RLogical = Robject<"bool_array">;
 
 // type Rvector<TObj, TArgs> = Robject<TObj[], TArgs | TArgs[]>;
 type Vector<TValue> = RObject<TValue[], TValue | TValue[]>;
