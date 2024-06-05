@@ -9,7 +9,8 @@ test("Rserve connects and runs", async () => {
   });
 
   const run_tests = async () => {
-    // console.log("Connected to R");
+    console.log("Connected to R");
+    expect(R.is_running()).toBe(true);
     // console.log(R);
     // const x = await R.eval<number>("1 + 1");
     // assertType<{ type: string; value: number }>(x);
