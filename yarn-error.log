@@ -1,0 +1,55 @@
+Arguments: 
+  /usr/bin/node /usr/bin/yarn add zod
+
+PATH: 
+  /home/tom/.local/share/pnpm:/home/tom/miniconda3/condabin:/home/tom/.cargo/bin:/home/tom/.local/bin:/home/tom/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/tom/bin:/home/tom/.local/bin:/home/tom/bin:/home/tom/.local/bin
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  20.12.0
+
+Platform: 
+  linux x64
+
+Trace: 
+  Error: ENOENT: no such file or directory, copyfile '/home/tom/.cache/yarn/v6/npm-is-stream-3.0.0-e6bfd7aa6bef69f4f472ce9bb681e3e57b4319ac-integrity/node_modules/is-stream/index.d.ts' -> '/home/tom/work/IAL/fellowship/ws1_tools/rserve-ts/node_modules/vitest/node_modules/is-stream/index.d.ts'
+
+npm manifest: 
+  {
+    "name": "rserve-ts",
+    "version": "0.0.3",
+    "description": "",
+    "private": false,
+    "main": "./dist/index.js",
+    "module": "./dist/index.esm.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+      "dev": "vitest",
+      "test": "vitest run",
+      "build": "tsup src/index.ts --format cjs,esm --dts",
+      "lint": "tsc",
+      "ci": "pnpm run lint && pnpm run test && pnpm run build",
+      "release": "pnpm run lint && pnpm run test && pnpm run build && changeset publish"
+    },
+    "keywords": [],
+    "author": "Tom Elliott",
+    "license": "MIT",
+    "devDependencies": {
+      "@changesets/cli": "^2.27.1",
+      "@types/node": "^20.10.5",
+      "tsup": "^8.0.1",
+      "typescript": "^5.3.3",
+      "vitest": "^1.1.0"
+    },
+    "dependencies": {
+      "rserve": "^1.0.2"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
