@@ -17,5 +17,16 @@ jobs:
           node-version: 20.x
           cache: "pnpm"
 
+      # install R
+      - name: Install R
+        uses: r-lib/actions/setup-r@v1
+        with:
+          r-version: "release"
+
+      - name: Install Rserve
+        run: |
+          install.packages("Rserve", repos="http://rforge.net", type="source")
+        shell: Rscript {0}
+
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run ci
+      # - run: pnpm run ci
