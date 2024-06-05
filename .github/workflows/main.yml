@@ -28,5 +28,9 @@ jobs:
           install.packages("Rserve", repos="http://rforge.net", type="source")
         shell: Rscript {0}
 
+      - name: Start Rserve
+        run: |
+          cd tests && ./r_files/start_no_ocap &
+
       - run: pnpm install --frozen-lockfile
-      # - run: pnpm run ci
+      - run: pnpm run ci
