@@ -31,10 +31,60 @@ declare namespace Rserve {
     | ArrayBufferView
     | Function;
 
-  type Payload<TResult, TAttr = undefined> = {
-    type: string;
-    value: TResult;
+  type RObject<
+    TType extends string,
+    TValue,
+    TAttr = undefined,
+    TJson = never // takes the input type and ADDS to it ...
+  > = {
+    type: TType;
+    value: TValue;
+    json: () => TJson;
+    //  & {
+    //   r_type: TType;
+    // } & (TAttr extends undefined ? {} : { r_attributes: TAttr });
   } & (TAttr extends undefined ? {} : { attributes: TAttr });
+
+  type RNull<A> = {
+    type: "null";
+    value: null;
+    attributes: A;
+    json: () => null;
+  };
+  type RClos<Formals, Body, Attr = undefined> = {
+    type: "clos";
+    value: {
+      formals: Formals;
+      body: Body;
+    };
+    attributes: Attr;
+    json: () => never;
+  };
+
+  type RVector<T, A> = RObject<
+    "vector",
+    T[],
+    any[],
+    readonly A extends undefined
+      ? T[]
+      : A extends ReadonlyArray<{
+          value: {
+            name: "names";
+            value: {
+              type: string;
+              value: infer U;
+            };
+          };
+        }>
+      ? { [K in U[number]]: T }
+      : T[]
+  >;
+  type RSymbol<T, A> = RObject<"symbol", T, A, T>;
+  type RList<T, A> = RObject<"list", T, A, T>;
+  type RLang<T, A> = RObject<"lang", T, A, T>; // TODO:
+  type RTaggedList<T, A> = RObject<"tagged_list", T, A, T>;
+
+  type Payload<TResult, TAttr = undefined> = RObject<string, TResult, TAttr>;
 
   export type SEXP<T extends Payload> = Payload<T> & {
     type: "sexp";

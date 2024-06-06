@@ -17,6 +17,14 @@ var Rserve = (function () {
       var wrapped_proto = {
         json: function (resolver) {
           var result = proto.json.call(this, resolver);
+          // if it is a non-object, non-array, non-function, we can just return it
+          if (
+            !_.isObject(result) ||
+            _.isArray(result) ||
+            _.isFunction(result) ||
+            _.isUndefined(result)
+          )
+            return result;
           result.r_type = type;
           if (!_.isUndefined(this.attributes))
             result.r_attributes = _.object(
@@ -51,6 +59,11 @@ var Rserve = (function () {
         };
       },
 
+      /**
+       * An R closure.
+       * Formals is a tagged_list.
+       * Body is a Lang or NULL.
+       */
       clos: function (formals, body, attributes) {
         return {
           type: "clos",
