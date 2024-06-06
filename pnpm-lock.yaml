@@ -8,6 +8,12 @@ dependencies:
   rserve:
     specifier: ^1.0.2
     version: 1.0.2
+  underscore:
+    specifier: ^1.13.6
+    version: 1.13.6
+  ws:
+    specifier: ^8.17.0
+    version: 8.17.0
 
 devDependencies:
   '@changesets/cli':
@@ -3291,6 +3297,10 @@ packages:
       which-boxed-primitive: 1.0.2
     dev: true
 
+  /underscore@1.13.6:
+    resolution: {integrity: sha512-+A5Sja4HP1M08MaXya7p5LvjuM7K6q/2EaC0+iovj/wOcMsTzMvDFbasi/oSapiwOlt252IqsKqPjCl7huKS0A==}
+    dev: false
+
   /underscore@1.5.1:
     resolution: {integrity: sha512-yOc7VukmA45a1D6clUn1mD7Mbc9LcVYAQEXNKSTblzha59hSFJ6cAt90JDoxh05GQnTPI9nk4wjT/I8C/nAMPw==}
     dev: false
@@ -3543,6 +3553,19 @@ packages:
       commander: 0.6.1
       options: 0.0.6
       tinycolor: 0.0.1
+    dev: false
+
+  /ws@8.17.0:
+    resolution: {integrity: sha512-uJq6108EgZMAl20KagGkzCKfMEjxmKvZHG7Tlq0Z6nOky7YF7aq4mOx6xK8TJ/i1LeK4Qus7INktacctDgY8Ow==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
     dev: false
 
   /y18n@4.0.3:

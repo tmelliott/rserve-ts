@@ -1,4 +1,4 @@
-import Rserve from "rserve";
+import Rserve from "./Rserve";
 
 type CallbackFromPromise<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
@@ -26,7 +26,7 @@ const createRserve = (options: Rserve.RserveOptions) => {
         });
       }),
     eval: <T>(command: string) =>
-      new Promise<Rserve.Payload<T>>((resolve, reject) => {
+      new Promise<Rserve.SEXP<T>>((resolve, reject) => {
         client.eval<T>(command, (err, data) => {
           if (err) {
             reject(err);

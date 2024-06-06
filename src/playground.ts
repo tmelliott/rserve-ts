@@ -1,3 +1,4 @@
+import { DoubleArray } from "./Rserve";
 import RserveClient from "./index";
 const R = RserveClient.create({
   host: "http://127.0.0.1:8081",
@@ -8,9 +9,9 @@ const run_tests = async () => {
   console.log("Connected to R");
   console.log(R.is_running());
 
-  R.client.eval("1 + 1", (err, data) => {
-    console.log(data);
-  });
+  console.log("Connected to R");
+  const x = await R.eval<DoubleArray>("1 + 1");
+  console.log(x);
 
   // const x = await R.eval<number>("1 + 1");
 

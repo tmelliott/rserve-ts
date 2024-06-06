@@ -25,6 +25,8 @@
     "vitest": "^1.6.0"
   },
   "dependencies": {
-    "rserve": "^1.0.2"
+    "rserve": "^1.0.2",
+    "underscore": "^1.13.6",
+    "ws": "^8.17.0"
   }
 }

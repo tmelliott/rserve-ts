@@ -1,4 +1,6 @@
-declare module "rserve" {
+export = Rserve;
+
+declare namespace Rserve {
   export interface RserveOptions {
     host?: string;
     on_connect?: () => void;
@@ -28,9 +30,19 @@ declare module "rserve" {
     | ArrayBuffer
     | ArrayBufferView
     | Function;
-  type Payload<TResult> = {
+
+  type Payload<TResult, TAttr = undefined> = {
     type: string;
     value: TResult;
+  } & (TAttr extends undefined ? {} : { attributes: TAttr });
+
+  export type SEXP<T extends Payload> = Payload<T> & {
+    type: "sexp";
+    value: T;
+  };
+  export type DoubleArray<A = undefined> = Payload<T, A> & {
+    type: "double";
+    value: number[];
   };
 
   type OCAP<TArgs, TResult> = (
@@ -46,10 +58,7 @@ declare module "rserve" {
 
     // CMD_ functions
     login: (command: string, k: RserveCallback) => void;
-    eval: <TResult>(
-      command: string,
-      k: RserveCallback<Payload<TResult>>
-    ) => void;
+    eval: <TResult>(command: string, k: RserveCallback<SEXP<TResult>>) => void;
     createFile: (command: string, k: RserveCallback) => void;
     writeFile: (chunk: number[], k: RserveCallback) => void;
     closeFile: (k: RserveCallback) => void;
