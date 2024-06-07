@@ -20,14 +20,29 @@ const R = RserveClient.create({
 //   ]
 // >;
 
+type KnownCharacter<T extends string[]> = {
+  type: "character_array";
+  value: T;
+  attributes: undefined;
+};
+let levels: KnownCharacter<["one", "two"]>;
+// levels.value
+
+type Factor<T extends string[] = string[]> = T;
+type X1 = Factor<["one", "two", "three"]>;
+type X2 = Factor;
+
 const run_tests = async () => {
   console.log("Connected to R");
   console.log(R.is_running());
 
   console.log("Connected to R");
-  const x = await R.eval<any>("list(a = 1, b = 2, c = 3)");
+  const x = await R.eval<any>("function(x) c(1, 2)");
+  // const x = await R.eval<any>("list(a = 1, b = 2, c = 3)");
+  // const x = await R.eval<any>("iris$Species[1:3]");
   console.log(x);
-  console.log(x.value.json());
+  // console.log(x.value.attributes.value);
+  // console.log(x.value.json());
 
   // const x = await R.eval<RClos<any, any>>("function(a, b) { 'hello world' }");
   // console.log(x);

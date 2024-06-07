@@ -17,21 +17,18 @@ var Rserve = (function () {
       var wrapped_proto = {
         json: function (resolver) {
           var result = proto.json.call(this, resolver);
-          // if it is a non-object, non-array, non-function, we can just return it
-          if (
-            !_.isObject(result) ||
-            _.isArray(result) ||
-            _.isFunction(result) ||
-            _.isUndefined(result)
-          )
-            return result;
-          result.r_type = type;
-          if (!_.isUndefined(this.attributes))
-            result.r_attributes = _.object(
-              _.map(this.attributes.value, function (v) {
-                return [v.name, v.value.json(resolver)];
-              })
-            );
+          try {
+            if (typeof result !== "object") return result;
+            result.r_type = type;
+            if (!_.isUndefined(this.attributes))
+              result.r_attributes = _.object(
+                _.map(this.attributes.value, function (v) {
+                  return [v.name, v.value.json(resolver)];
+                })
+              );
+          } catch (e) {
+            console.log(e);
+          }
           return result;
         },
       };
