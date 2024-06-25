@@ -1,4 +1,6 @@
+import { z } from "zod";
 import Rserve from "./Rserve";
+import { numeric, sexp } from "./types";
 
 type CallbackFromPromise<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
@@ -6,8 +8,52 @@ type CallbackFromPromise<T> = {
     : never;
 };
 
+type SEXP<
+  T extends z.ZodTypeAny = z.ZodTypeAny,
+  A extends z.ZodTypeAny = z.ZodTypeAny,
+  J extends z.ZodTypeAny = z.ZodTypeAny
+> = ReturnType<typeof sexp<string, T, A, J>>;
+
+// type WithTypes<T> = T & { r_type: string };
+
+// const withJson = <
+//   T extends z.ZodTypeAny,
+//   A extends z.ZodTypeAny,
+//   J extends z.ZodTypeAny
+// >(
+//   obj: ReturnType<SEXP<T, A, J>["parse"]>["value"]
+// ) => {
+//   const new_obj: WithTypes<typeof obj.value> = obj.value as WithTypes<
+//     typeof obj.value
+//   >;
+//   new_obj.r_type = obj.type;
+//   return new_obj;
+// };
+
 const createRserve = (options: Rserve.RserveOptions) => {
   const client = Rserve.create(options);
+
+  async function evalX<T extends SEXP>(
+    command: string,
+    schema: T
+  ): Promise<z.infer<T>["value"]>;
+  async function evalX(command: string): Promise<unknown>;
+  async function evalX(command: string, schema?: SEXP) {
+    return new Promise((resolve, reject) => {
+      client.eval(command, (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          try {
+            if (schema) resolve(schema.parse(data).value);
+            else resolve((data as any).value);
+          } catch (err) {
+            reject(err);
+          }
+        }
+      });
+    });
+  }
 
   return {
     client,
@@ -25,16 +71,7 @@ const createRserve = (options: Rserve.RserveOptions) => {
           }
         });
       }),
-    eval: <T>(command: string) =>
-      new Promise<Rserve.SEXP<T>>((resolve, reject) => {
-        client.eval<T>(command, (err, data) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(data);
-          }
-        });
-      }),
+    eval: evalX,
     createFile: (command: string) =>
       new Promise<void>((resolve, reject) => {
         client.createFile(command, (err) => {
@@ -106,6 +143,22 @@ const createRserve = (options: Rserve.RserveOptions) => {
           }
         });
       }),
+    // value: <TResult extends z.ZodTypeAny>(schema: TResult) => ({
+    //   eval: (command: string) =>
+    //     new Promise<z.infer<TResult>>((resolve, reject) => {
+    //       client.eval(command, (err, data) => {
+    // if (err) {
+    //   reject(err);
+    // } else {
+    //   try {
+    //     resolve(schema.parse(data.value) as z.infer<TResult>);
+    //   } catch (err) {
+    //     reject(err);
+    //   }
+    // }
+    //       });
+    //     }),
+    // }),
   };
 };
 

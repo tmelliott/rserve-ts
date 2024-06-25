@@ -12,7 +12,7 @@ test("Rserve connects and runs", async () => {
   const run_tests = async () => {
     console.log("Connected to R");
     expect(R.is_running()).toBe(true);
-    const x = await R.eval<DoubleArray>("1 + 1");
+    const x = await R.eval("1 + 1");
     assertType<{
       type: "sexp";
       value: {

@@ -19,6 +19,15 @@ declare namespace Rserve {
     ) => void;
   }
 
+  export type RInt32Array = Int32Array & {
+    r_type: "int_array";
+    r_attributes?: any;
+  };
+  export type RFloat64Array = Float64Array & {
+    r_type: "double_array";
+    r_attributes?: any;
+  };
+
   interface RserveCallback<TResult = null> {
     (err: Error | [string, number?] | null, data: TResult): void;
   }
@@ -61,28 +70,28 @@ declare namespace Rserve {
     json: () => never;
   };
 
-  type RVector<T, A> = RObject<
-    "vector",
-    T[],
-    any[],
-    readonly A extends undefined
-      ? T[]
-      : A extends ReadonlyArray<{
-          value: {
-            name: "names";
-            value: {
-              type: string;
-              value: infer U;
-            };
-          };
-        }>
-      ? { [K in U[number]]: T }
-      : T[]
-  >;
-  type RSymbol<T, A> = RObject<"symbol", T, A, T>;
-  type RList<T, A> = RObject<"list", T, A, T>;
-  type RLang<T, A> = RObject<"lang", T, A, T>; // TODO:
-  type RTaggedList<T, A> = RObject<"tagged_list", T, A, T>;
+  // type RVector<T, A> = RObject<
+  //   "vector",
+  //   T[],
+  //   any[],
+  //   readonly A extends undefined
+  //     ? T[]
+  //     : A extends ReadonlyArray<{
+  //         value: {
+  //           name: "names";
+  //           value: {
+  //             type: string;
+  //             value: infer U;
+  //           };
+  //         };
+  //       }>
+  //     ? { [K in U[number]]: T }
+  //     : T[]
+  // >;
+  // type RSymbol<T, A> = RObject<"symbol", T, A, T>;
+  // type RList<T, A> = RObject<"list", T, A, T>;
+  // type RLang<T, A> = RObject<"lang", T, A, T>; // TODO:
+  // type RTaggedList<T, A> = RObject<"tagged_list", T, A, T>;
 
   type Payload<TResult, TAttr = undefined> = RObject<string, TResult, TAttr>;
 
@@ -108,7 +117,7 @@ declare namespace Rserve {
 
     // CMD_ functions
     login: (command: string, k: RserveCallback) => void;
-    eval: <TResult>(command: string, k: RserveCallback<SEXP<TResult>>) => void;
+    eval: <TResult>(command: string, k: RserveCallback<TResult>) => void;
     createFile: (command: string, k: RserveCallback) => void;
     writeFile: (chunk: number[], k: RserveCallback) => void;
     closeFile: (k: RserveCallback) => void;

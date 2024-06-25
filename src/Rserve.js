@@ -7,6 +7,10 @@ var Rserve = (function () {
     var WebSocket = require("ws");
   }
 
+  class RInt32Array extends Int32Array {
+    r_type = "int_array";
+  }
+
   (function () {
     function make_basic(type, proto) {
       proto = proto || {
@@ -188,7 +192,7 @@ var Rserve = (function () {
             return arr;
           } else {
             if (this.value.length === 1) return this.value[0];
-            else return this.value;
+            else return new RInt32Array(this.value);
           }
         },
       }),
