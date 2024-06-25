@@ -2,10 +2,6 @@ import { z } from "zod";
 import RserveClient from "./index";
 import { integer, numeric } from "./types";
 import { RInt32Array } from "./Rserve";
-const R = RserveClient.create({
-  host: "http://127.0.0.1:8081",
-  on_connect: () => run_tests(),
-});
 
 const myarray: Int32Array & {
   r_type: "int_array";
@@ -54,7 +50,11 @@ type TRObject =
       json: () => any;
     };
 
-const run_tests = async () => {
+(async function () {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8081",
+  });
+
   console.log("Connected to R");
   console.log(R.is_running());
 
@@ -62,22 +62,19 @@ const run_tests = async () => {
   const mean = await R.eval("1L", integer());
   console.log("Mean ...");
   console.log(mean);
-  console.log(mean.json());
 
   const range = await R.eval("range(1:5)", integer());
   console.log("Range ...");
   console.log(range);
-  console.log(range.json());
 
   const xrand = await R.eval("rnorm(5)", numeric());
   console.log("Random ...");
   console.log(xrand);
-  console.log(xrand.json());
 
   const tbl = await R.eval("table(iris$Species)");
   console.log("Table ...");
   console.log(tbl);
-  console.log((tbl as any).json());
+  // console.log((tbl as any).json());
   // console.log((tbl as any).json().r_attributes);
 
   // the json method returns the type of value with attributes
@@ -145,4 +142,4 @@ const run_tests = async () => {
   // }>();
   // const z = await oc.add(1, 2);
   // console.log(z);
-};
+})();

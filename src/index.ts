@@ -1,6 +1,6 @@
 import { z } from "zod";
 import Rserve from "./Rserve";
-import { numeric, sexp } from "./types";
+import { sexp } from "./types";
 
 type CallbackFromPromise<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
@@ -14,29 +14,21 @@ type SEXP<
   J extends z.ZodTypeAny = z.ZodTypeAny
 > = ReturnType<typeof sexp<string, T, A, J>>;
 
-// type WithTypes<T> = T & { r_type: string };
-
-// const withJson = <
-//   T extends z.ZodTypeAny,
-//   A extends z.ZodTypeAny,
-//   J extends z.ZodTypeAny
-// >(
-//   obj: ReturnType<SEXP<T, A, J>["parse"]>["value"]
-// ) => {
-//   const new_obj: WithTypes<typeof obj.value> = obj.value as WithTypes<
-//     typeof obj.value
-//   >;
-//   new_obj.r_type = obj.type;
-//   return new_obj;
-// };
-
-const createRserve = (options: Rserve.RserveOptions) => {
-  const client = Rserve.create(options);
+const createRserve = async (
+  options: Omit<Rserve.RserveOptions, "on_connect" | "on_error">
+) => {
+  const client = await new Promise<Rserve.RserveClient>((resolve, reject) => {
+    const s = Rserve.create({
+      ...options,
+      on_connect: () => resolve(s),
+      on_error: (err) => reject(err),
+    });
+  });
 
   async function evalX<T extends SEXP>(
     command: string,
     schema: T
-  ): Promise<z.infer<T>["value"]>;
+  ): Promise<ReturnType<z.infer<T>["value"]["json"]>>;
   async function evalX(command: string): Promise<unknown>;
   async function evalX(command: string, schema?: SEXP) {
     return new Promise((resolve, reject) => {
@@ -45,8 +37,8 @@ const createRserve = (options: Rserve.RserveOptions) => {
           reject(err);
         } else {
           try {
-            if (schema) resolve(schema.parse(data).value);
-            else resolve((data as any).value);
+            if (schema) resolve(schema.parse(data).value.json());
+            else resolve((data as any).value.json());
           } catch (err) {
             reject(err);
           }
@@ -143,22 +135,6 @@ const createRserve = (options: Rserve.RserveOptions) => {
           }
         });
       }),
-    // value: <TResult extends z.ZodTypeAny>(schema: TResult) => ({
-    //   eval: (command: string) =>
-    //     new Promise<z.infer<TResult>>((resolve, reject) => {
-    //       client.eval(command, (err, data) => {
-    // if (err) {
-    //   reject(err);
-    // } else {
-    //   try {
-    //     resolve(schema.parse(data.value) as z.infer<TResult>);
-    //   } catch (err) {
-    //     reject(err);
-    //   }
-    // }
-    //       });
-    //     }),
-    // }),
   };
 };
 
