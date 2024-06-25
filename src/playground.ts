@@ -1,7 +1,4 @@
-import { z } from "zod";
 import RserveClient from "./index";
-import { integer, numeric } from "./types";
-import { RInt32Array } from "./Rserve";
 
 const myarray: Int32Array & {
   r_type: "int_array";
@@ -59,15 +56,15 @@ type TRObject =
   console.log(R.is_running());
 
   console.log("\n\n----");
-  const mean = await R.eval("1L", integer());
+  const mean = await R.eval("1L", R.integer());
   console.log("Mean ...");
   console.log(mean);
 
-  const range = await R.eval("range(1:5)", integer());
+  const range = await R.eval("range(1:5)", R.integer());
   console.log("Range ...");
   console.log(range);
 
-  const xrand = await R.eval("rnorm(5)", numeric());
+  const xrand = await R.eval("rnorm(5)", R.numeric());
   console.log("Random ...");
   console.log(xrand);
 
