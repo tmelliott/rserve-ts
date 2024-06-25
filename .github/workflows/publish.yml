@@ -19,6 +19,20 @@ jobs:
           node-version: 20.x
           cache: "pnpm"
 
+      - name: Install R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "release"
+
+      - name: Install Rserve
+        run: |
+          install.packages("Rserve", repos="http://rforge.net", type="source")
+        shell: Rscript {0}
+
+      - name: Start Rserve
+        run: |
+          cd tests && ./r_files/start_no_ocap &
+
       - run: pnpm install --frozen-lockfile
       - name: Create Release Pull Request or Publish
         id: changesets
