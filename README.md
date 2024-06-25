@@ -18,7 +18,7 @@ You need to have an Rserve server running for the following to work.
 import RserveClient from "rserve-ts";
 
 (async () => {
-  const R = RserveClient.create({
+  const R = await RserveClient.create({
     host: "http://127.0.0.1:8081",
   });
 
