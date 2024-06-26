@@ -1,4 +1,5 @@
 import RserveClient from "./index";
+import { z } from "zod";
 
 const myarray: Int32Array & {
   r_type: "int_array";
@@ -34,19 +35,6 @@ type Factor<T extends string[] = string[]> = T;
 type X1 = Factor<["one", "two", "three"]>;
 type X2 = Factor;
 
-// an TRObject
-type TRObject =
-  | {
-      type: "sexp";
-      value: TRObject;
-    }
-  | {
-      type: string;
-      value: any;
-      attributes: any;
-      json: () => any;
-    };
-
 (async function () {
   const R = await RserveClient.create({
     host: "http://127.0.0.1:8081",
@@ -68,9 +56,17 @@ type TRObject =
   console.log("Random ...");
   console.log(xrand);
 
-  const tbl = await R.eval("table(iris$Species)");
-  console.log("Table ...");
-  console.log(tbl);
+  const names = await R.eval("names(iris)");
+  console.log("Names ...");
+  console.log(names);
+
+  const names2 = await R.eval("names(iris)", R.character());
+  console.log("Names ...");
+  console.log(names);
+
+  // const tbl = await R.eval("table(iris$Species)");
+  // console.log("Table ...");
+  // console.log(tbl);
   // console.log((tbl as any).json());
   // console.log((tbl as any).json().r_attributes);
 

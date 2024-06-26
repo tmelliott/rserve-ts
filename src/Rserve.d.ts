@@ -19,15 +19,6 @@ declare namespace Rserve {
     ) => void;
   }
 
-  export type RInt32Array = Int32Array & {
-    r_type: "int_array";
-    r_attributes?: any;
-  };
-  export type RFloat64Array = Float64Array & {
-    r_type: "double_array";
-    r_attributes?: any;
-  };
-
   interface RserveCallback<TResult = null> {
     (err: Error | [string, number?] | null, data: TResult): void;
   }
