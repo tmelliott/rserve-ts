@@ -10,6 +10,10 @@ import { z } from "zod";
   console.log(R.is_running());
 
   console.log("\n\n----");
+  const logi = await R.eval("TRUE", R.boolean(1));
+  console.log("Logi ...");
+  console.log(logi);
+
   const int = await R.eval("1L", R.integer(1));
   console.log("Int ...");
   console.log(int);
@@ -30,16 +34,20 @@ import { z } from "zod";
   console.log("Names ...");
   console.log(names);
 
-  const tbl = await R.eval(
-    "table(iris$Species)",
-    R.integer(3, {
-      dimnames: z.object({
-        "": R.character(),
-      }),
-    })
-  );
-  console.log("Table ...");
-  console.log(tbl);
+  const species = await R.eval("unique(iris$Species)");
+  console.log("Species ...");
+  console.log(species);
+
+  // const tbl = await R.eval(
+  //   "table(iris$Species)",
+  //   R.integer(3, {
+  //     dimnames: z.object({
+  //       "": R.character(),
+  //     }),
+  //   })
+  // );
+  // console.log("Table ...");
+  // console.log(tbl);
   // console.log((tbl as any).json());
   // console.log((tbl as any).json().r_attributes);
 

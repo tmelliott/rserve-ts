@@ -208,4 +208,28 @@ function character(x?: number | z.ZodRawShape, y?: z.ZodRawShape) {
   return unknownCharacterWithAttr(x ? z.object(x) : z.unknown());
 }
 
+const factorWithAttr = <T extends z.ZodTypeAny>(
+  // levels: string[],
+  attr: T
+) => {
+  return z
+    .object({
+      data: z.array(z.string()),
+      levels: z.array(z.string()),
+      r_type: z.literal("factor"),
+      r_attributes: attr,
+    })
+    .transform((x) => {
+      const r: string[] & {
+        levels: string[];
+        r_type: "factor";
+        r_attributes: T extends z.ZodUndefined ? undefined : z.infer<T>;
+      } = x.data as any;
+      r.levels = x.levels;
+      r.r_type = x.r_type;
+      r.r_attributes = x.r_attributes as any;
+      return r;
+    });
+};
+
 export { boolean, integer, numeric, character };

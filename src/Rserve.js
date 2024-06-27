@@ -181,10 +181,12 @@ var Rserve = (function () {
             this.attributes.value[0].value.type === "string_array"
           ) {
             var levels = this.attributes.value[0].value.value;
-            var arr = _.map(this.value, function (factor) {
-              return levels[factor - 1];
-            });
-            arr.levels = levels;
+            var arr = {
+              data: _.map(this.value, function (factor) {
+                return levels[factor - 1];
+              }),
+              levels,
+            };
             return arr;
           } else {
             // TODO: should this check for undefined attributes too? I've changed it but need to confirm if OK
