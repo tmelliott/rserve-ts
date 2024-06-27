@@ -9,10 +9,12 @@ export const sexp = <T extends z.ZodTypeAny>(json: T) => {
   });
 };
 
-const integerVectorWithAttr = <T extends z.ZodTypeAny>(attr: T) =>
+const integerVectorWithAttr = <T extends z.ZodTypeAny>(attr: T, len?: number) =>
   z
     .object({
-      data: z.instanceof(Int32Array),
+      data: len
+        ? z.instanceof(Int32Array).refine((x) => x.length === len)
+        : z.instanceof(Int32Array),
       r_type: z.literal("int_array"),
       r_attributes: attr,
     })
@@ -49,7 +51,7 @@ function integer<L extends number, T extends z.ZodRawShape>(
 function integer(x?: number | z.ZodRawShape, y?: z.ZodRawShape) {
   if (typeof x === "number") {
     if (x === 1) return z.number();
-    return integerVectorWithAttr(y ? z.object(y) : z.unknown());
+    return integerVectorWithAttr(y ? z.object(y) : z.unknown(), x);
   }
   return unknownIntegerWithAttr(x ? z.object(x) : z.unknown());
 }
