@@ -56,35 +56,50 @@ function integer(x?: number | z.ZodRawShape, y?: z.ZodRawShape) {
   return unknownIntegerWithAttr(x ? z.object(x) : z.unknown());
 }
 
-const numericWithAttr = <T extends z.ZodTypeAny>(attr: T) =>
-  z.union([
-    z.number(),
-    z
-      .object({
-        data: z.instanceof(Float64Array),
-        r_type: z.literal("double_array"),
-        r_attributes: attr,
-      })
-      .transform((x) => {
-        const r: number[] & {
-          r_type: "double_array";
-          r_attributes: T extends z.ZodUndefined ? undefined : z.infer<T>;
-        } = x.data as any;
-        r.r_type = x.r_type;
-        r.r_attributes = x.r_attributes as any;
-        return r;
-      }),
-  ]);
-type NumericWithAttr<T extends z.ZodTypeAny> = ReturnType<
-  typeof numericWithAttr<T>
+const numericVectorWithAttr = <T extends z.ZodTypeAny>(attr: T, len?: number) =>
+  z
+    .object({
+      data: len
+        ? z.instanceof(Float64Array).refine((x) => x.length === len)
+        : z.instanceof(Float64Array),
+      r_type: z.literal("double_array"),
+      r_attributes: attr,
+    })
+    .transform((x) => {
+      const r: number[] & {
+        r_type: "double_array";
+        r_attributes: T extends z.ZodUndefined ? undefined : z.infer<T>;
+      } = x.data as any;
+      r.r_type = x.r_type;
+      r.r_attributes = x.r_attributes as any;
+      return r;
+    });
+const unknownNumericWithAttr = <T extends z.ZodTypeAny>(attr: T) =>
+  z.union([z.number(), numericVectorWithAttr(attr)]);
+type NumericVectorWithAttr<T extends z.ZodTypeAny> = ReturnType<
+  typeof numericVectorWithAttr<T>
 >;
-function numeric(): NumericWithAttr<z.ZodUnknown>;
+type UnknownNumericWithAttr<T extends z.ZodTypeAny> = ReturnType<
+  typeof unknownNumericWithAttr<T>
+>;
+
+function numeric(): UnknownNumericWithAttr<z.ZodUnknown>;
+function numeric<L extends number>(
+  len: L
+): L extends 1 ? z.ZodNumber : NumericVectorWithAttr<z.ZodUnknown>;
 function numeric<T extends z.ZodRawShape>(
   attr: T
-): NumericWithAttr<z.ZodObject<T, "strip">>;
-function numeric(attr?: z.ZodRawShape) {
-  if (attr) return numericWithAttr(z.object(attr));
-  return numericWithAttr(z.unknown());
+): z.ZodNumber | NumericVectorWithAttr<z.ZodObject<T, "strip">>;
+function numeric<L extends number, T extends z.ZodRawShape>(
+  len: L,
+  attr: T
+): L extends 1 ? z.ZodNumber : NumericVectorWithAttr<z.ZodObject<T, "strip">>;
+function numeric(x?: number | z.ZodRawShape, y?: z.ZodRawShape) {
+  if (typeof x === "number") {
+    if (x === 1) return z.number();
+    return numericVectorWithAttr(y ? z.object(y) : z.unknown(), x);
+  }
+  return unknownNumericWithAttr(x ? z.object(x) : z.unknown());
 }
 
 const characterWithAttr = <T extends z.ZodTypeAny>(attr: T) =>

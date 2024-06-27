@@ -18,7 +18,11 @@ import { z } from "zod";
   console.log("Range ...");
   console.log(range);
 
-  const xrand = await R.eval("rnorm(5)", R.numeric());
+  const mean = await R.eval("mean(1:5)", R.numeric(1));
+  console.log("Mean ...");
+  console.log(mean);
+
+  const xrand = await R.eval("rnorm(5)", R.numeric(5));
   console.log("Random ...");
   console.log(xrand);
 
