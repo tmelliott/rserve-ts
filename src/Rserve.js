@@ -187,7 +187,9 @@ var Rserve = (function () {
             arr.levels = levels;
             return arr;
           } else {
-            if (this.value.length === 1) return this.value[0];
+            // TODO: should this check for undefined attributes too? I've changed it but need to confirm if OK
+            if (this.value.length === 1 && _.isUndefined(this.attributes))
+              return this.value[0];
             else
               return {
                 data: this.value,
@@ -213,7 +215,7 @@ var Rserve = (function () {
               ) !== -1
             )
               return resolver(this.value[0]);
-            return this.value;
+            return { data: this.value };
           } else
             return {
               data: this.value,
@@ -224,7 +226,10 @@ var Rserve = (function () {
         json: function () {
           if (this.value.length === 1 && _.isUndefined(this.attributes))
             return this.value[0];
-          else return this.value;
+          else
+            return {
+              data: this.value,
+            };
         },
       }),
       raw: make_basic("raw", {
