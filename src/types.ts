@@ -143,15 +143,16 @@ function numeric<L extends number>(
 ): L extends 1 ? z.ZodNumber : NumericVectorWithAttr<z.ZodUnknown>;
 function numeric<T extends z.ZodRawShape>(
   attr: T
-): z.ZodNumber | NumericVectorWithAttr<z.ZodObject<T, "strip">>;
+): NumericVectorWithAttr<z.ZodObject<T, "strip">>;
 function numeric<L extends number, T extends z.ZodRawShape>(
   len: L,
   attr: T
-): L extends 1 ? z.ZodNumber : NumericVectorWithAttr<z.ZodObject<T, "strip">>;
+): NumericVectorWithAttr<z.ZodObject<T, "strip">>;
 function numeric(x?: number | z.ZodRawShape, y?: z.ZodRawShape) {
   if (typeof x === "number") {
+    if (y) return numericVectorWithAttr(z.object(y), x);
     if (x === 1) return z.number();
-    return numericVectorWithAttr(y ? z.object(y) : z.unknown(), x);
+    return numericVectorWithAttr(z.unknown(), x);
   }
   return unknownNumericWithAttr(x ? z.object(x) : z.unknown());
 }
@@ -193,15 +194,16 @@ function character<L extends number>(
 ): L extends 1 ? z.ZodString : CharacterVectorWithAttr<z.ZodUnknown>;
 function character<T extends z.ZodRawShape>(
   attr: T
-): z.ZodString | CharacterVectorWithAttr<z.ZodObject<T, "strip">>;
+): CharacterVectorWithAttr<z.ZodObject<T, "strip">>;
 function character<L extends number, T extends z.ZodRawShape>(
   len: L,
   attr: T
-): L extends 1 ? z.ZodString : CharacterVectorWithAttr<z.ZodObject<T, "strip">>;
+): CharacterVectorWithAttr<z.ZodObject<T, "strip">>;
 function character(x?: number | z.ZodRawShape, y?: z.ZodRawShape) {
   if (typeof x === "number") {
+    if (y) return characterVectorWithAttr(z.object(y), x);
     if (x === 1) return z.string();
-    return characterVectorWithAttr(y ? z.object(y) : z.unknown(), x);
+    return characterVectorWithAttr(z.unknown(), x);
   }
   return unknownCharacterWithAttr(x ? z.object(x) : z.unknown());
 }

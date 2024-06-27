@@ -193,7 +193,11 @@ test("Integer types", async () => {
   expect(r_int6).toEqual(r_int6_result);
 });
 
-test("Numeric types", () => {
+test("Numeric types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8081",
+  });
+
   type NumArray<A = unknown> = number[] & {
     r_type: "double_array";
     r_attributes: A;
@@ -219,13 +223,19 @@ test("Numeric types", () => {
     Expect<
       Equal<
         T4,
-        | number
-        | NumArray<{
-            class: string;
-          }>
+        NumArray<{
+          class: string;
+        }>
       >
     >,
-    Expect<Equal<T5, number>>,
+    Expect<
+      Equal<
+        T5,
+        NumArray<{
+          class: string;
+        }>
+      >
+    >,
     Expect<
       Equal<
         T6,
@@ -235,9 +245,49 @@ test("Numeric types", () => {
       >
     >
   ];
+
+  const r_num1 = await R.eval("1", num1);
+  expect(r_num1).toBe(1);
+
+  const r_num2 = await R.eval("1", num2);
+  expect(r_num2).toBe(1);
+
+  const r_num3 = await R.eval("c(1, 2, 3)", num3);
+  const r_num3_result: NumArray = new Float64Array([1, 2, 3]) as any;
+  r_num3_result.r_type = "double_array";
+  r_num3_result.r_attributes = undefined;
+  expect(r_num3).toEqual(r_num3_result);
+
+  const r_num4 = await R.eval("structure(c(1, 2, 3), class = 'myclass')", num4);
+  const r_num4_result: NumArray = new Float64Array([1, 2, 3]) as any;
+  r_num4_result.r_type = "double_array";
+  r_num4_result.r_attributes = {
+    class: "myclass",
+  };
+  expect(r_num4).toEqual(r_num4_result);
+
+  const r_num5 = await R.eval("structure(1, class = 'myclass')", num5);
+  const r_num5_result: NumArray = new Float64Array([1]) as any;
+  r_num5_result.r_type = "double_array";
+  r_num5_result.r_attributes = {
+    class: "myclass",
+  };
+  expect(r_num5).toEqual(r_num5_result);
+
+  const r_num6 = await R.eval("structure(c(1, 2, 3), class = 'myclass')", num6);
+  const r_num6_result: NumArray = new Float64Array([1, 2, 3]) as any;
+  r_num6_result.r_type = "double_array";
+  r_num6_result.r_attributes = {
+    class: "myclass",
+  };
+  expect(r_num6).toEqual(r_num6_result);
 });
 
-test("Character types", () => {
+test("Character types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8081",
+  });
+
   type CharArray<A = unknown> = string[] & {
     r_type: "string_array";
     r_attributes: A;
@@ -263,13 +313,19 @@ test("Character types", () => {
     Expect<
       Equal<
         T4,
-        | string
-        | CharArray<{
-            class: string;
-          }>
+        CharArray<{
+          class: string;
+        }>
       >
     >,
-    Expect<Equal<T5, string>>,
+    Expect<
+      Equal<
+        T5,
+        CharArray<{
+          class: string;
+        }>
+      >
+    >,
     Expect<
       Equal<
         T6,
@@ -279,4 +335,43 @@ test("Character types", () => {
       >
     >
   ];
+
+  const r_char1 = await R.eval("'hello'", char1);
+  expect(r_char1).toBe("hello");
+
+  const r_char2 = await R.eval("'hello'", char2);
+  expect(r_char2).toBe("hello");
+
+  const r_char3 = await R.eval("c('hello', 'world', 'foo')", char3);
+  const r_char3_result: CharArray = ["hello", "world", "foo"] as any;
+  r_char3_result.r_type = "string_array";
+  r_char3_result.r_attributes = undefined;
+  expect(r_char3).toEqual(r_char3_result);
+
+  const r_char4 = await R.eval("structure('hello', class = 'myclass')", char4);
+  const r_char4_result: CharArray = ["hello"] as any;
+  r_char4_result.r_type = "string_array";
+  r_char4_result.r_attributes = {
+    class: "myclass",
+  };
+  expect(r_char4).toEqual(r_char4_result);
+
+  const r_char5 = await R.eval("structure('hello', class = 'myclass')", char5);
+  const r_char5_result: CharArray = ["hello"] as any;
+  r_char5_result.r_type = "string_array";
+  r_char5_result.r_attributes = {
+    class: "myclass",
+  };
+  expect(r_char5).toEqual(r_char5_result);
+
+  const r_char6 = await R.eval(
+    "structure(c('hello', 'world', 'foo'), class = 'myclass')",
+    char6
+  );
+  const r_char6_result: CharArray = ["hello", "world", "foo"] as any;
+  r_char6_result.r_type = "string_array";
+  r_char6_result.r_attributes = {
+    class: "myclass",
+  };
+  expect(r_char6).toEqual(r_char6_result);
 });
