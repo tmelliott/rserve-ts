@@ -9,36 +9,49 @@ export const sexp = <T extends z.ZodTypeAny>(json: T) => {
   });
 };
 
-const integerWithAttr = <T extends z.ZodTypeAny>(attr: T) =>
-  z.union([
-    z.number(),
-    z
-      .object({
-        data: z.instanceof(Int32Array),
-        r_type: z.literal("int_array"),
-        r_attributes: attr,
-      })
-      .transform((x) => {
-        const r: number[] & {
-          r_type: "int_array";
-          r_attributes: T extends z.ZodUndefined ? undefined : z.infer<T>;
-        } = x.data as any;
-        r.r_type = x.r_type;
-        r.r_attributes = x.r_attributes as any;
-        return r;
-      }),
-  ]);
+const integerVectorWithAttr = <T extends z.ZodTypeAny>(attr: T) =>
+  z
+    .object({
+      data: z.instanceof(Int32Array),
+      r_type: z.literal("int_array"),
+      r_attributes: attr,
+    })
+    .transform((x) => {
+      const r: number[] & {
+        r_type: "int_array";
+        r_attributes: T extends z.ZodUndefined ? undefined : z.infer<T>;
+      } = x.data as any;
+      r.r_type = x.r_type;
+      r.r_attributes = x.r_attributes as any;
+      return r;
+    });
+const unknownIntegerWithAttr = <T extends z.ZodTypeAny>(attr: T) =>
+  z.union([z.number(), integerVectorWithAttr(attr)]);
 
-type IntegerWithAttr<T extends z.ZodTypeAny> = ReturnType<
-  typeof integerWithAttr<T>
+type IntegerVectorWithAttr<T extends z.ZodTypeAny> = ReturnType<
+  typeof integerVectorWithAttr<T>
 >;
-function integer(): IntegerWithAttr<z.ZodUnknown>;
+type UnknownIntegerWithAttr<T extends z.ZodTypeAny> = ReturnType<
+  typeof unknownIntegerWithAttr<T>
+>;
+
+function integer(): UnknownIntegerWithAttr<z.ZodUnknown>;
+function integer<L extends number>(
+  len: L
+): L extends 1 ? z.ZodNumber : IntegerVectorWithAttr<z.ZodUnknown>;
 function integer<T extends z.ZodRawShape>(
   attr: T
-): IntegerWithAttr<z.ZodObject<T, "strip">>;
-function integer(attr?: z.ZodRawShape) {
-  if (attr) return integerWithAttr(z.object(attr));
-  return integerWithAttr(z.unknown());
+): z.ZodNumber | IntegerVectorWithAttr<z.ZodObject<T, "strip">>;
+function integer<L extends number, T extends z.ZodRawShape>(
+  len: L,
+  attr: T
+): L extends 1 ? z.ZodNumber : IntegerVectorWithAttr<z.ZodObject<T, "strip">>;
+function integer(x?: number | z.ZodRawShape, y?: z.ZodRawShape) {
+  if (typeof x === "number") {
+    if (x === 1) return z.number();
+    return integerVectorWithAttr(y ? z.object(y) : z.unknown());
+  }
+  return unknownIntegerWithAttr(x ? z.object(x) : z.unknown());
 }
 
 const numericWithAttr = <T extends z.ZodTypeAny>(attr: T) =>

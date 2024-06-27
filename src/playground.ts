@@ -10,11 +10,11 @@ import { z } from "zod";
   console.log(R.is_running());
 
   console.log("\n\n----");
-  const int = await R.eval("1L", R.integer());
+  const int = await R.eval("1L", R.integer(1));
   console.log("Int ...");
   console.log(int);
 
-  const range = await R.eval("range(1:5)", R.integer());
+  const range = await R.eval("range(1:5)", R.integer(2));
   console.log("Range ...");
   console.log(range);
 
@@ -28,7 +28,7 @@ import { z } from "zod";
 
   const tbl = await R.eval(
     "table(iris$Species)",
-    R.integer({
+    R.integer(3, {
       dimnames: z.object({
         "": R.character(),
       }),

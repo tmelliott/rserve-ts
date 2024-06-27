@@ -28,7 +28,7 @@ test("Rserve connects and runs", async () => {
 
   const numWithAttr = await R.eval(
     "structure(1:3, class = 'myclass')",
-    R.integer({
+    R.integer(3, {
       class: R.character(),
     })
   );
@@ -43,7 +43,5 @@ test("Rserve connects and runs", async () => {
     class: "myclass",
   };
   expect(numWithAttr).toEqual(expectedNumWithAttr);
-  if (typeof numWithAttr === "object") {
-    expect(numWithAttr.r_attributes.class).toBe("myclass");
-  }
+  expect(numWithAttr.r_attributes.class).toBe("myclass");
 });
