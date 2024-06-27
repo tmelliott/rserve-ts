@@ -1,40 +1,6 @@
 import RserveClient from "./index";
 import { z } from "zod";
 
-const myarray: Int32Array & {
-  r_type: "int_array";
-} = new Int32Array([1, 2, 3]) as Int32Array & {
-  r_type: "int_array";
-};
-myarray.r_type = "int_array";
-
-// type V = RVector<
-//   number,
-//   [
-//     {
-//       value: {
-//         name: "names";
-//         value: {
-//           type: "string";
-//           value: ["one", "two", "three"];
-//         };
-//       };
-//     }
-//   ]
-// >;
-
-type KnownCharacter<T extends string[]> = {
-  type: "character_array";
-  value: T;
-  attributes: undefined;
-};
-let levels: KnownCharacter<["one", "two"]>;
-// levels.value
-
-type Factor<T extends string[] = string[]> = T;
-type X1 = Factor<["one", "two", "three"]>;
-type X2 = Factor;
-
 (async function () {
   const R = await RserveClient.create({
     host: "http://127.0.0.1:8081",
@@ -44,9 +10,9 @@ type X2 = Factor;
   console.log(R.is_running());
 
   console.log("\n\n----");
-  const mean = await R.eval("1L", R.integer());
-  console.log("Mean ...");
-  console.log(mean);
+  const int = await R.eval("1L", R.integer());
+  console.log("Int ...");
+  console.log(int);
 
   const range = await R.eval("range(1:5)", R.integer());
   console.log("Range ...");
@@ -56,17 +22,20 @@ type X2 = Factor;
   console.log("Random ...");
   console.log(xrand);
 
-  const names = await R.eval("names(iris)");
+  const names = await R.eval("names(iris)", R.character());
   console.log("Names ...");
   console.log(names);
 
-  const names2 = await R.eval("names(iris)", R.character());
-  console.log("Names ...");
-  console.log(names);
-
-  // const tbl = await R.eval("table(iris$Species)");
-  // console.log("Table ...");
-  // console.log(tbl);
+  const tbl = await R.eval(
+    "table(iris$Species)",
+    R.integer({
+      dimnames: z.object({
+        "": R.character(),
+      }),
+    })
+  );
+  console.log("Table ...");
+  console.log(tbl);
   // console.log((tbl as any).json());
   // console.log((tbl as any).json().r_attributes);
 

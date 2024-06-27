@@ -24,6 +24,26 @@ test("Rserve connects and runs", async () => {
     "Species",
   ] as any;
   expectedNames.r_type = "string_array";
-
   expect(irisNames).toEqual(expectedNames);
+
+  const numWithAttr = await R.eval(
+    "structure(1:3, class = 'myclass')",
+    R.integer({
+      class: R.character(),
+    })
+  );
+  const expectedNumWithAttr: number[] & {
+    r_type: "int_array";
+    r_attributes: {
+      class: string;
+    };
+  } = new Int32Array([1, 2, 3]) as any;
+  expectedNumWithAttr.r_type = "int_array";
+  expectedNumWithAttr.r_attributes = {
+    class: "myclass",
+  };
+  expect(numWithAttr).toEqual(expectedNumWithAttr);
+  if (typeof numWithAttr === "object") {
+    expect(numWithAttr.r_attributes.class).toBe("myclass");
+  }
 });

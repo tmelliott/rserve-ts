@@ -188,7 +188,10 @@ var Rserve = (function () {
             return arr;
           } else {
             if (this.value.length === 1) return this.value[0];
-            else return this.value;
+            else
+              return {
+                data: this.value,
+              };
           }
         },
       }),
@@ -196,7 +199,7 @@ var Rserve = (function () {
         json: function () {
           if (this.value.length === 1 && _.isUndefined(this.attributes))
             return this.value[0];
-          else return this.value;
+          else return { data: this.value };
         },
       }),
       string_array: make_basic("string_array", {

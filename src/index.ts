@@ -9,10 +9,10 @@ type CallbackFromPromise<T> = {
 };
 
 type SEXP<
-  T extends z.ZodTypeAny = z.ZodTypeAny,
-  A extends z.ZodTypeAny = z.ZodTypeAny,
-  J extends z.ZodTypeAny = z.ZodTypeAny
-> = ReturnType<typeof sexp<string, T, A, J>>;
+  // T extends z.ZodTypeAny = z.ZodTypeAny,
+  // A extends z.ZodTypeAny = z.ZodTypeAny,
+  T extends z.ZodTypeAny = z.ZodTypeAny
+> = ReturnType<typeof sexp<T>>;
 
 const createRserve = async (
   options: Omit<Rserve.RserveOptions, "on_connect" | "on_error">
@@ -25,20 +25,21 @@ const createRserve = async (
     });
   });
 
-  async function evalX<T extends SEXP>(
+  async function evalX<T extends z.ZodTypeAny>(
     command: string,
     schema: T
-  ): Promise<ReturnType<z.infer<T>["value"]["json"]>>;
+  ): Promise<z.infer<T>>;
   async function evalX(command: string): Promise<unknown>;
-  async function evalX(command: string, schema?: SEXP) {
+  async function evalX<T extends z.ZodTypeAny>(command: string, schema?: T) {
     return new Promise((resolve, reject) => {
-      client.eval(command, (err, data) => {
+      client.eval<z.infer<SEXP<T>>>(command, (err, data) => {
         if (err) {
           reject(err);
         } else {
           try {
-            if (schema) resolve(schema.parse(data).value.json());
-            else {
+            if (schema) {
+              resolve(schema.parse(data.value.json()));
+            } else {
               const x = (data as any).value.json();
               if (typeof x === "object" && x.r_type === "string_array") {
                 const r: any = x.data;
