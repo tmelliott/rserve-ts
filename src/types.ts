@@ -208,28 +208,75 @@ function character(x?: number | z.ZodRawShape, y?: z.ZodRawShape) {
   return unknownCharacterWithAttr(x ? z.object(x) : z.unknown());
 }
 
-const factorWithAttr = <T extends z.ZodTypeAny>(
-  // levels: string[],
+const factorWithAttr = <
+  L extends z.ZodTuple | z.ZodArray<z.ZodString>,
+  T extends z.ZodTypeAny
+>(
+  levels: L,
   attr: T
 ) => {
   return z
     .object({
       data: z.array(z.string()),
-      levels: z.array(z.string()),
-      r_type: z.literal("factor"),
+      levels: levels,
+      r_type: z.literal("int_array"),
       r_attributes: attr,
     })
     .transform((x) => {
       const r: string[] & {
-        levels: string[];
-        r_type: "factor";
+        levels: z.infer<L>;
+        r_type: "int_array";
         r_attributes: T extends z.ZodUndefined ? undefined : z.infer<T>;
       } = x.data as any;
-      r.levels = x.levels;
+      r.levels = x.levels as any;
       r.r_type = x.r_type;
       r.r_attributes = x.r_attributes as any;
       return r;
     });
 };
 
-export { boolean, integer, numeric, character };
+type ArrayToLiteralArray<T extends [string, ...string[]]> = {
+  [P in keyof T]: z.ZodLiteral<T[P]>;
+};
+const arrayToTuple = <T extends [string, ...string[]]>(x: T) => {
+  return z.tuple(x.map((l) => z.literal(l)) as ArrayToLiteralArray<T>);
+};
+type ArrayToTuple<T extends [string, ...string[]]> = ReturnType<
+  typeof arrayToTuple<T>
+>;
+
+type FactorWithAttr<
+  L extends z.ZodTuple | z.ZodArray<z.ZodString>,
+  T extends z.ZodTypeAny
+> = ReturnType<typeof factorWithAttr<L, T>>;
+
+function factor(): FactorWithAttr<z.ZodArray<z.ZodString>, z.ZodUnknown>;
+function factor<const L extends [string, ...string[]]>(
+  levels: L
+): FactorWithAttr<ArrayToTuple<L>, z.ZodUnknown>;
+function factor<const L extends [string, ...string[]], T extends z.ZodRawShape>(
+  levels: L,
+  attr: T
+): FactorWithAttr<ArrayToTuple<L>, z.ZodObject<T, "strip">>;
+function factor<T extends z.ZodRawShape>(
+  levels: undefined,
+  attr: T
+): FactorWithAttr<z.ZodArray<z.ZodString>, z.ZodObject<T, "strip">>;
+
+function factor<
+  const L extends [string, ...string[]] | undefined,
+  T extends z.ZodRawShape
+>(lvls?: L, attr?: T) {
+  if (lvls) {
+    return factorWithAttr(
+      arrayToTuple(lvls),
+      attr ? z.object(attr) : z.unknown()
+    );
+  }
+  return factorWithAttr(
+    z.string().array(),
+    attr ? z.object(attr) : z.unknown()
+  );
+}
+
+export { boolean, integer, numeric, character, factor };

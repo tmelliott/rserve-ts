@@ -34,7 +34,10 @@ import { z } from "zod";
   console.log("Names ...");
   console.log(names);
 
-  const species = await R.eval("unique(iris$Species)");
+  const species = await R.eval(
+    "unique(iris$Species)",
+    R.factor(["setosa", "versicolor", "virginica"])
+  );
   console.log("Species ...");
   console.log(species);
 

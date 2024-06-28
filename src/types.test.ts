@@ -375,3 +375,75 @@ test("Character types", async () => {
   };
   expect(r_char6).toEqual(r_char6_result);
 });
+
+test("Factor types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8081",
+  });
+
+  type FactorArray<
+    L extends [string, ...string[]] | string[] = string[],
+    A = unknown
+  > = string[] & {
+    levels: L;
+    r_type: "int_array";
+    r_attributes: A;
+  };
+
+  const factor1 = R.factor();
+  const factor2 = R.factor(["a", "b", "c"]);
+  const factor3 = R.factor(["a", "b", "c"], { class: z.string() });
+  const factor4 = R.factor(undefined, { class: z.string() });
+
+  type T1 = z.infer<typeof factor1>;
+  type T2 = z.infer<typeof factor2>;
+  type T3 = z.infer<typeof factor3>;
+  type T4 = z.infer<typeof factor4>;
+
+  type tests = [
+    Expect<Equal<T1, FactorArray>>,
+    Expect<Equal<T2, FactorArray<["a", "b", "c"]>>>,
+    Expect<Equal<T3, FactorArray<["a", "b", "c"], { class: string }>>>,
+    Expect<Equal<T4, FactorArray<string[], { class: string }>>>
+  ];
+
+  const r_factor1 = await R.eval("factor(c('a', 'b', 'c'))", factor1);
+  const r_factor1_result: FactorArray = ["a", "b", "c"] as any;
+  r_factor1_result.levels = ["a", "b", "c"] as ["a", "b", "c"];
+  r_factor1_result.r_type = "int_array";
+  r_factor1_result.r_attributes = undefined;
+  r_factor1.r_attributes = undefined;
+  expect(r_factor1).toEqual(r_factor1_result);
+
+  const r_factor2 = await R.eval("factor(c('a', 'b', 'c'))", factor2);
+  const r_factor2_result: FactorArray = ["a", "b", "c"] as any;
+  r_factor2_result.levels = ["a", "b", "c"] as ["a", "b", "c"];
+  r_factor2_result.r_type = "int_array";
+  r_factor2_result.r_attributes = undefined;
+  r_factor2.r_attributes = undefined;
+  expect(r_factor2).toEqual(r_factor2_result);
+
+  const r_factor3 = await R.eval("factor(c('a', 'b', 'c'))", factor3);
+  const r_factor3_result: FactorArray = ["a", "b", "c"] as any;
+  r_factor3_result.levels = ["a", "b", "c"] as ["a", "b", "c"];
+  r_factor3_result.r_type = "int_array";
+  r_factor3_result.r_attributes = {
+    class: "factor",
+  };
+  r_factor3.r_attributes = {
+    class: "factor",
+  };
+  expect(r_factor3).toEqual(r_factor3_result);
+
+  const r_factor4 = await R.eval("factor(c('a', 'b', 'c'))", factor4);
+  const r_factor4_result: FactorArray = ["a", "b", "c"] as any;
+  r_factor4_result.levels = ["a", "b", "c"] as ["a", "b", "c"];
+  r_factor4_result.r_type = "int_array";
+  r_factor4_result.r_attributes = {
+    class: "factor",
+  };
+  r_factor4.r_attributes = {
+    class: "factor",
+  };
+  expect(r_factor4).toEqual(r_factor4_result);
+});
