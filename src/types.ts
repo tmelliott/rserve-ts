@@ -235,13 +235,13 @@ const factorWithAttr = <
     });
 };
 
-type ArrayToLiteralArray<T extends [string, ...string[]]> = {
+type ArrayToLiteralArray<T extends [any, ...any[]]> = {
   [P in keyof T]: z.ZodLiteral<T[P]>;
 };
-const arrayToTuple = <T extends [string, ...string[]]>(x: T) => {
+const arrayToTuple = <T extends [any, ...any[]]>(x: T) => {
   return z.tuple(x.map((l) => z.literal(l)) as ArrayToLiteralArray<T>);
 };
-type ArrayToTuple<T extends [string, ...string[]]> = ReturnType<
+type ArrayToTuple<T extends [any, ...any[]]> = ReturnType<
   typeof arrayToTuple<T>
 >;
 
@@ -279,4 +279,44 @@ function factor<
   );
 }
 
-export { boolean, integer, numeric, character, factor };
+// A table is an n-dimensional array with names for each dimension
+// The dimensions can optionally be named also.
+// names: {dim1: [name11, name12, ...], dim2: [name21, name22, ...], ...}
+// data: [[x11, x12, ...], [x21, x22, ...], ...]
+// R returns this as an integer vector
+// function table<const D extends [number]>(
+//   dim: D
+// );
+
+function table<const D extends [number, ...number[]]>(
+  dim: D
+): D extends [number]
+  ? IntegerVectorWithAttr<z.ZodObject<{ dim: z.ZodLiteral<D[0]> }>>
+  : IntegerVectorWithAttr<
+      z.ZodObject<{
+        dim: ArrayToTuple<D> &
+          z.ZodObject<{
+            r_type: z.ZodLiteral<"int_array">;
+            r_attributes: z.ZodUnknown;
+          }>;
+      }>
+    > {
+  const n = dim.reduce((a, b) => a * b, 1);
+  const x = integer(n, {
+    dim:
+      dim.length === 1
+        ? z.literal(dim[0])
+        : arrayToTuple(dim).transform((x) => {
+            const d: z.infer<ArrayToTuple<D>> & {
+              r_type: "int_array";
+              r_attributes: undefined;
+            } = x as any;
+            d.r_type = "int_array";
+            d.r_attributes = undefined;
+            return x;
+          }),
+  }) as any;
+  return x;
+}
+
+export { boolean, integer, numeric, character, factor, table };

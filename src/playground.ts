@@ -41,8 +41,15 @@ import { z } from "zod";
   console.log("Species ...");
   console.log(species);
 
-  // const tbl = await R.eval(
-  //   "table(iris$Species)",
+  const tbl1 = await R.eval("table(iris$Species)");
+  console.log("Table 1 ...");
+  console.log(tbl1);
+
+  const tbl2 = await R.eval(
+    "with(iNZight::census.at.school.500, table(travel, gender))"
+  );
+  console.log("Table 2 ...");
+  console.log(tbl2);
   //   R.integer(3, {
   //     dimnames: z.object({
   //       "": R.character(),
