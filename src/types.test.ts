@@ -1,30 +1,89 @@
 import { test, expect, expectTypeOf } from "vitest";
-import { boolean, character, integer, numeric } from "./types";
+import { logical, character, integer, numeric } from "./types";
 import { z } from "zod";
 import RserveClient from "./index";
 
-export type Expect<T extends true> = T;
-export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <
-  T
->() => T extends Y ? 1 : 2
+type Expect<T extends true> = T;
+type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y
+  ? 1
+  : 2
   ? true
   : false;
+
+type Unify<T> = {} & {
+  [K in keyof T]: T[K] extends object ? Unify<T[K]> : T[K];
+};
+
+type RArray<T, L extends string, A = undefined> = A extends undefined
+  ? {
+      data: T;
+      r_type: L;
+      r_attributes?: unknown;
+    }
+  : {
+      data: T;
+      r_type: L;
+      r_attributes: A;
+    };
+type BoolArray<T = boolean | boolean[], A = undefined> = RArray<
+  T,
+  "bool_array",
+  A
+>;
+type IntArray<T = number | Int32Array, A = undefined> = RArray<
+  T,
+  "int_array",
+  A
+>;
+type NumArray<T = number | Float64Array, A = undefined> = RArray<
+  T,
+  "double_array",
+  A
+>;
+type StringArray<T = string | string[], A = undefined> = RArray<
+  T,
+  "string_array",
+  A
+>;
+type FactorArray<
+  L extends [string, ...string[]] | string[] = string[],
+  A = {}
+> = Unify<
+  RArray<
+    string[],
+    "int_array",
+    Unify<
+      A & {
+        levels: {
+          data: L;
+          r_type: "string_array";
+          r_attributes?: unknown;
+        };
+        class: {
+          data: "factor";
+          r_type: "string_array";
+          r_attributes?: unknown;
+        };
+      }
+    >
+  > & {
+    levels: L;
+  }
+>;
 
 test("Boolean types", async () => {
   const R = await RserveClient.create({
     host: "http://127.0.0.1:8081",
   });
 
-  type BoolArray<A = unknown> = boolean[] & {
-    r_type: "bool_array";
-    r_attributes: A;
-  };
-  const bool1 = boolean();
-  const bool2 = boolean(1);
-  const bool3 = boolean(3);
-  const bool4 = boolean({ class: z.string() });
-  const bool5 = boolean(1, { class: z.string() });
-  const bool6 = boolean(3, { class: z.string() });
+  const bool1 = logical();
+  const bool2 = logical(1);
+  const bool3 = logical(3);
+  const bool4 = logical({
+    class: character(1),
+  });
+  const bool5 = logical(1, { class: character(1) });
+  const bool6 = logical(3, { class: character(1) });
 
   type T1 = z.infer<typeof bool1>;
   type T2 = z.infer<typeof bool2>;
@@ -34,73 +93,67 @@ test("Boolean types", async () => {
   type T6 = z.infer<typeof bool6>;
 
   type tests = [
-    Expect<Equal<T1, boolean | BoolArray>>,
-    Expect<Equal<T2, boolean>>,
-    Expect<Equal<T3, BoolArray>>,
+    Expect<Equal<T1, BoolArray>>,
+    Expect<Equal<T2, BoolArray<boolean>>>,
+    Expect<Equal<T3, BoolArray<boolean[]>>>,
     Expect<
       Equal<
         T4,
-        BoolArray<{
-          class: string;
-        }>
+        BoolArray<
+          boolean[],
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >,
     Expect<
       Equal<
         T5,
-        BoolArray<{
-          class: string;
-        }>
+        BoolArray<
+          boolean[],
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >,
     Expect<
       Equal<
         T6,
-        BoolArray<{
-          class: string;
-        }>
+        BoolArray<
+          boolean[],
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >
   ];
 
-  const r_bool1 = await R.eval("TRUE", bool1);
+  const { data: r_bool1 } = await R.eval("TRUE", bool1);
   expect(r_bool1).toBe(true);
 
   const r_bool2 = await R.eval("TRUE", bool2);
-  expect(r_bool2).toBe(true);
+  expect(r_bool2.data).toBe(true);
 
   const r_bool3 = await R.eval("c(TRUE, TRUE, FALSE)", bool3);
-  const r_bool3_result: BoolArray = [true, true, false] as any;
-  r_bool3_result.r_type = "bool_array";
-  r_bool3_result.r_attributes = undefined;
-  expect(r_bool3).toEqual(r_bool3_result);
+  expect(r_bool3.data).toEqual([true, true, false]);
 
   const r_bool4 = await R.eval("structure(TRUE, class = 'mybool')", bool4);
-  const r_bool4_result: BoolArray = [true] as any;
-  r_bool4_result.r_type = "bool_array";
-  r_bool4_result.r_attributes = {
-    class: "mybool",
-  };
-  expect(r_bool4).toEqual(r_bool4_result);
+  expect(r_bool4.data).toEqual([true]);
+  expect(r_bool4.r_attributes.class.data).toBe("mybool");
 
   const r_bool5 = await R.eval("structure(TRUE, class = 'mybool')", bool5);
-  const r_bool5_result: BoolArray = [true] as any;
-  r_bool5_result.r_type = "bool_array";
-  r_bool5_result.r_attributes = {
-    class: "mybool",
-  };
-  expect(r_bool5).toEqual(r_bool5_result);
+  expect(r_bool5.data).toEqual([true]);
+  expect(r_bool5.r_attributes.class.data).toBe("mybool");
 
   const r_bool6 = await R.eval(
     "structure(c(TRUE, FALSE, TRUE), class = 'mybool')",
     bool6
   );
-  const r_bool6_result: BoolArray = [true, false, true] as any;
-  r_bool6_result.r_type = "bool_array";
-  r_bool6_result.r_attributes = {
-    class: "mybool",
-  };
-  expect(r_bool6).toEqual(r_bool6_result);
+  expect(r_bool6.data).toEqual([true, false, true]);
+  expect(r_bool6.r_attributes.class.data).toBe("mybool");
 });
 
 test("Integer types", async () => {
@@ -108,16 +161,12 @@ test("Integer types", async () => {
     host: "http://127.0.0.1:8081",
   });
 
-  type IntArray<A = unknown> = number[] & {
-    r_type: "int_array";
-    r_attributes: A;
-  };
   const int1 = integer();
   const int2 = integer(1);
   const int3 = integer(3);
-  const int4 = integer({ class: z.string() });
-  const int5 = integer(1, { class: z.string() });
-  const int6 = integer(3, { class: z.string() });
+  const int4 = integer({ class: character(1) });
+  const int5 = integer(1, { class: character(1) });
+  const int6 = integer(3, { class: character(1) });
 
   type T1 = z.infer<typeof int1>;
   type T2 = z.infer<typeof int2>;
@@ -127,70 +176,64 @@ test("Integer types", async () => {
   type T6 = z.infer<typeof int6>;
 
   type tests = [
-    Expect<Equal<T1, number | IntArray>>,
-    Expect<Equal<T2, number>>,
-    Expect<Equal<T3, IntArray>>,
+    Expect<Equal<T1, IntArray>>,
+    Expect<Equal<T2, IntArray<number>>>,
+    Expect<Equal<T3, IntArray<Int32Array>>>,
     Expect<
       Equal<
         T4,
-        IntArray<{
-          class: string;
-        }>
+        IntArray<
+          Int32Array,
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >,
     Expect<
       Equal<
         T5,
-        IntArray<{
-          class: string;
-        }>
+        IntArray<
+          Int32Array,
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >,
     Expect<
       Equal<
         T6,
-        IntArray<{
-          class: string;
-        }>
+        IntArray<
+          Int32Array,
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >
   ];
 
-  const r_int1 = await R.eval("1L", int1);
+  const { data: r_int1 } = await R.eval("1L", int1);
   expect(r_int1).toBe(1);
 
-  const r_int2 = await R.eval("1L", int2);
+  const { data: r_int2 } = await R.eval("1L", int2);
   expect(r_int2).toBe(1);
 
-  const r_int3 = await R.eval("1:3", int3);
-  const r_int3_result: IntArray = new Int32Array([1, 2, 3]) as any;
-  r_int3_result.r_type = "int_array";
-  r_int3_result.r_attributes = undefined;
-  expect(r_int3).toEqual(r_int3_result);
+  const { data: r_int3 } = await R.eval("1:3", int3);
+  expect(r_int3).toEqual(new Int32Array([1, 2, 3]));
 
   const r_int4 = await R.eval("structure(1:3, class = 'myclass')", int4);
-  const r_int4_result: IntArray = new Int32Array([1, 2, 3]) as any;
-  r_int4_result.r_type = "int_array";
-  r_int4_result.r_attributes = {
-    class: "myclass",
-  };
-  expect(r_int4).toEqual(r_int4_result);
+  expect(r_int4.data).toEqual(new Int32Array([1, 2, 3]));
+  expect(r_int4.r_attributes.class.data).toBe("myclass");
 
   const r_int5 = await R.eval("structure(1L, class = 'myclass')", int5);
-  const r_int5_result: IntArray = new Int32Array([1]) as any;
-  r_int5_result.r_type = "int_array";
-  r_int5_result.r_attributes = {
-    class: "myclass",
-  };
-  expect(r_int5).toEqual(r_int5_result);
+  expect(r_int5.data).toEqual(new Int32Array([1]));
+  expect(r_int5.r_attributes.class.data).toBe("myclass");
 
   const r_int6 = await R.eval("structure(1:3, class = 'myclass')", int6);
-  const r_int6_result: IntArray = new Int32Array([1, 2, 3]) as any;
-  r_int6_result.r_type = "int_array";
-  r_int6_result.r_attributes = {
-    class: "myclass",
-  };
-  expect(r_int6).toEqual(r_int6_result);
+  expect(r_int6.data).toEqual(new Int32Array([1, 2, 3]));
+  expect(r_int6.r_attributes.class.data).toBe("myclass");
 });
 
 test("Numeric types", async () => {
@@ -198,16 +241,12 @@ test("Numeric types", async () => {
     host: "http://127.0.0.1:8081",
   });
 
-  type NumArray<A = unknown> = number[] & {
-    r_type: "double_array";
-    r_attributes: A;
-  };
   const num1 = numeric();
   const num2 = numeric(1);
   const num3 = numeric(3);
-  const num4 = numeric({ class: z.string() });
-  const num5 = numeric(1, { class: z.string() });
-  const num6 = numeric(3, { class: z.string() });
+  const num4 = numeric({ class: character(1) });
+  const num5 = numeric(1, { class: character(1) });
+  const num6 = numeric(3, { class: character(1) });
 
   type T1 = z.infer<typeof num1>;
   type T2 = z.infer<typeof num2>;
@@ -217,70 +256,64 @@ test("Numeric types", async () => {
   type T6 = z.infer<typeof num6>;
 
   type tests = [
-    Expect<Equal<T1, number | NumArray>>,
-    Expect<Equal<T2, number>>,
-    Expect<Equal<T3, NumArray>>,
+    Expect<Equal<T1, NumArray>>,
+    Expect<Equal<T2, NumArray<number>>>,
+    Expect<Equal<T3, NumArray<Float64Array>>>,
     Expect<
       Equal<
         T4,
-        NumArray<{
-          class: string;
-        }>
+        NumArray<
+          Float64Array,
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >,
     Expect<
       Equal<
         T5,
-        NumArray<{
-          class: string;
-        }>
+        NumArray<
+          Float64Array,
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >,
     Expect<
       Equal<
         T6,
-        NumArray<{
-          class: string;
-        }>
+        NumArray<
+          Float64Array,
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >
   ];
 
-  const r_num1 = await R.eval("1", num1);
+  const { data: r_num1 } = await R.eval("1", num1);
   expect(r_num1).toBe(1);
 
-  const r_num2 = await R.eval("1", num2);
+  const { data: r_num2 } = await R.eval("1", num2);
   expect(r_num2).toBe(1);
 
-  const r_num3 = await R.eval("c(1, 2, 3)", num3);
-  const r_num3_result: NumArray = new Float64Array([1, 2, 3]) as any;
-  r_num3_result.r_type = "double_array";
-  r_num3_result.r_attributes = undefined;
-  expect(r_num3).toEqual(r_num3_result);
+  const { data: r_num3 } = await R.eval("c(1, 2, 3)", num3);
+  expect(r_num3).toEqual(new Float64Array([1, 2, 3]));
 
   const r_num4 = await R.eval("structure(c(1, 2, 3), class = 'myclass')", num4);
-  const r_num4_result: NumArray = new Float64Array([1, 2, 3]) as any;
-  r_num4_result.r_type = "double_array";
-  r_num4_result.r_attributes = {
-    class: "myclass",
-  };
-  expect(r_num4).toEqual(r_num4_result);
+  expect(r_num4.data).toEqual(new Float64Array([1, 2, 3]));
+  expect(r_num4.r_attributes.class.data).toBe("myclass");
 
   const r_num5 = await R.eval("structure(1, class = 'myclass')", num5);
-  const r_num5_result: NumArray = new Float64Array([1]) as any;
-  r_num5_result.r_type = "double_array";
-  r_num5_result.r_attributes = {
-    class: "myclass",
-  };
-  expect(r_num5).toEqual(r_num5_result);
+  expect(r_num5.data).toEqual(new Float64Array([1]));
+  expect(r_num5.r_attributes.class.data).toBe("myclass");
 
   const r_num6 = await R.eval("structure(c(1, 2, 3), class = 'myclass')", num6);
-  const r_num6_result: NumArray = new Float64Array([1, 2, 3]) as any;
-  r_num6_result.r_type = "double_array";
-  r_num6_result.r_attributes = {
-    class: "myclass",
-  };
-  expect(r_num6).toEqual(r_num6_result);
+  expect(r_num6.data).toEqual(new Float64Array([1, 2, 3]));
+  expect(r_num6.r_attributes.class.data).toBe("myclass");
 });
 
 test("Character types", async () => {
@@ -288,16 +321,12 @@ test("Character types", async () => {
     host: "http://127.0.0.1:8081",
   });
 
-  type CharArray<A = unknown> = string[] & {
-    r_type: "string_array";
-    r_attributes: A;
-  };
   const char1 = character();
   const char2 = character(1);
   const char3 = character(3);
-  const char4 = character({ class: z.string() });
-  const char5 = character(1, { class: z.string() });
-  const char6 = character(3, { class: z.string() });
+  const char4 = character({ class: character(1) });
+  const char5 = character(1, { class: character(1) });
+  const char6 = character(3, { class: character(1) });
 
   type T1 = z.infer<typeof char1>;
   type T2 = z.infer<typeof char2>;
@@ -307,73 +336,67 @@ test("Character types", async () => {
   type T6 = z.infer<typeof char6>;
 
   type tests = [
-    Expect<Equal<T1, string | CharArray>>,
-    Expect<Equal<T2, string>>,
-    Expect<Equal<T3, CharArray>>,
+    Expect<Equal<T1, StringArray>>,
+    Expect<Equal<T2, StringArray<string>>>,
+    Expect<Equal<T3, StringArray<string[]>>>,
     Expect<
       Equal<
         T4,
-        CharArray<{
-          class: string;
-        }>
+        StringArray<
+          string[],
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >,
     Expect<
       Equal<
         T5,
-        CharArray<{
-          class: string;
-        }>
+        StringArray<
+          string[],
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >,
     Expect<
       Equal<
         T6,
-        CharArray<{
-          class: string;
-        }>
+        StringArray<
+          string[],
+          {
+            class: StringArray<string>;
+          }
+        >
       >
     >
   ];
 
-  const r_char1 = await R.eval("'hello'", char1);
+  const { data: r_char1 } = await R.eval("'hello'", char1);
   expect(r_char1).toBe("hello");
 
-  const r_char2 = await R.eval("'hello'", char2);
+  const { data: r_char2 } = await R.eval("'hello'", char2);
   expect(r_char2).toBe("hello");
 
-  const r_char3 = await R.eval("c('hello', 'world', 'foo')", char3);
-  const r_char3_result: CharArray = ["hello", "world", "foo"] as any;
-  r_char3_result.r_type = "string_array";
-  r_char3_result.r_attributes = undefined;
-  expect(r_char3).toEqual(r_char3_result);
+  const { data: r_char3 } = await R.eval("c('hello', 'world', 'foo')", char3);
+  expect(r_char3).toEqual(["hello", "world", "foo"]);
 
   const r_char4 = await R.eval("structure('hello', class = 'myclass')", char4);
-  const r_char4_result: CharArray = ["hello"] as any;
-  r_char4_result.r_type = "string_array";
-  r_char4_result.r_attributes = {
-    class: "myclass",
-  };
-  expect(r_char4).toEqual(r_char4_result);
+  expect(r_char4.data).toEqual(["hello"]);
+  expect(r_char4.r_attributes.class.data).toBe("myclass");
 
   const r_char5 = await R.eval("structure('hello', class = 'myclass')", char5);
-  const r_char5_result: CharArray = ["hello"] as any;
-  r_char5_result.r_type = "string_array";
-  r_char5_result.r_attributes = {
-    class: "myclass",
-  };
-  expect(r_char5).toEqual(r_char5_result);
+  expect(r_char5.data).toEqual(["hello"]);
+  expect(r_char5.r_attributes.class.data).toBe("myclass");
 
   const r_char6 = await R.eval(
     "structure(c('hello', 'world', 'foo'), class = 'myclass')",
     char6
   );
-  const r_char6_result: CharArray = ["hello", "world", "foo"] as any;
-  r_char6_result.r_type = "string_array";
-  r_char6_result.r_attributes = {
-    class: "myclass",
-  };
-  expect(r_char6).toEqual(r_char6_result);
+  expect(r_char6.data).toEqual(["hello", "world", "foo"]);
+  expect(r_char6.r_attributes.class.data).toBe("myclass");
 });
 
 test("Factor types", async () => {
@@ -381,120 +404,112 @@ test("Factor types", async () => {
     host: "http://127.0.0.1:8081",
   });
 
-  type FactorArray<
-    L extends [string, ...string[]] | string[] = string[],
-    A = unknown
-  > = string[] & {
-    levels: L;
-    r_type: "int_array";
-    r_attributes: A;
-  };
-
   const factor1 = R.factor();
   const factor2 = R.factor(["a", "b", "c"]);
-  const factor3 = R.factor(["a", "b", "c"], { class: z.string() });
-  const factor4 = R.factor(undefined, { class: z.string() });
+  const factor3 = R.factor(["a", "b", "c"], { someattr: character(1) });
+  const factor4 = R.factor(undefined, { someattr: character(1) });
 
-  type T1 = z.infer<typeof factor1>;
-  type T2 = z.infer<typeof factor2>;
-  type T3 = z.infer<typeof factor3>;
-  type T4 = z.infer<typeof factor4>;
+  type T1 = Unify<z.infer<typeof factor1>>;
+  type T2 = Unify<z.infer<typeof factor2>>;
+  type T3 = Unify<z.infer<typeof factor3>>;
+  type T4 = Unify<z.infer<typeof factor4>>;
 
   type tests = [
     Expect<Equal<T1, FactorArray>>,
     Expect<Equal<T2, FactorArray<["a", "b", "c"]>>>,
-    Expect<Equal<T3, FactorArray<["a", "b", "c"], { class: string }>>>,
-    Expect<Equal<T4, FactorArray<string[], { class: string }>>>
+    Expect<
+      Equal<T3, FactorArray<["a", "b", "c"], { someattr: StringArray<string> }>>
+    >,
+    Expect<Equal<T4, FactorArray<string[], { someattr: StringArray<string> }>>>
   ];
 
   const r_factor1 = await R.eval("factor(c('a', 'b', 'c'))", factor1);
-  const r_factor1_result: FactorArray = ["a", "b", "c"] as any;
-  r_factor1_result.levels = ["a", "b", "c"] as ["a", "b", "c"];
-  r_factor1_result.r_type = "int_array";
-  r_factor1_result.r_attributes = undefined;
-  r_factor1.r_attributes = undefined;
-  expect(r_factor1).toEqual(r_factor1_result);
+  expect(r_factor1.data).toEqual(["a", "b", "c"]);
+  expect(r_factor1.levels).toEqual(["a", "b", "c"]);
 
   const r_factor2 = await R.eval("factor(c('a', 'b', 'c'))", factor2);
-  const r_factor2_result: FactorArray = ["a", "b", "c"] as any;
-  r_factor2_result.levels = ["a", "b", "c"] as ["a", "b", "c"];
-  r_factor2_result.r_type = "int_array";
-  r_factor2_result.r_attributes = undefined;
-  r_factor2.r_attributes = undefined;
-  expect(r_factor2).toEqual(r_factor2_result);
+  expect(r_factor2.data).toEqual(["a", "b", "c"]);
+  expect(r_factor2.levels).toEqual(["a", "b", "c"]);
 
-  const r_factor3 = await R.eval("factor(c('a', 'b', 'c'))", factor3);
-  const r_factor3_result: FactorArray = ["a", "b", "c"] as any;
-  r_factor3_result.levels = ["a", "b", "c"] as ["a", "b", "c"];
-  r_factor3_result.r_type = "int_array";
-  r_factor3_result.r_attributes = {
-    class: "factor",
-  };
-  r_factor3.r_attributes = {
-    class: "factor",
-  };
-  expect(r_factor3).toEqual(r_factor3_result);
+  const r_factor3 = await R.eval(
+    "structure(factor(c('a', 'b', 'c')), someattr = 'foo')",
+    factor3
+  );
+  expect(r_factor3.data).toEqual(["a", "b", "c"]);
+  expect(r_factor3.levels).toEqual(["a", "b", "c"]);
+  expect(r_factor3.r_attributes.someattr.data).toBe("foo");
 
-  const r_factor4 = await R.eval("factor(c('a', 'b', 'c'))", factor4);
-  const r_factor4_result: FactorArray = ["a", "b", "c"] as any;
-  r_factor4_result.levels = ["a", "b", "c"] as ["a", "b", "c"];
-  r_factor4_result.r_type = "int_array";
-  r_factor4_result.r_attributes = {
-    class: "factor",
-  };
-  r_factor4.r_attributes = {
-    class: "factor",
-  };
-  expect(r_factor4).toEqual(r_factor4_result);
+  const r_factor4 = await R.eval(
+    "structure(factor(c('a', 'b', 'c')), someattr = 'foo')",
+    factor4
+  );
+  expect(r_factor4.data).toEqual(["a", "b", "c"]);
+  expect(r_factor4.levels).toEqual(["a", "b", "c"]);
+  expect(r_factor4.r_attributes.someattr.data).toBe("foo");
 });
 
-test("Character types", async () => {
-  const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
-  });
+// test("Table types", async () => {
+//   const R = await RserveClient.create({
+//     host: "http://127.0.0.1:8081",
+//   });
 
-  const tab1 = R.table([3]);
-  const tab2 = R.table([3, 2]);
+//   const tab1 = R.table([3]);
+//   const tab2 = R.table([3, 2]);
 
-  type Tab1 = z.infer<typeof tab1>;
-  type Tab2 = z.infer<typeof tab2>;
+//   type Tab1 = z.infer<typeof tab1>;
+//   type Tab2 = z.infer<typeof tab2>;
 
-  type tests = [
-    Expect<
-      Equal<
-        Tab1,
-        number[] & {
-          r_type: "int_array";
-          r_attributes: {
-            dim: 3;
-          };
-        }
-      >
-    >,
-    Expect<
-      Equal<
-        Tab2,
-        number[] & {
-          r_type: "int_array";
-          r_attributes: {
-            dim: [3, 2] & {
-              r_type: "int_array";
-              r_attributes?: unknown;
-            };
-          };
-        }
-      >
-    >
-  ];
+//   type tests = [
+//     Expect<
+//       Equal<
+//         Tab1,
+//         number[] & {
+//           r_type: "int_array";
+//           r_attributes: {
+//             dim: 3;
+//           };
+//         }
+//       >
+//     >,
+//     Expect<
+//       Equal<
+//         Tab2,
+//         number[] & {
+//           r_type: "int_array";
+//           r_attributes: {
+//             dim: [3, 2] & {
+//               r_type: "int_array";
+//               r_attributes?: unknown;
+//             };
+//           };
+//         }
+//       >
+//     >
+//   ];
 
-  const r_tab1 = await R.eval("table(iris$Species)", tab1);
-  const r_tab1_result: Tab1 = new Int32Array([50, 50, 50]) as any;
-  r_tab1_result.r_type = "int_array";
-  r_tab1_result.r_attributes = {
-    dim: 3,
-  };
-  expect(r_tab1).toEqual(r_tab1_result);
+//   const r_tab1 = await R.eval("table(iris$Species)", tab1);
+//   const r_tab1_result: Tab1 = new Int32Array([50, 50, 50]) as any;
+//   r_tab1_result.r_type = "int_array";
+//   r_tab1_result.r_attributes = {
+//     dim: 3,
+//   };
+//   expect(r_tab1).toEqual(r_tab1_result);
 
-  const r_tab2 = await R.eval("table(iris$Species, rep(1:2, each = 75))");
-  console.log(r_tab2);
-});
+//   const r_tab2 = await R.eval("table(iris$Species, rep(1:2, each = 75))", tab2);
+//   const r_tab2_result: Tab2 = new Int32Array([50, 25, 0, 0, 25, 50]) as any;
+//   r_tab2_result.r_type = "int_array";
+//   r_tab2_result.r_attributes = {
+//     dim: [3, 2] as any,
+//     // dimnames: {
+//     //   "": {
+//     //     data: ["1", "2"],
+//     //     r_type: "string_array",
+//     //   },
+//     //   r_type: "vector",
+//     //   r_attributes: undefined,
+//     // },
+//   };
+//   r_tab2_result.r_attributes.dim.r_type = "int_array";
+//   r_tab2_result.r_attributes.dim.r_attributes = undefined;
+//   expect(r_tab2).toEqual(r_tab2_result);
+// });

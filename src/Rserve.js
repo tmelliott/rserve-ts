@@ -16,10 +16,12 @@ var Rserve = (function () {
       };
       var wrapped_proto = {
         json: function (resolver) {
-          var result = proto.json.call(this, resolver);
+          const res = proto.json.call(this, resolver);
+          var result = res.data
+            ? { ...res, r_type: type }
+            : { data: res, r_type: type };
+
           try {
-            if (typeof result !== "object") return result;
-            result.r_type = type;
             if (!_.isUndefined(this.attributes))
               result.r_attributes = _.object(
                 _.map(this.attributes.value, function (v) {
@@ -192,10 +194,7 @@ var Rserve = (function () {
             // TODO: should this check for undefined attributes too? I've changed it but need to confirm if OK
             if (this.value.length === 1 && _.isUndefined(this.attributes))
               return this.value[0];
-            else
-              return {
-                data: this.value,
-              };
+            else return this.value;
           }
         },
       }),
@@ -203,7 +202,7 @@ var Rserve = (function () {
         json: function () {
           if (this.value.length === 1 && _.isUndefined(this.attributes))
             return this.value[0];
-          else return { data: this.value };
+          else return this.value;
         },
       }),
       string_array: make_basic("string_array", {
@@ -217,21 +216,15 @@ var Rserve = (function () {
               ) !== -1
             )
               return resolver(this.value[0]);
-            return { data: this.value };
-          } else
-            return {
-              data: this.value,
-            };
+            return this.value;
+          } else return this.value;
         },
       }),
       bool_array: make_basic("bool_array", {
         json: function () {
           if (this.value.length === 1 && _.isUndefined(this.attributes))
             return this.value[0];
-          else
-            return {
-              data: this.value,
-            };
+          else return this.value;
         },
       }),
       raw: make_basic("raw", {

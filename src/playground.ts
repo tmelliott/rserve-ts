@@ -10,7 +10,7 @@ import { z } from "zod";
   console.log(R.is_running());
 
   console.log("\n\n----");
-  const logi = await R.eval("TRUE", R.boolean(1));
+  const logi = await R.eval("TRUE", R.logical(1));
   console.log("Logi ...");
   console.log(logi);
 

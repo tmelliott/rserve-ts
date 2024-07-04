@@ -1,14 +1,6 @@
 import { z } from "zod";
 import Rserve from "./Rserve";
-import {
-  boolean,
-  character,
-  factor,
-  integer,
-  numeric,
-  sexp,
-  table,
-} from "./types";
+import { logical, character, factor, integer, numeric, sexp } from "./types";
 
 type CallbackFromPromise<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
@@ -33,19 +25,19 @@ const createRserve = async (
     });
   });
 
-  const parseAttr = (attr: Record<string, any>) => {
-    if (!attr) return;
-    const attrs = Object.entries(attr).map(([key, value]) => {
-      if (value.data) {
-        const r: any = value.data;
-        r.r_type = value.r_type;
-        r.r_attributes = parseAttr(value.r_attributes);
-        value = r;
-      }
-      return [key, value];
-    });
-    return Object.fromEntries(attrs);
-  };
+  // const parseAttr = (attr: Record<string, any>) => {
+  //   if (!attr) return;
+  //   const attrs = Object.entries(attr).map(([key, value]) => {
+  //     if (value.data) {
+  //       const r: any = value.data;
+  //       r.r_type = value.r_type;
+  //       r.r_attributes = parseAttr(value.r_attributes);
+  //       value = r;
+  //     }
+  //     return [key, value];
+  //   });
+  //   return Object.fromEntries(attrs);
+  // };
 
   async function evalX<T extends z.ZodTypeAny>(
     command: string,
@@ -63,12 +55,12 @@ const createRserve = async (
               resolve(schema.parse(data.value.json()));
             } else {
               const x = (data as any).value.json();
-              if (typeof x === "object" && x.data) {
-                const r: any = x.data;
-                r.r_type = x.r_type;
-                r.r_attributes = parseAttr(x.r_attributes);
-                resolve(r);
-              }
+              // if (typeof x === "object" && x.data) {
+              //   const r: any = x.data;
+              //   r.r_type = x.r_type;
+              //   r.r_attributes = parseAttr(x.r_attributes);
+              //   resolve(r);
+              // }
               resolve(x);
             }
           } catch (err) {
@@ -167,12 +159,11 @@ const createRserve = async (
           }
         });
       }),
-    boolean,
+    logical,
     integer,
     numeric,
     character,
     factor,
-    table,
   };
 };
 
