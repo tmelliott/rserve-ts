@@ -1,4 +1,5 @@
-import { z } from "zod";
+import { R } from "vitest/dist/reporters-yx5ZTtEV";
+import { array, z } from "zod";
 
 export const sexp = <T extends z.ZodTypeAny>(json: T) => {
   return z.object({
@@ -166,9 +167,21 @@ function character<L extends number, T extends z.ZodRawShape>(
   len: L,
   attr: T
 ): Robject<z.ZodArray<z.ZodString>, "string_array", z.ZodObject<T, "strip">>;
-function character(a?: number | z.ZodRawShape, b?: z.ZodRawShape) {
+function character<
+  const V extends [string, ...string[]],
+  T extends z.ZodRawShape
+>(values: V, attr?: T): Robject<ArrayToTuple<V>, "string_array">;
+function character(
+  a?: [string, ...string[]] | number | z.ZodRawShape,
+  b?: z.ZodRawShape
+) {
+  const attr = typeof a === "number" || Array.isArray(a) ? b : a;
+
+  if (Array.isArray(a)) {
+    return robject(arrayToTuple(a) as any, "string_array");
+  }
+
   const len = typeof a === "number" ? a : undefined;
-  const attr = typeof a === "number" ? b : a;
 
   return robject(
     attr
@@ -256,39 +269,54 @@ function factor<
 // names: {dim1: [name11, name12, ...], dim2: [name21, name22, ...], ...}
 // data: [[x11, x12, ...], [x21, x22, ...], ...]
 // R returns this as an integer vector
-// function table<const D extends [number]>(
-//   dim: D
-// );
 
-// type TableWithAttr<D extends [number, ...number[]]> = D extends [number]
-//   ? IntegerVectorWithAttr<z.ZodObject<{ dim: z.ZodLiteral<D[0]> }>>
-//   : IntegerVectorWithAttr<
-//       z.ZodObject<{
-//         dim: ArrayToTuple<D> &
-//           z.ZodObject<{
-//             r_type: z.ZodLiteral<"int_array">;
-//             r_attributes: z.ZodUnknown;
-//           }>;
-//       }>
-//     >;
+type TupleOf<T, N extends number> = N extends N
+  ? number extends N
+    ? T[]
+    : _TupleOf<T, N, []>
+  : never;
+type _TupleOf<T, N extends number, R extends unknown[]> = R["length"] extends N
+  ? R
+  : _TupleOf<T, N, [T, ...R]>;
 
-// function table<const D extends [number, ...number[]]>(dim: D) {
-//   const n = dim.reduce((a, b) => a * b, 1);
-//   const x = integer(n, {
-//     dim:
-//       dim.length === 1
-//         ? z.literal(dim[0])
-//         : arrayToTuple(dim).transform((x) => {
-//             const d: z.infer<ArrayToTuple<D>> & {
-//               r_type: "int_array";
-//               r_attributes: undefined;
-//             } = x as any;
-//             d.r_type = "int_array";
-//             d.r_attributes = undefined;
-//             return x;
-//           }),
-//   }) as TableWithAttr<D>;
-//   return x;
-// }
+const tupleOf = <T, N extends number>(t: T, n: N) => {
+  return Array(n).fill(t) as TupleOf<T, N>;
+};
 
-export { logical, integer, numeric, character, factor };
+type Table<D extends number | number[] | [number, ...number[]]> = Robject<
+  ZodInt32Array,
+  "int_array",
+  z.ZodObject<
+    {
+      dim: D extends [number, ...number[]]
+        ? Robject<ArrayToTuple<D>, "int_array">
+        : Robject<z.ZodLiteral<D>, "int_array">;
+    },
+    "strip"
+  >
+>;
+
+function table<const D extends number>(
+  dim: D
+): D extends 1 ? Table<number> : Table<TupleOf<number, D>>;
+function table<const D extends [number, ...number[]]>(
+  dim: D
+): Table<D extends [number] ? D[0] : D>;
+function table(x: number | [number, ...number[]]) {
+  const dim = Array.isArray(x) ? x : tupleOf(x, 1);
+
+  return robject(
+    z.instanceof(Int32Array),
+    "int_array",
+    z.object({
+      dim: robject(
+        dim.length === 1
+          ? z.literal(dim[0])
+          : z.instanceof(Int32Array).transform((x) => Array.from(x)),
+        "int_array"
+      ),
+    })
+  ) as any;
+}
+
+export { logical, integer, numeric, character, factor, table };

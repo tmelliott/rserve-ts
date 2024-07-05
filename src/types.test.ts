@@ -327,6 +327,7 @@ test("Character types", async () => {
   const char4 = character({ class: character(1) });
   const char5 = character(1, { class: character(1) });
   const char6 = character(3, { class: character(1) });
+  const char7 = character(["a", "b", "c"]);
 
   type T1 = z.infer<typeof char1>;
   type T2 = z.infer<typeof char2>;
@@ -334,6 +335,7 @@ test("Character types", async () => {
   type T4 = z.infer<typeof char4>;
   type T5 = z.infer<typeof char5>;
   type T6 = z.infer<typeof char6>;
+  type T7 = z.infer<typeof char7>;
 
   type tests = [
     Expect<Equal<T1, StringArray>>,
@@ -370,6 +372,16 @@ test("Character types", async () => {
             class: StringArray<string>;
           }
         >
+      >
+    >,
+    Expect<
+      Equal<
+        T7,
+        {
+          data: ["a", "b", "c"];
+          r_type: "string_array";
+          r_attributes?: unknown;
+        }
       >
     >
   ];
@@ -448,68 +460,93 @@ test("Factor types", async () => {
   expect(r_factor4.r_attributes.someattr.data).toBe("foo");
 });
 
-// test("Table types", async () => {
-//   const R = await RserveClient.create({
-//     host: "http://127.0.0.1:8081",
-//   });
+test("Table types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8081",
+  });
 
-//   const tab1 = R.table([3]);
-//   const tab2 = R.table([3, 2]);
+  const tab1 = R.table([3]);
+  const tab2 = R.table([3, 2]);
+  const tab3 = R.table(1); // a 1D table with unknown dimensions
+  const tab4 = R.table(3); // a 3D table with unknown dimensions
 
-//   type Tab1 = z.infer<typeof tab1>;
-//   type Tab2 = z.infer<typeof tab2>;
+  type Tab1 = z.infer<typeof tab1>;
+  type Tab2 = z.infer<typeof tab2>;
+  type Tab3 = z.infer<typeof tab3>;
+  type Tab4 = z.infer<typeof tab4>;
 
-//   type tests = [
-//     Expect<
-//       Equal<
-//         Tab1,
-//         number[] & {
-//           r_type: "int_array";
-//           r_attributes: {
-//             dim: 3;
-//           };
-//         }
-//       >
-//     >,
-//     Expect<
-//       Equal<
-//         Tab2,
-//         number[] & {
-//           r_type: "int_array";
-//           r_attributes: {
-//             dim: [3, 2] & {
-//               r_type: "int_array";
-//               r_attributes?: unknown;
-//             };
-//           };
-//         }
-//       >
-//     >
-//   ];
+  type tests = [
+    Expect<
+      Equal<
+        Tab1,
+        {
+          data: Int32Array;
+          r_type: "int_array";
+          r_attributes: {
+            dim: {
+              data: 3;
+              r_type: "int_array";
+              r_attributes?: unknown;
+            };
+          };
+        }
+      >
+    >,
+    Expect<
+      Equal<
+        Tab2,
+        {
+          data: Int32Array;
+          r_type: "int_array";
+          r_attributes: {
+            dim: {
+              data: [3, 2];
+              r_type: "int_array";
+              r_attributes?: unknown;
+            };
+          };
+        }
+      >
+    >,
+    Expect<
+      Equal<
+        Tab3,
+        {
+          data: Int32Array;
+          r_type: "int_array";
+          r_attributes: {
+            dim: {
+              data: number;
+              r_type: "int_array";
+              r_attributes?: unknown;
+            };
+          };
+        }
+      >
+    >,
+    Expect<
+      Equal<
+        Tab4,
+        {
+          data: Int32Array;
+          r_type: "int_array";
+          r_attributes: {
+            dim: {
+              data: [number, number, number];
+              r_type: "int_array";
+              r_attributes?: unknown;
+            };
+          };
+        }
+      >
+    >
+  ];
 
-//   const r_tab1 = await R.eval("table(iris$Species)", tab1);
-//   const r_tab1_result: Tab1 = new Int32Array([50, 50, 50]) as any;
-//   r_tab1_result.r_type = "int_array";
-//   r_tab1_result.r_attributes = {
-//     dim: 3,
-//   };
-//   expect(r_tab1).toEqual(r_tab1_result);
+  const r_tab1 = await R.eval("table(iris$Species)", tab1);
+  expect(r_tab1.data).toEqual(new Int32Array([50, 50, 50]));
+  expect(r_tab1.r_attributes.dim.data).toBe(3);
 
-//   const r_tab2 = await R.eval("table(iris$Species, rep(1:2, each = 75))", tab2);
-//   const r_tab2_result: Tab2 = new Int32Array([50, 25, 0, 0, 25, 50]) as any;
-//   r_tab2_result.r_type = "int_array";
-//   r_tab2_result.r_attributes = {
-//     dim: [3, 2] as any,
-//     // dimnames: {
-//     //   "": {
-//     //     data: ["1", "2"],
-//     //     r_type: "string_array",
-//     //   },
-//     //   r_type: "vector",
-//     //   r_attributes: undefined,
-//     // },
-//   };
-//   r_tab2_result.r_attributes.dim.r_type = "int_array";
-//   r_tab2_result.r_attributes.dim.r_attributes = undefined;
-//   expect(r_tab2).toEqual(r_tab2_result);
-// });
+  const r_tab2 = await R.eval("table(iris$Species, rep(1:2, each = 75))", tab2);
+  expect(r_tab2.data).toEqual(new Int32Array([50, 25, 0, 0, 25, 50]));
+  expect(r_tab2.r_attributes.dim.data).toEqual([3, 2]);
+});

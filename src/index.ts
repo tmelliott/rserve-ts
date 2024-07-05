@@ -1,6 +1,14 @@
 import { z } from "zod";
 import Rserve from "./Rserve";
-import { logical, character, factor, integer, numeric, sexp } from "./types";
+import {
+  logical,
+  character,
+  factor,
+  integer,
+  numeric,
+  sexp,
+  table,
+} from "./types";
 
 type CallbackFromPromise<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
@@ -164,6 +172,7 @@ const createRserve = async (
     numeric,
     character,
     factor,
+    table,
   };
 };
 
