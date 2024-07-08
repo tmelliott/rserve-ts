@@ -1,5 +1,5 @@
 import { test, expect, expectTypeOf } from "vitest";
-import { logical, character, integer, numeric } from "./types";
+import { logical, character, integer, numeric, RTypes } from "./types";
 import { z } from "zod";
 import RserveClient from "./index";
 
@@ -573,14 +573,7 @@ test("List types", async () => {
       Equal<
         List1,
         {
-          data: Record<
-            string,
-            {
-              data?: any;
-              r_type: string;
-              r_attributes?: any;
-            }
-          >;
+          data: Record<string, RTypes>;
           r_type: "vector";
           r_attributes: {
             [x: string]: any;

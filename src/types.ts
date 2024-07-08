@@ -1,4 +1,4 @@
-import { R } from "vitest/dist/reporters-yx5ZTtEV";
+import { R, T } from "vitest/dist/reporters-yx5ZTtEV";
 import { array, z } from "zod";
 
 export const sexp = <T extends z.ZodTypeAny>(json: T) => {
@@ -48,22 +48,38 @@ type Robject<
   TAttr extends z.ZodTypeAny = z.ZodUnknown
 > = ReturnType<typeof robject<TData, TType, TAttr>>;
 
-function logical(): Robject<
-  z.ZodUnion<[z.ZodBoolean, z.ZodArray<z.ZodBoolean>]>,
-  "bool_array"
->;
-function logical<L extends number>(
-  len: L
-): L extends 1
-  ? Robject<z.ZodBoolean, "bool_array">
-  : Robject<z.ZodArray<z.ZodBoolean>, "bool_array">;
-function logical<T extends z.ZodRawShape>(
-  attr: T
-): Robject<z.ZodArray<z.ZodBoolean>, "bool_array", z.ZodObject<T, "strip">>;
+type ZVector<
+  V extends string = string,
+  L extends number | undefined = undefined,
+  A extends z.ZodRawShape | undefined = undefined,
+  TSingle extends z.ZodTypeAny = z.ZodTypeAny,
+  TMulti extends z.ZodTypeAny = z.ZodArray<TSingle>
+> = A extends z.ZodRawShape
+  ? Robject<TMulti, V, z.ZodObject<A, "strip">>
+  : Robject<
+      L extends undefined
+        ? z.ZodUnion<[TSingle, TMulti]>
+        : L extends 1
+        ? TSingle
+        : TMulti,
+      V,
+      z.ZodUnknown
+    >;
+export type Vector = z.infer<ZVector>;
+
+type ZLogical<
+  T extends number | undefined = undefined,
+  A extends z.ZodRawShape | undefined = undefined
+> = ZVector<"bool_array", T, A, z.ZodBoolean>;
+export type Logical = z.infer<ZLogical>;
+
+function logical(): ZLogical;
+function logical<L extends number>(len: L): ZLogical<L>;
+function logical<T extends z.ZodRawShape>(attr: T): ZLogical<undefined, T>;
 function logical<L extends number, T extends z.ZodRawShape>(
   len: L,
   attr: T
-): Robject<z.ZodArray<z.ZodBoolean>, "bool_array", z.ZodObject<T, "strip">>;
+): ZLogical<L, T>;
 function logical(a?: number | z.ZodRawShape, b?: z.ZodRawShape) {
   const len = typeof a === "number" ? a : undefined;
   const attr = typeof a === "number" ? b : a;
@@ -83,22 +99,19 @@ function logical(a?: number | z.ZodRawShape, b?: z.ZodRawShape) {
 
 type ZodInt32Array = z.ZodType<Int32Array, z.ZodTypeDef, Int32Array>;
 
-function integer(): Robject<
-  z.ZodUnion<[z.ZodNumber, ZodInt32Array]>,
-  "int_array"
->;
-function integer<L extends number>(
-  len: L
-): L extends 1
-  ? Robject<z.ZodNumber, "int_array">
-  : Robject<ZodInt32Array, "int_array">;
-function integer<T extends z.ZodRawShape>(
-  attr: T
-): Robject<ZodInt32Array, "int_array", z.ZodObject<T, "strip">>;
+type ZInteger<
+  L extends number | undefined = undefined,
+  A extends z.ZodRawShape | undefined = undefined
+> = ZVector<"int_array", L, A, z.ZodNumber, ZodInt32Array>;
+export type Integer = z.infer<ZInteger>;
+
+function integer(): ZInteger;
+function integer<L extends number>(len: L): ZInteger<L>;
+function integer<T extends z.ZodRawShape>(attr: T): ZInteger<undefined, T>;
 function integer<L extends number, T extends z.ZodRawShape>(
   len: L,
   attr: T
-): Robject<ZodInt32Array, "int_array", z.ZodObject<T, "strip">>;
+): ZInteger<L, T>;
 function integer(a?: number | z.ZodRawShape, b?: z.ZodRawShape) {
   const len = typeof a === "number" ? a : undefined;
   const attr = typeof a === "number" ? b : a;
@@ -118,22 +131,19 @@ function integer(a?: number | z.ZodRawShape, b?: z.ZodRawShape) {
 
 type ZodFloat64Array = z.ZodType<Float64Array, z.ZodTypeDef, Float64Array>;
 
-function numeric(): Robject<
-  z.ZodUnion<[z.ZodNumber, ZodFloat64Array]>,
-  "double_array"
->;
-function numeric<L extends number>(
-  len: L
-): L extends 1
-  ? Robject<z.ZodNumber, "double_array">
-  : Robject<ZodFloat64Array, "double_array">;
-function numeric<T extends z.ZodRawShape>(
-  attr: T
-): Robject<ZodFloat64Array, "double_array", z.ZodObject<T, "strip">>;
+type ZNumeric<
+  L extends number | undefined = undefined,
+  A extends z.ZodRawShape | undefined = undefined
+> = ZVector<"double_array", L, A, z.ZodNumber, ZodFloat64Array>;
+export type Numeric = z.infer<ZNumeric>;
+
+function numeric(): ZNumeric;
+function numeric<L extends number>(len: L): ZNumeric<L>;
+function numeric<T extends z.ZodRawShape>(attr: T): ZNumeric<undefined, T>;
 function numeric<L extends number, T extends z.ZodRawShape>(
   len: L,
   attr: T
-): Robject<ZodFloat64Array, "double_array", z.ZodObject<T, "strip">>;
+): ZNumeric<L, T>;
 function numeric(a?: number | z.ZodRawShape, b?: z.ZodRawShape) {
   const len = typeof a === "number" ? a : undefined;
   const attr = typeof a === "number" ? b : a;
@@ -151,22 +161,20 @@ function numeric(a?: number | z.ZodRawShape, b?: z.ZodRawShape) {
   );
 }
 
-function character(): Robject<
-  z.ZodUnion<[z.ZodString, z.ZodArray<z.ZodString>]>,
-  "string_array"
->;
-function character<L extends number>(
-  len: L
-): L extends 1
-  ? Robject<z.ZodString, "string_array">
-  : Robject<z.ZodArray<z.ZodString>, "string_array">;
-function character<T extends z.ZodRawShape>(
-  attr: T
-): Robject<z.ZodArray<z.ZodString>, "string_array", z.ZodObject<T, "strip">>;
+type ZCharacter<
+  L extends number | undefined = undefined,
+  A extends z.ZodRawShape | undefined = undefined
+> = ZVector<"string_array", L, A, z.ZodString>;
+export type Character = z.infer<ZCharacter>;
+
+function character(): ZCharacter;
+function character<L extends number>(len: L): ZCharacter<L>;
+function character<T extends z.ZodRawShape>(attr: T): ZCharacter<undefined, T>;
 function character<L extends number, T extends z.ZodRawShape>(
   len: L,
   attr: T
-): Robject<z.ZodArray<z.ZodString>, "string_array", z.ZodObject<T, "strip">>;
+): ZCharacter<L, T>;
+// TODO: Can this be a generic ZCharacter too?
 function character<
   const V extends [string, ...string[]],
   T extends z.ZodRawShape
@@ -235,6 +243,14 @@ type FactorWithAttr<
   T extends z.ZodTypeAny
 > = ReturnType<typeof factorWithAttr<L, T>>;
 
+type ZFactor<L extends [string, ...string[]] | undefined = undefined> =
+  FactorWithAttr<
+    L extends [string, ...string[]] ? ArrayToTuple<L> : z.ZodArray<z.ZodString>,
+    z.ZodUnknown
+  >;
+export type Factor<L extends [string, ...string[]] | undefined = undefined> =
+  z.infer<ZFactor<L>>;
+
 function factor(): FactorWithAttr<z.ZodArray<z.ZodString>, z.ZodUnknown>;
 function factor<const L extends [string, ...string[]]>(
   levels: L
@@ -277,25 +293,29 @@ const tupleOf = <T, N extends number>(t: T, n: N) => {
   return Array(n).fill(t) as TupleOf<T, N>;
 };
 
-type Table<D extends number | number[] | [number, ...number[]]> = Robject<
-  ZodInt32Array,
-  "int_array",
-  z.ZodObject<
-    {
-      dim: D extends [number, ...number[]]
-        ? Robject<ArrayToTuple<D>, "int_array">
-        : Robject<z.ZodLiteral<D>, "int_array">;
-    },
-    "strip"
-  >
->;
+type ZTable<D extends number | number[] | [number, ...number[]] = number[]> =
+  Robject<
+    ZodInt32Array,
+    "int_array",
+    z.ZodObject<
+      {
+        dim: D extends [number, ...number[]]
+          ? Robject<ArrayToTuple<D>, "int_array">
+          : Robject<z.ZodLiteral<D>, "int_array">;
+      },
+      "strip"
+    >
+  >;
+export type Table<
+  D extends number | number[] | [number, ...number[]] = number[]
+> = z.infer<ZTable<D>>;
 
 function table<const D extends number>(
   dim: D
-): D extends 1 ? Table<number> : Table<TupleOf<number, D>>;
+): D extends 1 ? ZTable<number> : ZTable<TupleOf<number, D>>;
 function table<const D extends [number, ...number[]]>(
   dim: D
-): Table<D extends [number] ? D[0] : D>;
+): ZTable<D extends [number] ? D[0] : D>;
 function table(x: number | [number, ...number[]]) {
   const dim = Array.isArray(x) ? x : tupleOf(x, 1);
 
@@ -313,21 +333,25 @@ function table(x: number | [number, ...number[]]) {
   ) as any;
 }
 
-type List<
+type ZTypes = ZLogical | ZInteger | ZNumeric | ZCharacter | ZFactor | ZTable;
+export type RTypes = z.infer<ZTypes>;
+
+type ZList<
   T extends z.ZodRawShape | z.ZodTuple | undefined = undefined,
   A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
 > = Robject<
   T extends undefined
     ? z.ZodRecord<
         z.ZodString,
-        z.ZodObject<
-          {
-            data: z.ZodTypeAny;
-            r_type: z.ZodString;
-            r_attributes: z.ZodTypeAny;
-          },
-          "strip"
-        >
+        ZTypes
+        // z.ZodObject<
+        //   {
+        //     data: z.ZodTypeAny;
+        //     r_type: z.ZodString;
+        //     r_attributes: z.ZodTypeAny;
+        //   },
+        //   "strip"
+        // >
       >
     : T extends z.ZodRawShape
     ? z.ZodObject<T, "strip">
@@ -347,16 +371,20 @@ type List<
     "strip"
   >
 >;
+export type List<
+  T extends z.ZodRawShape | z.ZodTuple | undefined = undefined,
+  A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
+> = z.infer<ZList<T, A>>;
 
-function list(): List;
+function list(): ZList;
 function list<
   const T extends z.ZodRawShape,
   const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
->(schema: T, attr?: A): List<T, A>;
+>(schema: T, attr?: A): ZList<T, A>;
 function list<
   const T extends [z.ZodTypeAny, ...z.ZodTypeAny[]],
   const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
->(schema: T, attr?: A): List<z.ZodTuple<T>, A>;
+>(schema: T, attr?: A): ZList<z.ZodTuple<T>, A>;
 function list(
   schema?: z.ZodRawShape | [z.ZodTypeAny, ...z.ZodTypeAny[]],
   attr?: z.ZodRawShape
