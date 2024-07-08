@@ -556,8 +556,6 @@ test("List types", async () => {
     host: "http://127.0.0.1:8081",
   });
 
-  // const list1 = R.list();
-
   const list1 = R.list();
   const list2 = R.list({ x: R.numeric(1), y: R.factor(["one", "two"]) });
   const list3 = R.list([R.numeric(5), R.factor(["one", "two"])]);
