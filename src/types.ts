@@ -264,12 +264,6 @@ function factor<
   );
 }
 
-// A table is an n-dimensional array with names for each dimension
-// The dimensions can optionally be named also.
-// names: {dim1: [name11, name12, ...], dim2: [name21, name22, ...], ...}
-// data: [[x11, x12, ...], [x21, x22, ...], ...]
-// R returns this as an integer vector
-
 type TupleOf<T, N extends number> = N extends N
   ? number extends N
     ? T[]
@@ -319,4 +313,75 @@ function table(x: number | [number, ...number[]]) {
   ) as any;
 }
 
-export { logical, integer, numeric, character, factor, table };
+type List<
+  T extends z.ZodRawShape | z.ZodTuple | undefined = undefined,
+  A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
+> = Robject<
+  T extends undefined
+    ? z.ZodRecord<
+        z.ZodString,
+        z.ZodObject<
+          {
+            data: z.ZodTypeAny;
+            r_type: z.ZodString;
+            r_attributes: z.ZodTypeAny;
+          },
+          "strip"
+        >
+      >
+    : T extends z.ZodRawShape
+    ? z.ZodObject<T, "strip">
+    : T,
+  "vector",
+  z.ZodObject<
+    (T extends z.ZodRawShape
+      ? {
+          names: Robject<z.ZodArray<z.ZodString>, "string_array">;
+        }
+      : T extends z.ZodTuple
+      ? {}
+      : {
+          names?: Robject<z.ZodArray<z.ZodString>, "string_array">;
+        }) &
+      A,
+    "strip"
+  >
+>;
+
+function list(): List;
+function list<
+  const T extends z.ZodRawShape,
+  const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
+>(schema: T, attr?: A): List<T, A>;
+function list<
+  const T extends [z.ZodTypeAny, ...z.ZodTypeAny[]],
+  const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
+>(schema: T, attr?: A): List<z.ZodTuple<T>, A>;
+function list(
+  schema?: z.ZodRawShape | [z.ZodTypeAny, ...z.ZodTypeAny[]],
+  attr?: z.ZodRawShape
+) {
+  return robject(
+    schema
+      ? Array.isArray(schema)
+        ? z.tuple(schema)
+        : z.object(schema)
+      : z.record(
+          z.string(),
+          z.object({
+            data: z.any(),
+            r_type: z.string(),
+            r_attributes: z.any(),
+          })
+        ),
+    "vector",
+    attr
+      ? z.object({
+          ...attr,
+          names: schema ? character(Object.keys(schema).length) : character(),
+        })
+      : z.any()
+  ) as any;
+}
+
+export { logical, integer, numeric, character, factor, table, list };

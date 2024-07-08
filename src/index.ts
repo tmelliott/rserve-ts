@@ -8,6 +8,7 @@ import {
   numeric,
   sexp,
   table,
+  list,
 } from "./types";
 
 type CallbackFromPromise<T> = {
@@ -173,6 +174,7 @@ const createRserve = async (
     character,
     factor,
     table,
+    list,
   };
 };
 

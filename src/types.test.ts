@@ -550,3 +550,92 @@ test("Table types", async () => {
   expect(r_tab2.data).toEqual(new Int32Array([50, 25, 0, 0, 25, 50]));
   expect(r_tab2.r_attributes.dim.data).toEqual([3, 2]);
 });
+
+test("List types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8081",
+  });
+
+  // const list1 = R.list();
+
+  const list1 = R.list();
+  const list2 = R.list({ x: R.numeric(1), y: R.factor(["one", "two"]) });
+  const list3 = R.list([R.numeric(5), R.factor(["one", "two"])]);
+
+  type List1 = z.infer<typeof list1>;
+  type List2 = z.infer<typeof list2>;
+  type List3 = z.infer<typeof list3>;
+
+  type List1X = List1["data"];
+
+  type tests = [
+    Expect<
+      Equal<
+        List1,
+        {
+          data: Record<
+            string,
+            {
+              data?: any;
+              r_type: string;
+              r_attributes?: any;
+            }
+          >;
+          r_type: "vector";
+          r_attributes: {
+            [x: string]: any;
+            names?: unknown;
+          };
+        }
+      >
+    >,
+    Expect<
+      Equal<
+        List2,
+        {
+          data: {
+            x: NumArray<number>;
+            y: FactorArray<["one", "two"]>;
+          };
+          r_type: "vector";
+          r_attributes: {
+            [x: string]: any;
+            names?: unknown;
+          };
+        }
+      >
+    >,
+    Expect<
+      Equal<
+        List3,
+        {
+          data: [NumArray<Float64Array>, FactorArray<["one", "two"]>];
+          r_type: "vector";
+          r_attributes: {
+            [x: string]: any;
+          };
+        }
+      >
+    >
+  ];
+
+  const r_list1 = await R.eval(
+    "list(x = 5.3, y = factor(c('one', 'two')))",
+    list1
+  );
+  expect(r_list1.data.x.data).toEqual(5.3);
+  expect(r_list1.data.y.data).toEqual(["one", "two"]);
+
+  const r_list2 = await R.eval(
+    "list(x = 5.3, y = factor(c('one', 'two')))",
+    list2
+  );
+  expect(r_list2.data.x.data).toEqual(5.3);
+  expect(r_list2.data.y.data).toEqual(["one", "two"]);
+  // if (r_list2.r_attributes.names)
+  //   expect(r_list2.r_attributes.names.data).toEqual(["x", "y"]);
+
+  const r_list3 = await R.eval("list(1:5/2, factor(c('one', 'two')))", list3);
+  expect(r_list3.data[0].data).toEqual(new Float64Array([0.5, 1, 1.5, 2, 2.5]));
+  expect(r_list3.data[1].data).toEqual(["one", "two"]);
+});
