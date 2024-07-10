@@ -77,7 +77,8 @@ var Rserve = (function () {
       vector: make_basic("vector", {
         json: function (resolver) {
           var values = _.map(this.value, function (x) {
-            return x.json(resolver);
+            const y = x.json(resolver);
+            return y;
           });
           if (_.isUndefined(this.attributes)) {
             return values;
@@ -1146,6 +1147,7 @@ var Rserve = (function () {
         // SEND doesn't need reply, so it's irrelevant, MSG is handled separately below and
         // enforces the right queue.
         if (!queue) queue = queues[0];
+
         if (!v.ok) {
           queue.result_callback([v.message, v.status_code], undefined);
           // handle_error(v.message, v.status_code);
@@ -1362,17 +1364,18 @@ var Rserve = (function () {
         //////////////////////////////////////////////////////////////////////
         // ocap mode
 
+        // ocap is not a json() version
         OCcall: function (ocap, values, k) {
           var is_ocap = false,
             str;
           try {
-            is_ocap |= ocap.r_attributes["class"] === "OCref";
-            str = ocap[0];
+            is_ocap |= ocap.r_attributes["class"].data === "OCref";
+            str = ocap.data ? ocap.data[0] : ocap.value;
           } catch (e) {}
           if (!is_ocap) {
             try {
               is_ocap |= ocap.attributes.value[0].value.value[0] === "OCref";
-              str = ocap.value[0];
+              str = ocap.data ? ocap.data.value[0] : ocap.value[0];
             } catch (e) {}
           }
           if (!is_ocap) {
@@ -1405,37 +1408,66 @@ var Rserve = (function () {
       return result;
     };
 
+    // const unData = (x) => {
+    //   if (!x) return x;
+    //   if (x.data) {
+    //     let result = unData(x.data);
+    //     try {
+    //       if (x.r_type) result.r_type = x.r_type;
+    //       if (x.r_attributes) result.r_attributes = unData(x.r_attributes);
+    //     } catch (e) {}
+    //     return unData(result);
+    //   }
+
+    //   if (_.isObject(x) && !_.isArray(x)) {
+    //     let result = _.object(_.map(x, (v, k) => [k, unData(v)]));
+    //     try {
+    //       if (x.r_type) result.r_type = x.r_type;
+    //       if (x.r_attributes) result.r_attributes = unData(x.r_attributes);
+    //     } catch (e) {}
+    //     return result;
+    //   }
+
+    //   return x;
+    // };
+
     Rserve.wrap_all_ocaps = function (s, v) {
       v = v.value.json(s.resolve_hash);
       function replace(obj) {
         var result = obj;
         if (
-          _.isArray(obj) &&
+          _.isArray(obj.data) &&
           obj.r_attributes &&
-          obj.r_attributes["class"] == "OCref"
+          obj.r_attributes["class"] &&
+          obj.r_attributes["class"].data == "OCref"
         ) {
           return Rserve.wrap_ocap(s, obj);
-        } else if (_.isArray(obj)) {
-          result = _.map(obj, replace);
+        } else if (_.isArray(obj.data)) {
+          result = { data: _.map(obj.data, replace) };
           result.r_type = obj.r_type;
           result.r_attributes = obj.r_attributes;
-        } else if (_.isTypedArray(obj)) {
+        } else if (_.isTypedArray(obj.data)) {
           return obj;
-        } else if (_.isFunction(obj)) {
+        } else if (_.isFunction(obj.data)) {
           return obj;
         } else if (
           obj &&
-          !_.isUndefined(obj.byteLength) &&
-          !_.isUndefined(obj.slice)
+          obj.data &&
+          !_.isUndefined(obj.data.byteLength) &&
+          !_.isUndefined(obj.data.slice)
         ) {
           // ArrayBuffer
           return obj;
-        } else if (_.isObject(obj)) {
-          result = _.object(
-            _.map(obj, function (v, k) {
-              return [k, replace(v)];
-            })
-          );
+        } else if (_.isObject(obj.data)) {
+          result = {
+            ..._.object(
+              _.map(obj.data, function (v, k) {
+                return [k, replace(v)];
+              })
+            ),
+            r_type: obj.r_type,
+            r_attributes: replace(obj.r_attributes),
+          };
         }
         return result;
       }

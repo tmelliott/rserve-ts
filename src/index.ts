@@ -9,9 +9,11 @@ import {
   sexp,
   table,
   list,
+  RTypes,
+  ZTypes,
 } from "./types";
 
-type CallbackFromPromise<T> = {
+export type CallbackFromPromise<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
     ? (args: A, k: (err: string, data: Awaited<R>) => void) => void
     : never;
@@ -137,34 +139,30 @@ const createRserve = async (
           }
         });
       }),
-    ocap: <const TFuns extends Record<string, (...args: any[]) => any>>() =>
-      new Promise<TFuns>((resolve, reject) => {
-        client.ocap<CallbackFromPromise<TFuns>>((err, data) => {
+    ocap: <TFuns extends z.ZodRawShape>(schema?: TFuns) =>
+      new Promise<z.infer<z.ZodObject<TFuns, "strip">>>((resolve, reject) => {
+        client.ocap((err: string, data: Record<string, Function>) => {
           if (err) {
             reject(err);
           } else {
             const ocapFuns = Object.fromEntries(
-              Object.entries<any>(data).map(([key, fun]) => [
+              Object.entries(data).map(([key, fun]) => [
                 key,
-                (...args: any[]) =>
-                  new Promise((resolve, reject) => {
-                    fun(
-                      args,
-                      (
-                        err: string,
-                        data: CallbackFromPromise<TFuns>[keyof TFuns]
-                      ) => {
-                        if (err) {
-                          reject(err);
-                        } else {
-                          resolve(data);
-                        }
+                (...args: any[]) => {
+                  return new Promise((resolve, reject) => {
+                    fun(...args, (err: string, data: unknown) => {
+                      if (err) {
+                        reject(err);
+                      } else {
+                        resolve(data);
                       }
-                    );
-                  }),
+                    });
+                  });
+                },
               ])
-            ) as TFuns;
-            resolve(ocapFuns);
+            );
+            if (schema) resolve(z.object(schema).parse(ocapFuns));
+            else resolve(ocapFuns as any);
           }
         });
       }),

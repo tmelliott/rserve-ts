@@ -73,7 +73,7 @@ type FactorArray<
 
 test("Boolean types", async () => {
   const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
+    host: "http://127.0.0.1:8881",
   });
 
   const bool1 = logical();
@@ -158,7 +158,7 @@ test("Boolean types", async () => {
 
 test("Integer types", async () => {
   const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
+    host: "http://127.0.0.1:8881",
   });
 
   const int1 = integer();
@@ -238,7 +238,7 @@ test("Integer types", async () => {
 
 test("Numeric types", async () => {
   const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
+    host: "http://127.0.0.1:8881",
   });
 
   const num1 = numeric();
@@ -318,7 +318,7 @@ test("Numeric types", async () => {
 
 test("Character types", async () => {
   const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
+    host: "http://127.0.0.1:8881",
   });
 
   const char1 = character();
@@ -413,7 +413,7 @@ test("Character types", async () => {
 
 test("Factor types", async () => {
   const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
+    host: "http://127.0.0.1:8881",
   });
 
   const factor1 = R.factor();
@@ -462,7 +462,7 @@ test("Factor types", async () => {
 
 test("Table types", async () => {
   const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
+    host: "http://127.0.0.1:8881",
   });
 
   const tab1 = R.table([3]);
@@ -553,7 +553,7 @@ test("Table types", async () => {
 
 test("List types", async () => {
   const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
+    host: "http://127.0.0.1:8881",
   });
 
   const list1 = R.list();

@@ -4,7 +4,7 @@ import RserveClient from "./index";
 
 test("Rserve connects and runs", async () => {
   const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
+    host: "http://127.0.0.1:8881",
   });
 
   expect(R.is_running()).toBe(true);
@@ -43,4 +43,13 @@ test("Rserve connects and runs", async () => {
   };
   expect(numWithAttr).toEqual(expectedNumWithAttr);
   expect(numWithAttr.r_attributes.class.data).toBe("myclass");
+});
+
+test("Rserve connects to OCAP server", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8781",
+  });
+
+  // const { data: funs } = await R.ocap();
+  // console.log(funs);
 });

@@ -28,8 +28,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Start Rserve
-        run: |
-          cd tests && ./r_files/start_no_ocap &
+        run: pnpm run rserve &
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run ci

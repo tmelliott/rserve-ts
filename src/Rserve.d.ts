@@ -117,7 +117,7 @@ declare namespace Rserve {
     resolve_hash: (hash: string) => any; // TODO: does this need exporting?
 
     // ocap mode
-    ocap: <T>(k: RserveCallback<T>) => void;
+    ocap: (k: Function) => void;
   }
 
   export function create(options: RserveOptions): RserveClient;

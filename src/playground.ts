@@ -1,9 +1,10 @@
-import RserveClient from "./index";
+import RserveClient, { type CallbackFromPromise } from "./index";
 import { z } from "zod";
+import { Character, Integer, List, Numeric, RTypes } from "./types";
 
-(async function () {
+const noOcap = async () => {
   const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
+    host: "http://127.0.0.1:8881",
   });
 
   console.log("Connected to R");
@@ -117,8 +118,6 @@ import { z } from "zod";
   // console.log(x.value.value);
   // console.log(x.value.value.formals.value);
 
-  process.exit(0);
-
   // const x = await R.eval<number>("1 + 1");
 
   // const oc = await R.ocap<{
@@ -126,4 +125,46 @@ import { z } from "zod";
   // }>();
   // const z = await oc.add(1, 2);
   // console.log(z);
+};
+
+const ocapTest = async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8781",
+  });
+
+  // console.log(R.client);
+
+  // // console.log(
+  // R.client.ocap(() => {
+  //   console.log("hello");
+  // });
+  // // );
+
+  const oc = await R.ocap();
+
+  const ocapFuns = {
+    add: z
+      .function(z.tuple([z.number(), z.number()]))
+      .returns(z.promise(R.numeric(1))),
+    newItem: z.function(z.tuple([z.string(), z.number()])).returns(
+      z.promise(
+        R.list({
+          name: R.character(1),
+          price: R.numeric(1),
+          codes: R.numeric(5),
+        })
+      )
+    ),
+    randomNumbers: z.function().returns(z.promise(R.numeric(10))),
+  };
+
+  const app = await R.ocap(ocapFuns);
+  const { data: x } = await app.add(1, 2);
+  console.log(x);
+};
+
+(async () => {
+  // await noOcap();
+  await ocapTest();
+  process.exit(0);
 })();

@@ -68,10 +68,13 @@ type ZVector<
 export type Vector = z.infer<ZVector>;
 
 type ZLogical<
-  T extends number | undefined = undefined,
+  L extends number | undefined = undefined,
   A extends z.ZodRawShape | undefined = undefined
-> = ZVector<"bool_array", T, A, z.ZodBoolean>;
-export type Logical = z.infer<ZLogical>;
+> = ZVector<"bool_array", L, A, z.ZodBoolean>;
+export type Logical<
+  L extends number | undefined = undefined,
+  A extends z.ZodRawShape | undefined = undefined
+> = z.infer<ZLogical<L, A>>;
 
 function logical(): ZLogical;
 function logical<L extends number>(len: L): ZLogical<L>;
@@ -103,7 +106,10 @@ type ZInteger<
   L extends number | undefined = undefined,
   A extends z.ZodRawShape | undefined = undefined
 > = ZVector<"int_array", L, A, z.ZodNumber, ZodInt32Array>;
-export type Integer = z.infer<ZInteger>;
+export type Integer<
+  L extends number | undefined = undefined,
+  A extends z.ZodRawShape | undefined = undefined
+> = z.infer<ZInteger<L, A>>;
 
 function integer(): ZInteger;
 function integer<L extends number>(len: L): ZInteger<L>;
@@ -135,7 +141,10 @@ type ZNumeric<
   L extends number | undefined = undefined,
   A extends z.ZodRawShape | undefined = undefined
 > = ZVector<"double_array", L, A, z.ZodNumber, ZodFloat64Array>;
-export type Numeric = z.infer<ZNumeric>;
+export type Numeric<
+  L extends number | undefined = undefined,
+  A extends z.ZodRawShape | undefined = undefined
+> = z.infer<ZNumeric<L, A>>;
 
 function numeric(): ZNumeric;
 function numeric<L extends number>(len: L): ZNumeric<L>;
@@ -165,7 +174,10 @@ type ZCharacter<
   L extends number | undefined = undefined,
   A extends z.ZodRawShape | undefined = undefined
 > = ZVector<"string_array", L, A, z.ZodString>;
-export type Character = z.infer<ZCharacter>;
+export type Character<
+  L extends number | undefined = undefined,
+  A extends z.ZodRawShape | undefined = undefined
+> = z.infer<ZCharacter<L, A>>;
 
 function character(): ZCharacter;
 function character<L extends number>(len: L): ZCharacter<L>;
@@ -333,7 +345,13 @@ function table(x: number | [number, ...number[]]) {
   ) as any;
 }
 
-type ZTypes = ZLogical | ZInteger | ZNumeric | ZCharacter | ZFactor | ZTable;
+export type ZTypes =
+  | ZLogical
+  | ZInteger
+  | ZNumeric
+  | ZCharacter
+  | ZFactor
+  | ZTable;
 export type RTypes = z.infer<ZTypes>;
 
 type ZList<
@@ -341,18 +359,7 @@ type ZList<
   A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
 > = Robject<
   T extends undefined
-    ? z.ZodRecord<
-        z.ZodString,
-        ZTypes
-        // z.ZodObject<
-        //   {
-        //     data: z.ZodTypeAny;
-        //     r_type: z.ZodString;
-        //     r_attributes: z.ZodTypeAny;
-        //   },
-        //   "strip"
-        // >
-      >
+    ? z.ZodRecord<z.ZodString, ZTypes>
     : T extends z.ZodRawShape
     ? z.ZodObject<T, "strip">
     : T,
@@ -372,9 +379,13 @@ type ZList<
   >
 >;
 export type List<
-  T extends z.ZodRawShape | z.ZodTuple | undefined = undefined,
-  A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
-> = z.infer<ZList<T, A>>;
+  T extends Record<string, RTypes> = Record<string, RTypes>,
+  A extends Record<string, RTypes> = Record<string, RTypes>
+> = {
+  data: T;
+  r_type: "vector";
+  r_attributes: A;
+};
 
 function list(): ZList;
 function list<
