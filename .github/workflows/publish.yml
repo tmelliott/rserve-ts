@@ -34,6 +34,10 @@ jobs:
           cd tests && ./r_files/start_no_ocap &
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Start Rserve
+        run: pnpm run rserve &
+
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
