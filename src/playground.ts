@@ -1,6 +1,7 @@
 import RserveClient, { type CallbackFromPromise } from "./index";
 import { z } from "zod";
 import { Character, Integer, List, Numeric, RTypes } from "./types";
+import { ocapFuns } from "../tests/r_files/oc";
 
 const noOcap = async () => {
   const R = await RserveClient.create({
@@ -142,25 +143,39 @@ const ocapTest = async () => {
 
   const oc = await R.ocap();
 
-  const ocapFuns = {
-    add: z
-      .function(z.tuple([z.number(), z.number()]))
-      .returns(z.promise(R.numeric(1))),
-    newItem: z.function(z.tuple([z.string(), z.number()])).returns(
-      z.promise(
-        R.list({
-          name: R.character(1),
-          price: R.numeric(1),
-          codes: R.numeric(5),
-        })
-      )
-    ),
-    randomNumbers: z.function().returns(z.promise(R.numeric(10))),
-  };
-
   const app = await R.ocap(ocapFuns);
-  const { data: x } = await app.add(1, 2);
-  console.log(x);
+
+  const { data: x1 } = await app.t1(5);
+  console.log("T1:", x1);
+
+  const { data: x2 } = await app.t2(4);
+  console.log("T2:", x2);
+
+  // this API is tricky - can we improve it? e.g.,
+  // app.t3(function(x) {
+  //   return 21 + x;
+  // })
+  const { data: x3 } = await app.t3(function (x, k) {
+    k(null, 21 + x);
+  });
+  console.log("T3:", x3);
+
+  // T4: 26
+  const { data: x4 } = await app.t4(5);
+  console.log("T4:", x4);
+
+  // T5: null
+  const x5 = await app.t5(function (i) {
+    return i * i;
+  });
+  console.log("T5:", x5);
+
+  // T6: 25
+  const {
+    data: [{ data: f6 }, { data: i6 }],
+  } = await app.t6(5);
+  const x6 = f6(i6);
+  console.log("T6:", x6);
 };
 
 (async () => {

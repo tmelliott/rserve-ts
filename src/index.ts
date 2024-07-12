@@ -161,6 +161,7 @@ const createRserve = async (
                 },
               ])
             );
+            // resolve(ocapFuns as any);
             if (schema) resolve(z.object(schema).parse(ocapFuns));
             else resolve(ocapFuns as any);
           }

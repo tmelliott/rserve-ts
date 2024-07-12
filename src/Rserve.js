@@ -1165,7 +1165,7 @@ var Rserve = (function () {
           // console.log("OOB MSG result on queue "+ queue.name);
           var p;
           try {
-            p = Rserve.wrap_all_ocaps(result, v.payload); // .value.json(result.resolve_hash);
+            p = Rserve.wrap_all_ocaps(result, v.payload).data; // .value.json(result.resolve_hash);
           } catch (e) {
             _send_cmd_now(
               Rserve.Rsrv.RESP_ERR | cmd,
@@ -1174,7 +1174,7 @@ var Rserve = (function () {
             );
             return;
           }
-          if (_.isString(p[0])) {
+          if (_.isString(p[0].data)) {
             if (_.isUndefined(opts.on_oob_message)) {
               _send_cmd_now(
                 Rserve.Rsrv.RESP_ERR | cmd,
@@ -1210,7 +1210,7 @@ var Rserve = (function () {
                 bump_queues();
               });
             }
-          } else if (_.isFunction(p[0])) {
+          } else if (_.isFunction(p[0].data)) {
             if (!result.ocap_mode) {
               _send_cmd_now(
                 Rserve.Rsrv.RESP_ERROR | cmd,
@@ -1220,8 +1220,10 @@ var Rserve = (function () {
                 msg_id
               );
             } else {
-              var captured_function = p[0],
-                params = p.slice(1);
+              var captured_function = p[0].data,
+                params = _.map(p.slice(1), function (p) {
+                  return p.data;
+                });
               params.push(function (err, result) {
                 if (err) {
                   _send_cmd_now(
@@ -1408,33 +1410,34 @@ var Rserve = (function () {
       return result;
     };
 
-    // const unData = (x) => {
-    //   if (!x) return x;
-    //   if (x.data) {
-    //     let result = unData(x.data);
-    //     try {
-    //       if (x.r_type) result.r_type = x.r_type;
-    //       if (x.r_attributes) result.r_attributes = unData(x.r_attributes);
-    //     } catch (e) {}
-    //     return unData(result);
-    //   }
+    const unData = (x) => {
+      if (!x) return x;
+      if (x.data) {
+        let result = unData(x.data);
+        try {
+          if (x.r_type) result.r_type = x.r_type;
+          if (x.r_attributes) result.r_attributes = unData(x.r_attributes);
+        } catch (e) {}
+        return unData(result);
+      }
 
-    //   if (_.isObject(x) && !_.isArray(x)) {
-    //     let result = _.object(_.map(x, (v, k) => [k, unData(v)]));
-    //     try {
-    //       if (x.r_type) result.r_type = x.r_type;
-    //       if (x.r_attributes) result.r_attributes = unData(x.r_attributes);
-    //     } catch (e) {}
-    //     return result;
-    //   }
+      if (_.isObject(x) && !_.isArray(x)) {
+        let result = _.object(_.map(x, (v, k) => [k, unData(v)]));
+        try {
+          if (x.r_type) result.r_type = x.r_type;
+          if (x.r_attributes) result.r_attributes = unData(x.r_attributes);
+        } catch (e) {}
+        return result;
+      }
 
-    //   return x;
-    // };
+      return x;
+    };
 
     Rserve.wrap_all_ocaps = function (s, v) {
       v = v.value.json(s.resolve_hash);
       function replace(obj) {
         var result = obj;
+        if (_.isUndefined(obj) || _.isNull(obj)) return obj;
         if (
           _.isArray(obj.data) &&
           obj.r_attributes &&
