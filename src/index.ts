@@ -10,6 +10,7 @@ import {
   table,
   list,
 } from "./types";
+import { types } from "util";
 
 export type CallbackFromPromise<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
@@ -180,3 +181,4 @@ const RserveClient = {
 };
 
 export default RserveClient;
+export * as types from "./types";

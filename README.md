@@ -35,6 +35,41 @@ In OCAP mode, only pre-defined functions can be called. This is useful for restr
 
 [Zod](https://zod.dev) is used to define function schemas, with additional R types defined.
 
-```typescript
+```r
+# ocap.R
+library(Rserve)
+oc.init <- function() {
+  ocap(function() {
+    list(
+      add <- ocap(function(a, b) {
+        a + b
+      }),
+    )
+  })
+}
+```
 
+```typescript
+// ocap.ts
+import { types } from "rserve-ts";
+
+export const appFuns = {
+  add: types.function([types.number(), types.number()], types.number()),
+};
+```
+
+```typescript
+import { RserveClient } from "rserve-ts";
+import { appFuns } from "./ocap";
+
+(async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8081",
+  });
+
+  const app = await R.ocap(appFuns);
+
+  const { data: sum } = await app.add(1, 2);
+  console.log("1 + 2 = ", sum);
+})();
 ```
