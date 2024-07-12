@@ -1,6 +1,4 @@
-import RserveClient, { type CallbackFromPromise } from "./index";
-import { z } from "zod";
-import { Character, Integer, List, Numeric, RTypes } from "./types";
+import RserveClient from "./index";
 import { ocapFuns } from "../tests/r_files/oc";
 
 const noOcap = async () => {
@@ -132,14 +130,6 @@ const ocapTest = async () => {
   const R = await RserveClient.create({
     host: "http://127.0.0.1:8781",
   });
-
-  // console.log(R.client);
-
-  // // console.log(
-  // R.client.ocap(() => {
-  //   console.log("hello");
-  // });
-  // // );
 
   const oc = await R.ocap();
 

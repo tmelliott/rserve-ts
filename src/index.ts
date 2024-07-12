@@ -9,8 +9,6 @@ import {
   sexp,
   table,
   list,
-  RTypes,
-  ZTypes,
 } from "./types";
 
 export type CallbackFromPromise<T> = {

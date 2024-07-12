@@ -1,7 +1,7 @@
-import { test, expect, expectTypeOf } from "vitest";
-import { logical, character, integer, numeric, RTypes } from "./types";
+import { test, expect } from "vitest";
+import { logical, character, integer, numeric, RTypes } from ".";
 import { z } from "zod";
-import RserveClient from "./index";
+import RserveClient from "../index";
 
 type Expect<T extends true> = T;
 type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y

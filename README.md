@@ -28,3 +28,13 @@ import RserveClient from "rserve-ts";
   console.log("Connected to ", rversion);
 })();
 ```
+
+## OCAP mode
+
+In OCAP mode, only pre-defined functions can be called. This is useful for restricting the R code that can be executed on the server, or for developing applications.
+
+[Zod](https://zod.dev) is used to define function schemas, with additional R types defined.
+
+```typescript
+
+```
