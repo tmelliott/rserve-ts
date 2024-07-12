@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.1.0
+
+### Minor Changes
+
+- Basic working implementation of type-safe Rserve using zod
+
 ## 0.0.3
 
 ### Patch Changes
