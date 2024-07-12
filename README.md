@@ -1,5 +1,7 @@
 # rserve-ts: Typescript wrapper for rserve library
 
+![NPM Version](https://img.shields.io/npm/v/rserve-ts)
+
 This is a typescript wrapper for the rserve library. The goal is to provide modern async API alternatives with typescript support (via zod).
 
 The package wraps the main connection function and allows users to evaluate arbitrary R code on the server. This will be extended to full OCAP support.
