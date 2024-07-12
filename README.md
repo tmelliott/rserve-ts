@@ -1,6 +1,6 @@
 # rserve-ts: Typescript wrapper for rserve library
 
-![NPM Version](https://img.shields.io/npm/v/rserve-ts)
+[![NPM Version](https://img.shields.io/npm/v/rserve-ts)](https://www.npmjs.com/package/rserve-ts)
 
 This is a typescript wrapper for the rserve library. The goal is to provide modern async API alternatives with typescript support (via zod).
 
