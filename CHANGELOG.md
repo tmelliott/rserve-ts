@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.2.2
+
+### Patch Changes
+
+- 30c9fcd: ws dependency rejig'
+
 ## 0.2.1
 
 ### Patch Changes
