@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.2.1
+
+### Patch Changes
+
+- fc221c5: remove ws
+
 ## 0.2.0
 
 ### Minor Changes
