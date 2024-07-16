@@ -1,5 +1,8 @@
 import RserveClient from "./index";
 
+// set global WebSocket
+global.WebSocket = require("ws");
+
 import { test, expect } from "vitest";
 
 import { ocapFuns } from "../tests/r_files/oc";

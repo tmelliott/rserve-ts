@@ -2,6 +2,9 @@ import RserveClient from "./index";
 import { ocapFuns } from "../tests/r_files/oc";
 import * as RT from "./types";
 
+// set global WebSocket
+global.WebSocket = require("ws");
+
 const noOcap = async () => {
   const R = await RserveClient.create({
     host: "http://127.0.0.1:8881",

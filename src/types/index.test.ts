@@ -3,6 +3,9 @@ import { logical, character, integer, numeric, RTypes } from ".";
 import { z } from "zod";
 import RserveClient from "../index";
 
+// set global WebSocket
+global.WebSocket = require("ws");
+
 type Expect<T extends true> = T;
 type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y
   ? 1
