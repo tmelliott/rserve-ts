@@ -23,7 +23,6 @@
   "devDependencies": {
     "@changesets/cli": "^2.27.5",
     "@types/node": "^20.14.1",
-    "@types/ws": "^8.5.11",
     "bluebird": "^3.7.2",
     "concurrently": "^8.2.2",
     "tsup": "^8.1.0",
