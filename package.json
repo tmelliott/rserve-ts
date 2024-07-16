@@ -32,7 +32,6 @@
   "dependencies": {
     "rserve": "^1.0.2",
     "underscore": "^1.13.6",
-    "ws": "^8.17.0",
     "zod": "^3.23.8"
   }
 }
