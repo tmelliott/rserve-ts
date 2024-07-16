@@ -33,7 +33,7 @@ jobs:
         run: |
           cd tests && ./r_files/start_no_ocap &
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --no-frozen-lockfile
 
       - name: Start Rserve
         run: pnpm run rserve &
