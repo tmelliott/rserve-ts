@@ -24,9 +24,6 @@ importers:
       '@types/node':
         specifier: ^20.14.1
         version: 20.14.1
-      '@types/ws':
-        specifier: ^8.5.11
-        version: 8.5.11
       bluebird:
         specifier: ^3.7.2
         version: 3.7.2
@@ -540,9 +537,6 @@ packages:
 
   '@types/semver@7.5.8':
     resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
-
-  '@types/ws@8.5.11':
-    resolution: {integrity: sha512-4+q7P5h3SpJxaBft0Dzpbr6lmMaqh0Jr2tbhJZ/luAwvD7ohSCniYkwz/pLxuT2h0EOa6QADgJj1Ko+TzRfZ+w==}
 
   '@vitest/expect@1.6.0':
     resolution: {integrity: sha512-ixEvFVQjycy/oNgHjqsL6AZCDduC+tflRluaHIzKIsdbzkLn2U/iBnVeJwB6HsIjQBdfMR8Z0tRxKUsvFJEeWQ==}
@@ -2466,10 +2460,6 @@ snapshots:
   '@types/normalize-package-data@2.4.4': {}
 
   '@types/semver@7.5.8': {}
-
-  '@types/ws@8.5.11':
-    dependencies:
-      '@types/node': 20.14.1
 
   '@vitest/expect@1.6.0':
     dependencies:

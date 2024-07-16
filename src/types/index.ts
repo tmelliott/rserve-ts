@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { RObject } from "../Rserve";
 
 export const sexp = <T extends z.ZodTypeAny>(json: T) => {
   return z.object({
