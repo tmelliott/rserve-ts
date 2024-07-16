@@ -4,7 +4,7 @@ var Rserve = (function () {
   var _ = require("underscore");
 
   if (typeof window === "undefined") {
-    var WebSocket = require("ws");
+    var WebSocket = require("ws").Server;
   }
 
   (function () {
