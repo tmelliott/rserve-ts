@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.2.0
+
+### Minor Changes
+
+- 35db39e: Add (slightly) better table support with an `asTable()` method, which returns an M-dimensional array
+
 ## 0.1.0
 
 ### Minor Changes
