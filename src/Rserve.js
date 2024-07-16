@@ -3,6 +3,10 @@ var Rserve = (function () {
 
   var _ = require("underscore");
 
+  if (typeof window === "undefined") {
+    var WebSocket = require("ws");
+  }
+
   (function () {
     function make_basic(type, proto) {
       proto = proto || {
