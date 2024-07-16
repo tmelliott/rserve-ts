@@ -27,7 +27,7 @@ jobs:
           install.packages("Rserve", repos="http://rforge.net", type="source")
         shell: Rscript {0}
 
-      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm install
 
       - name: Start Rserve
         run: pnpm run rserve &
