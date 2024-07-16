@@ -11,6 +11,9 @@ importers:
       underscore:
         specifier: ^1.13.6
         version: 1.13.6
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
       zod:
         specifier: ^3.23.8
         version: 3.23.8
@@ -39,9 +42,6 @@ importers:
       vitest:
         specifier: ^1.6.0
         version: 1.6.0(@types/node@20.14.1)
-      ws:
-        specifier: ^8.18.0
-        version: 8.18.0
 
 packages:
 
