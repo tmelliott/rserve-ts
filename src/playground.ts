@@ -1,5 +1,6 @@
 import RserveClient from "./index";
 import { ocapFuns } from "../tests/r_files/oc";
+import * as RT from "./types";
 
 const noOcap = async () => {
   const R = await RserveClient.create({
@@ -41,15 +42,29 @@ const noOcap = async () => {
   console.log("Species ...");
   console.log(species);
 
-  const tbl1 = await R.eval("table(iris$Species)");
+  const tbl = RT.asTable([1, 2, 3, 4, 5, 6], [3, 2]);
+  console.log(tbl);
+  console.log(tbl[1][0]);
+
+  const {
+    data: tbl1,
+    r_attributes: {
+      dim: { data: tbldim },
+    },
+  } = await R.eval("table(iris$Species)", R.table([3]));
   console.log("Table 1 ...");
-  console.log(tbl1);
+  console.log(RT.asTable(tbl1, [tbldim]));
 
   const tbl2 = await R.eval(
-    "with(iNZight::census.at.school.500, table(travel, gender))"
+    "with(iNZight::census.at.school.500, table(travel, gender))",
+    RT.table([6, 2])
   );
   console.log("Table 2 ...");
-  console.log(tbl2);
+  console.log(RT.asTable(tbl2.data, [6, 2]));
+  if (tbl2.r_attributes) {
+    console.log(tbl2.r_attributes.dimnames);
+  }
+
   //   R.integer(3, {
   //     dimnames: z.object({
   //       "": R.character(),
@@ -169,7 +184,7 @@ const ocapTest = async () => {
 };
 
 (async () => {
-  // await noOcap();
-  await ocapTest();
+  await noOcap();
+  // await ocapTest();
   process.exit(0);
 })();

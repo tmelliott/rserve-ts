@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RObject } from "../Rserve";
 
 export const sexp = <T extends z.ZodTypeAny>(json: T) => {
   return z.object({
@@ -291,7 +292,7 @@ function factor<
   );
 }
 
-type TupleOf<T, N extends number> = N extends N
+export type TupleOf<T, N extends number> = N extends N
   ? number extends N
     ? T[]
     : _TupleOf<T, N, []>
@@ -313,6 +314,9 @@ type ZTable<D extends number | number[] | [number, ...number[]] = number[]> =
         dim: D extends [number, ...number[]]
           ? Robject<ArrayToTuple<D>, "int_array">
           : Robject<z.ZodLiteral<D>, "int_array">;
+        dimnames: z.ZodObject<{
+          data: z.ZodRecord<z.ZodString, ZCharacter>;
+        }>;
       },
       "strip"
     >
@@ -320,6 +324,37 @@ type ZTable<D extends number | number[] | [number, ...number[]] = number[]> =
 export type Table<
   D extends number | number[] | [number, ...number[]] = number[]
 > = z.infer<ZTable<D>>;
+
+type XTable<D extends [number, ...number[]]> = D extends [number]
+  ? _Table<D[0]>
+  : D extends [...infer T, infer K]
+  ? T extends [number, ...number[]]
+    ? _Table<K extends number ? K : never, XTable<T>>
+    : never
+  : never;
+type _Table<
+  D extends number,
+  T extends number | _Table<any, any> = number
+> = TupleOf<T, D>;
+
+export function asTable<const D extends [number, ...number[]]>(
+  x: number[] | Int32Array,
+  dim: D
+): XTable<D> {
+  let result: any = x;
+  if (x instanceof Int32Array) {
+    result = Array.from(x);
+  }
+  for (let j = 0; j < dim.length; j++) {
+    const idx = Array.from({ length: dim[j] }, (_, i) => i + 1);
+    let x0 = [];
+    while (result.length) {
+      x0.push(idx.map((j) => result.shift()));
+    }
+    result = x0;
+  }
+  return result[0];
+}
 
 function table<const D extends number>(
   dim: D
@@ -340,6 +375,9 @@ function table(x: number | [number, ...number[]]) {
           : z.instanceof(Int32Array).transform((x) => Array.from(x)),
         "int_array"
       ),
+      dimnames: z.object({
+        data: z.record(z.string(), character()),
+      }),
     })
   ) as any;
 }

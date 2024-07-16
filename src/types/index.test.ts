@@ -488,6 +488,9 @@ test("Table types", async () => {
               r_type: "int_array";
               r_attributes?: unknown;
             };
+            dimnames: {
+              data: Record<string, StringArray>;
+            };
           };
         }
       >
@@ -503,6 +506,9 @@ test("Table types", async () => {
               data: [3, 2];
               r_type: "int_array";
               r_attributes?: unknown;
+            };
+            dimnames: {
+              data: Record<string, StringArray>;
             };
           };
         }
@@ -520,6 +526,9 @@ test("Table types", async () => {
               r_type: "int_array";
               r_attributes?: unknown;
             };
+            dimnames: {
+              data: Record<string, StringArray>;
+            };
           };
         }
       >
@@ -535,6 +544,9 @@ test("Table types", async () => {
               data: [number, number, number];
               r_type: "int_array";
               r_attributes?: unknown;
+            };
+            dimnames: {
+              data: Record<string, StringArray>;
             };
           };
         }
