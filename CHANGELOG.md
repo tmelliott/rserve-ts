@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.2.4
+
+### Patch Changes
+
+- 9c921cb: Fix vector bug where names ignored if not first attribute
+
 ## 0.2.3
 
 ### Patch Changes
