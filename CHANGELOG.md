@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.2.3
+
+### Patch Changes
+
+- b71d969: Move ws import to tests
+
 ## 0.2.2
 
 ### Patch Changes
