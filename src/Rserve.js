@@ -1458,7 +1458,7 @@ var Rserve = (function () {
           return obj;
         } else if (_.isObject(obj.data)) {
           result = {
-            ..._.object(
+            data: _.object(
               _.map(obj.data, function (v, k) {
                 return [k, replace(v)];
               })

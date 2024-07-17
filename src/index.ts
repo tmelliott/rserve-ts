@@ -139,12 +139,12 @@ const createRserve = async (
       }),
     ocap: <TFuns extends z.ZodRawShape>(schema?: TFuns) =>
       new Promise<z.infer<z.ZodObject<TFuns, "strip">>>((resolve, reject) => {
-        client.ocap((err: string, data: Record<string, Function>) => {
+        client.ocap((err: string, data: { data: Record<string, Function> }) => {
           if (err) {
             reject(err);
           } else {
             const ocapFuns = Object.fromEntries(
-              Object.entries(data).map(([key, fun]) => [
+              Object.entries(data.data).map(([key, fun]) => [
                 key,
                 (...args: any[]) => {
                   return new Promise((resolve, reject) => {

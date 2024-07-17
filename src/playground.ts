@@ -69,12 +69,7 @@ const noOcap = async () => {
     console.log(tbl2.r_attributes.dimnames);
   }
 
-  const iris = await R.eval(
-    "head(iris)",
-    z.object({
-      data: z.any(),
-    })
-  );
+  const iris = await R.eval("head(iris)", z.any());
   console.log("Iris ...", iris);
 
   //   R.integer(3, {
@@ -193,10 +188,14 @@ const ocapTest = async () => {
   } = await app.t6(5);
   const x6 = f6(i6);
   console.log("T6:", x6);
+
+  // iris
+  const iris = await app.iris();
+  console.log("Iris:", iris);
 };
 
 (async () => {
-  await noOcap();
-  // await ocapTest();
+  // await noOcap();
+  await ocapTest();
   process.exit(0);
 })();

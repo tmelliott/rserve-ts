@@ -26,7 +26,8 @@ give.first.functions <- function() {
                 newItem = function(name, price) {
                     list(name = name, price = price, codes = sample(100, 5))
                 },
-                randomNumbers = rnorm(10)
+                randomNumbers = rnorm(10),
+                iris = function() head(iris)
             ),
             wrap.r.fun
         ),
@@ -71,7 +72,8 @@ give.first.functions <- function() {
                     naked.javascript.function <<- v
                     NULL
                 }, "t5"
-            ), t6 = wrap.r.fun(
+            ),
+            t6 = wrap.r.fun(
                 function(v) {
                     list(naked.javascript.function, v)
                 }, "t6"

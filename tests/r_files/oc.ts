@@ -15,6 +15,7 @@ export const ocapFuns = {
     )
   ),
   randomNumbers: z.function().returns(z.promise(R.numeric(10))),
+  iris: z.function().returns(z.promise(z.any())),
   tfail: z.function().returns(z.promise(z.unknown())),
   t1: z.function(z.tuple([z.number()])).returns(z.promise(R.numeric(1))),
   t2: z.function(z.tuple([z.number()])).returns(z.promise(R.numeric(1))),
