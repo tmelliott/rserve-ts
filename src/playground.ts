@@ -1,6 +1,7 @@
 import RserveClient from "./index";
 import { ocapFuns } from "../tests/r_files/oc";
 import * as RT from "./types";
+import { z } from "zod";
 
 // set global WebSocket
 global.WebSocket = require("ws");
@@ -67,6 +68,14 @@ const noOcap = async () => {
   if (tbl2.r_attributes) {
     console.log(tbl2.r_attributes.dimnames);
   }
+
+  const iris = await R.eval(
+    "head(iris)",
+    z.object({
+      data: z.any(),
+    })
+  );
+  console.log("Iris ...", iris);
 
   //   R.integer(3, {
   //     dimnames: z.object({

@@ -79,20 +79,19 @@ var Rserve = (function () {
           if (_.isUndefined(this.attributes)) {
             return values;
           } else {
-            // FIXME: there is no reason why names should be the first or only
-            //        attribute, so the code should really look
-            //        for "names" and not cry if it doesn't exist
-            if (this.attributes.value[0].name == "names") {
-              var keys = this.attributes.value[0].value.value;
-              var result = {};
-              _.each(keys, function (key, i) {
-                result[key] = values[i];
-              });
-              return result;
-            }
+            const namesIndex = this.attributes.value.findIndex(
+              (v) => v.name === "names"
+            );
+            if (namesIndex === -1) return values;
+            var keys = this.attributes.value[namesIndex].value.value;
+            var result = {};
+            _.each(keys, function (key, i) {
+              result[key] = values[i];
+            });
+            return result;
+
             // FIXME: how can we pass other important attributes
             //        like "class" ?
-            return values;
           }
         },
       }),
