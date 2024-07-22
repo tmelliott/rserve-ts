@@ -391,14 +391,20 @@ export type ZTypes =
 export type RTypes = z.infer<ZTypes>;
 
 type ZList<
-  T extends z.ZodRawShape | z.ZodTuple | undefined = undefined,
+  T extends z.ZodRawShape | z.ZodTuple | z.ZodTypeAny | undefined = undefined,
   A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
 > = Robject<
   T extends undefined
     ? z.ZodRecord<z.ZodString, ZTypes>
     : T extends z.ZodRawShape
     ? z.ZodObject<T, "strip">
-    : T,
+    : T extends z.ZodTuple
+    ? T
+    : T extends z.ZodRecord
+    ? T
+    : T extends z.ZodTypeAny
+    ? z.ZodArray<T>
+    : never,
   "vector",
   z.ZodObject<
     (T extends z.ZodRawShape
@@ -423,7 +429,15 @@ export type List<
   r_attributes: A;
 };
 
+const isZTypes = (x: any): x is ZTypes => {
+  return x instanceof z.ZodObject && x.shape.r_type instanceof z.ZodLiteral;
+};
+
 function list(): ZList;
+function list<
+  T extends z.ZodTypeAny,
+  const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
+>(schema: T, attr?: A): ZList<T, A>;
 function list<
   const T extends z.ZodRawShape,
   const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
@@ -433,13 +447,21 @@ function list<
   const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
 >(schema: T, attr?: A): ZList<z.ZodTuple<T>, A>;
 function list(
-  schema?: z.ZodRawShape | [z.ZodTypeAny, ...z.ZodTypeAny[]],
+  schema?:
+    | z.ZodRawShape
+    | [z.ZodTypeAny, ...z.ZodTypeAny[]]
+    | ZTypes
+    | z.ZodRecord,
   attr?: z.ZodRawShape
 ) {
   return robject(
     schema
       ? Array.isArray(schema)
         ? z.tuple(schema)
+        : isZTypes(schema)
+        ? z.array(schema)
+        : schema instanceof z.ZodRecord
+        ? schema
         : z.object(schema)
       : z.record(
           z.string(),

@@ -72,6 +72,22 @@ const noOcap = async () => {
   const iris = await R.eval("head(iris)", z.any());
   console.log("Iris ...", iris);
 
+  // generic lists
+  const listWithoutNames = R.list(R.character(1));
+  type ListWithoutNames = z.infer<typeof listWithoutNames>;
+  const l1 = await R.eval("list('A', 'B', 'C')", listWithoutNames);
+  console.log("List 1:", l1);
+
+  const listWithNames = R.list(z.record(z.string(), R.character(1)));
+  type ListWithNames = z.infer<typeof listWithNames>;
+  const l2 = await R.eval("list(A = 'a', B = 'b', C = 'c')", listWithNames);
+  console.log("List 2:", l2);
+
+  const { data } = l2;
+  Object.keys(data).forEach((key) => {
+    console.log(key, "=", data[key].data);
+  });
+
   //   R.integer(3, {
   //     dimnames: z.object({
   //       "": R.character(),
@@ -195,7 +211,7 @@ const ocapTest = async () => {
 };
 
 (async () => {
-  // await noOcap();
-  await ocapTest();
+  await noOcap();
+  // await ocapTest();
   process.exit(0);
 })();
