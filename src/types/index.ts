@@ -481,4 +481,25 @@ function list(
   ) as any;
 }
 
-export { logical, integer, numeric, character, factor, table, list };
+function dataframe(): ZList<z.ZodRecord<z.ZodString, ZTypes>>;
+function dataframe<
+  const T extends z.ZodRawShape,
+  const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
+>(schema: T, attr?: A): ZList<T, A>;
+function dataframe(schema?: z.ZodRawShape, attr?: z.ZodRawShape) {
+  return robject(
+    schema ? z.object(schema) : z.record(z.string(), z.any()),
+    "vector",
+    z.object({
+      ...attr,
+      class: z.object({
+        data: z.literal("data.frame"),
+        r_type: z.literal("string_array"),
+      }),
+      names: schema ? character(Object.keys(schema).length) : character(),
+      "row.names": z.union([character(), integer()]),
+    })
+  ) as any;
+}
+
+export { logical, integer, numeric, character, factor, table, list, dataframe };

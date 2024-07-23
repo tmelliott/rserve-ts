@@ -88,6 +88,16 @@ const noOcap = async () => {
     console.log(key, "=", data[key].data);
   });
 
+  // data frames
+  const df = await R.eval(
+    "data.frame(A = c('a', 'b', 'c'), B = c(1, 2, 3))",
+    R.dataframe({
+      A: RT.character(3),
+      B: RT.numeric(3),
+    })
+  );
+  console.log("Data Frame ...", df);
+
   //   R.integer(3, {
   //     dimnames: z.object({
   //       "": R.character(),

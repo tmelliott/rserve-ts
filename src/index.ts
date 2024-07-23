@@ -9,6 +9,7 @@ import {
   sexp,
   table,
   list,
+  dataframe,
 } from "./types";
 
 export type CallbackFromPromise<T> = {
@@ -172,6 +173,7 @@ const createRserve = async (
     factor,
     table,
     list,
+    dataframe,
   };
 };
 
