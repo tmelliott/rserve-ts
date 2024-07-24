@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.2.5
+
+### Patch Changes
+
+- 1454721: add everything
+
 ## 0.2.7
 
 ### Patch Changes
