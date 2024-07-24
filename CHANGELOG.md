@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.2.7
+
+### Patch Changes
+
+- add dist
+
 ## 0.2.6
 
 ### Patch Changes
