@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.2.6
+
+### Patch Changes
+
+- 4d23bdc: update pkgjson
+
 ## 0.2.5
 
 ### Patch Changes
