@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.2.5
+
+### Patch Changes
+
+- a90b69f: Types subpackage
+
 ## 0.2.4
 
 ### Patch Changes
