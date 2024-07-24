@@ -1,6 +1,6 @@
 {
   "name": "rserve-ts",
-  "version": "0.2.5",
+  "version": "0.2.8",
   "description": "",
   "private": false,
   "main": "./dist/index.js",
