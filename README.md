@@ -51,7 +51,7 @@ oc.init <- function() {
 
 ```typescript
 // ocap.ts
-import { types } from "rserve-ts";
+import { function, number } from "rserve-ts/types";
 
 export const appFuns = {
   add: types.function([types.number(), types.number()], types.number()),

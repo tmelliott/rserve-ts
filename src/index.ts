@@ -182,4 +182,3 @@ const RserveClient = {
 };
 
 export default RserveClient;
-export * as types from "./types";
