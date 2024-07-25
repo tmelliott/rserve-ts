@@ -183,3 +183,4 @@ const RserveClient = {
 
 export default RserveClient;
 export * as Robj from "./types";
+export type * from "./types";
