@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.3.2
+
+### Patch Changes
+
+- ec5b485: Export types
+
 ## 0.3.1
 
 ### Patch Changes
