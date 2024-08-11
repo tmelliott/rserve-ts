@@ -27,7 +27,13 @@ give.first.functions <- function() {
                     list(name = name, price = price, codes = sample(100, 5))
                 },
                 randomNumbers = rnorm(10),
-                iris = function() head(iris)
+                iris = function() head(iris),
+                rng = function() {
+                    list(
+                        rnorm = wrap.r.fun(rnorm),
+                        runif = wrap.r.fun(runif)
+                    )
+                }
             ),
             wrap.r.fun
         ),

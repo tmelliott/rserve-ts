@@ -189,7 +189,7 @@ const ocapTest = async () => {
   const { data: x2 } = await app.t2(4);
   console.log("T2:", x2);
 
-  // this API is tricky - can we improve it? e.g.,
+  // TODO: this API is tricky - can we improve it? e.g.,
   // app.t3(function(x) {
   //   return 21 + x;
   // })
@@ -217,11 +217,23 @@ const ocapTest = async () => {
 
   // iris
   const iris = await app.iris();
-  console.log("Iris:", iris);
+  // console.log("Iris:", iris);
+
+  // rng (functions from function)
+  const {
+    data: { rnorm, runif },
+  } = await app.rng();
+
+  // this should happen automatically ....
+  const x = await rnorm(5);
+  console.log("RNG rnorm:", x.data);
+
+  const y = await runif(5);
+  console.log("RNG runif:", y);
 };
 
 (async () => {
-  await noOcap();
-  // await ocapTest();
+  // await noOcap();
+  await ocapTest();
   process.exit(0);
 })();

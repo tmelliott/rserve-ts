@@ -1,3 +1,4 @@
+import { promisify } from "util";
 import { z } from "zod";
 
 export const sexp = <T extends z.ZodTypeAny>(json: T) => {
@@ -502,4 +503,86 @@ function dataframe(schema?: z.ZodRawShape, attr?: z.ZodRawShape) {
   ) as any;
 }
 
-export { logical, integer, numeric, character, factor, table, list, dataframe };
+// Defining a function that returns a promise
+// (but actually on the R end it's a callback)
+function ocap<
+  TArgs extends [z.ZodTypeAny, ...z.ZodTypeAny[]],
+  TRes extends z.ZodTypeAny
+>(args: TArgs, res: TRes) {
+  return z
+    .function(
+      z.tuple([
+        ...args,
+        z.function(z.tuple([character(0).nullish(), res]), z.void()),
+      ]),
+      z.void()
+    )
+    .transform(
+      (f) =>
+        promisify(f) as (
+          ...args: {
+            [K in keyof TArgs]: z.infer<TArgs[K]>;
+          }
+        ) => Promise<z.infer<TRes>>
+    );
+}
+
+// const cb_rnorm = cb_fn([numeric(1)], numeric(0));
+
+// const fff = (x: number, cb: (err: string | null, data: number) => void) => {};
+
+// const rnorm = cb_rnorm;
+// type Rnorm = z.infer<typeof rnorm>;
+
+// const myf = rnorm.parse(fff);
+
+// // const f = promisify(myf);
+
+// const X = rnorm.parse((x: unknown) => {
+//   console.log(x);
+// });
+// async () => {
+//   const r = await X({ data: 5, r_type: "double_array" });
+// };
+
+// function fn<
+//   A extends [z.ZodTypeAny, ...z.ZodTypeAny[]],
+//   R extends z.ZodTypeAny
+// >(args: A, ret: R) {
+//   const cb = z
+//     .function()
+//     .args<[z.ZodNullable<Character<1>>, z.ZodTypeAny[]]>(
+//       character(1).nullable(),
+//       ret
+//     )
+//     .returns(z.void());
+
+//   return z
+//     .function()
+//     .args<[...A, typeof cb]>(...args, cb)
+//     .returns(z.void());
+
+//   // .transform(
+//   //   (f) => (x: A) =>
+//   //     new Promise<R>((res, rej) => {
+//   //       f(x, (err: z.ZodNullable<ZCharacter<1>>, data: R) =>
+//   //         err ? rej(err) : res(data)
+//   //       );
+//   //     })
+//   // );
+// }
+
+// const rnorm = fn([numeric(1)]), numeric(0));
+// type Rnorm = z.infer<typeof rnorm>;
+
+export {
+  logical,
+  integer,
+  numeric,
+  character,
+  factor,
+  table,
+  list,
+  dataframe,
+  ocap,
+};
