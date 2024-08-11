@@ -3,6 +3,9 @@ import { ocapFuns } from "../tests/r_files/oc";
 import * as RT from "./types";
 import { z } from "zod";
 
+import { Presets, SingleBar } from "cli-progress";
+import { callbackify } from "util";
+
 // set global WebSocket
 global.WebSocket = require("ws");
 
@@ -230,6 +233,20 @@ const ocapTest = async () => {
 
   const y = await runif(5);
   console.log("RNG runif:", y);
+
+  // sending javascript functions to R
+  const progBar = new SingleBar({}, Presets.shades_classic);
+  progBar.start(100, 0);
+  const { data: longresult } = await app.longjob(async (x) =>
+    progBar.update(x)
+  );
+  progBar.stop();
+  console.log("Long job result:", longresult);
+
+  // desired API:
+  // > app.anotherlongjob((x) => progBar.update(x));
+  // then this gets transformed into ...
+  // > app.anotherlongjob((x, k) => k(null, x));
 };
 
 (async () => {

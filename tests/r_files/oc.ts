@@ -1,5 +1,6 @@
 import { z } from "zod";
 import * as R from "../../src/types";
+import { callbackify } from "util";
 
 export const ocapFuns = {
   add: z
@@ -24,6 +25,17 @@ export const ocapFuns = {
       })
     )
   ),
+  longjob: z
+    .function()
+    .args(
+      z
+        .function()
+        .args(z.number())
+        .returns(z.promise(z.void()))
+        .transform((f) => callbackify(f))
+    )
+    .returns(z.promise(R.logical(1))),
+  // anotherlongjob: z.function().args(z.function().args(z.number())),
   tfail: z.function().returns(z.promise(z.unknown())),
   t1: z.function(z.tuple([z.number()])).returns(z.promise(R.numeric(1))),
   t2: z.function(z.tuple([z.number()])).returns(z.promise(R.numeric(1))),

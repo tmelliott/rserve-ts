@@ -33,6 +33,15 @@ give.first.functions <- function() {
                         rnorm = wrap.r.fun(rnorm),
                         runif = wrap.r.fun(runif)
                     )
+                },
+                longjob = function(k) {
+                    prog <- 0
+                    while (prog < 100) {
+                        Sys.sleep(0.2)
+                        prog <- prog + 5
+                        self.oobMessage(list(k, prog))
+                    }
+                    TRUE
                 }
             ),
             wrap.r.fun
