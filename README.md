@@ -41,9 +41,18 @@ library(Rserve)
 oc.init <- function() {
   ocap(function() {
     list(
+      # Ocaps are functions that javascript can call
       add <- ocap(function(a, b) {
         a + b
       }),
+      dist <- ocap(function(which = c('normal', 'uniform')) {
+        # Ocaps can return new ocaps, too!
+        # This could be useful for progressively revealing functionality, etc.
+        switch(which,
+          normal = list(sample = ocap(function(n) rnorm(n))),
+          uniform = list(sample = ocap(function(n) runif(n)))
+        )
+      })
     )
   })
 }
@@ -51,10 +60,13 @@ oc.init <- function() {
 
 ```typescript
 // ocap.ts
-import { function, number } from "rserve-ts/types";
+import { function, number, list, ocap } from "rserve-ts/types";
 
 export const appFuns = {
-  add: types.function([types.number(), types.number()], types.number()),
+  add: ocap([z.number(), z.number()], number()),
+  dist: ocap([z.enum(["normal", "uniform"])], list({
+    sample: ocap([z.number()], numeric()),
+  })),
 };
 ```
 
@@ -71,5 +83,9 @@ import { appFuns } from "./ocap";
 
   const { data: sum } = await app.add(1, 2);
   console.log("1 + 2 = ", sum);
+
+  const { data: normal } = await app.dist("normal");
+  const { data: sample } = await normal.sample(5);
+  console.log("Normal sample: ", sample);
 })();
 ```
