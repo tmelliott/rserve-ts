@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.4.0
+
+### Minor Changes
+
+- e684849: Add function type support (i.e., ocaps)
+
 ## 0.3.2
 
 ### Patch Changes
