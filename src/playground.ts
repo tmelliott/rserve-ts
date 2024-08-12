@@ -192,13 +192,13 @@ const ocapTest = async () => {
   const { data: x2 } = await app.t2(4);
   console.log("T2:", x2);
 
-  // TODO: this API is tricky - can we improve it? e.g.,
-  // app.t3(function(x) {
-  //   return 21 + x;
-  // })
-  const { data: x3 } = await app.t3(function (x, k) {
-    k(null, 21 + x);
-  });
+  // original syntax:
+  // const { data: x3 } = await app.t3(function (x, k) {
+  //   k(null, 21 + x);
+  // });
+
+  // new syntax:
+  const { data: x3 } = await app.t3(async (x) => 21 + x);
   console.log("T3:", x3);
 
   // T4: 26

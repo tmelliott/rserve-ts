@@ -84,8 +84,8 @@ import { appFuns } from "./ocap";
   const { data: sum } = await app.add(1, 2);
   console.log("1 + 2 = ", sum);
 
-  const { data: normal } = await app.dist("normal");
-  const { data: sample } = await normal.sample(5);
+  const { data: chosenDist } = await app.dist("normal");
+  const { data: sample } = await chosenDist.sample(5);
   console.log("Normal sample: ", sample);
 })();
 ```
