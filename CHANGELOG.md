@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.5.0
+
+### Minor Changes
+
+- c68e06a: Send js functions to R
+
 ## 0.4.0
 
 ### Minor Changes
