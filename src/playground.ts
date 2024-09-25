@@ -237,9 +237,11 @@ const ocapTest = async () => {
   // sending javascript functions to R
   const progBar = new SingleBar({}, Presets.shades_classic);
   progBar.start(100, 0);
+
   const { data: longresult } = await app.longjob(async (x) =>
     progBar.update(x)
   );
+
   progBar.stop();
   console.log("Long job result:", longresult);
 

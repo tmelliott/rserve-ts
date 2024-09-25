@@ -35,19 +35,9 @@ export const ocapFuns = {
         .transform((f) => callbackify(f))
     )
     .returns(z.promise(R.logical(1))),
-  // anotherlongjob: z.function().args(z.function().args(z.number())),
   tfail: z.function().returns(z.promise(z.unknown())),
   t1: z.function(z.tuple([z.number()])).returns(z.promise(R.numeric(1))),
   t2: z.function(z.tuple([z.number()])).returns(z.promise(R.numeric(1))),
-  // t3: z
-  //   .function(
-  //     z.tuple([
-  //       z.function(
-  //         z.tuple([z.number(), z.function(z.tuple([z.any(), z.number()]))])
-  //       ),
-  //     ])
-  //   )
-  //   .returns(z.promise(R.logical(1))),
   t3: z
     .function()
     .args(
