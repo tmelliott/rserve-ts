@@ -4,7 +4,7 @@ import * as RT from "./types";
 import { z } from "zod";
 
 import { Presets, SingleBar } from "cli-progress";
-import { callbackify } from "util";
+import { callbackify, promisify } from "util";
 
 // set global WebSocket
 global.WebSocket = require("ws");
@@ -224,7 +224,7 @@ const ocapTest = async () => {
 
   // rng (functions from function)
   const {
-    data: { rnorm, runif },
+    data: { rnorm, runif, flip },
   } = await app.rng();
 
   // this should happen automatically ....
@@ -234,21 +234,23 @@ const ocapTest = async () => {
   const y = await runif(5);
   console.log("RNG runif:", y);
 
+  const coin = await flip();
+  console.log("RNG flip:", coin.data === 1 ? "heads" : "tails");
+
   // sending javascript functions to R
   const progBar = new SingleBar({}, Presets.shades_classic);
   progBar.start(100, 0);
 
-  const { data: longresult } = await app.longjob(async (x) =>
-    progBar.update(x)
-  );
+  // const { data: longresult } = await app.longjob(async (x) =>
+  //   progBar.update(x)
+  // );
 
   progBar.stop();
-  console.log("Long job result:", longresult);
+  // console.log("Long job result:", longresult);
 
-  // desired API:
-  // > app.anotherlongjob((x) => progBar.update(x));
-  // then this gets transformed into ...
-  // > app.anotherlongjob((x, k) => k(null, x));
+  // // some random numbers
+  // const { data: xrand } = await app.randomNumbers();
+  // console.log("Random numbers:", xrand);
 };
 
 (async () => {

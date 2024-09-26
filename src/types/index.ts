@@ -505,9 +505,35 @@ function dataframe(schema?: z.ZodRawShape, attr?: z.ZodRawShape) {
 
 // Defining a function that returns a promise
 // (but actually on the R end it's a callback)
+
+type Ocap<
+  TArgs extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [],
+  TRes extends z.ZodTypeAny = z.ZodTypeAny
+> = z.ZodEffects<
+  z.ZodTypeAny,
+  z.ZodFunction<
+    TArgs extends [z.ZodTypeAny, ...z.ZodTypeAny[]]
+      ? z.ZodTuple<[...TArgs]>
+      : z.ZodTuple<[]>,
+    z.ZodPromise<TRes>
+  >,
+  z.ZodFunction<
+    z.ZodTuple<
+      [
+        ...TArgs,
+        z.ZodFunction<
+          z.ZodTuple<[z.ZodOptional<z.ZodNullable<ZCharacter<0>>>, TRes]>,
+          z.ZodVoid
+        >
+      ]
+    >,
+    z.ZodVoid
+  >
+>;
+
 function ocap<
-  TArgs extends [z.ZodTypeAny, ...z.ZodTypeAny[]],
-  TRes extends z.ZodTypeAny
+  TArgs extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [],
+  TRes extends z.ZodTypeAny = z.ZodTypeAny
 >(args: TArgs, res: TRes) {
   return z
     .function(

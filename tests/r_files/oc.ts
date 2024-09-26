@@ -16,12 +16,14 @@ export const ocapFuns = {
     )
   ),
   randomNumbers: z.function().returns(z.promise(R.numeric(10))),
+  // randomNumbers: R.ocap([], R.numeric(10)),
   iris: z.function().returns(z.promise(z.any())),
   rng: z.function().returns(
     z.promise(
       R.list({
         rnorm: R.ocap([z.number()], R.numeric()),
         runif: R.ocap([z.number()], R.numeric()),
+        flip: R.ocap([], R.integer(1)),
       })
     )
   ),

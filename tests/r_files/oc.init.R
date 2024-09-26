@@ -26,12 +26,13 @@ give.first.functions <- function() {
                 newItem = function(name, price) {
                     list(name = name, price = price, codes = sample(100, 5))
                 },
-                randomNumbers = rnorm(10),
+                randomNumbers = function() rnorm(10),
                 iris = function() head(iris),
                 rng = function() {
                     list(
                         rnorm = wrap.r.fun(rnorm),
-                        runif = wrap.r.fun(runif)
+                        runif = wrap.r.fun(runif),
+                        flip = wrap.r.fun(function() sample(0:1, 1L))
                     )
                 },
                 longjob = function(updateProgress) {
