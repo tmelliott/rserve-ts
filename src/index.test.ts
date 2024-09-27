@@ -59,7 +59,7 @@ test("Rserve connects to OCAP server", async () => {
 
   let x0 = true;
   try {
-    await funs.tfail();
+    await funs.tfail(1);
   } catch (err) {
     x0 = false;
     console.error("Nice.");

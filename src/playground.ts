@@ -186,16 +186,15 @@ const ocapTest = async () => {
 
   const app = await R.ocap(ocapFuns);
 
+  await app.tfail(1).catch((err) => {
+    console.log("Nice: ", err);
+  });
+
   const { data: x1 } = await app.t1(5);
   console.log("T1:", x1);
 
   const { data: x2 } = await app.t2(4);
   console.log("T2:", x2);
-
-  // original syntax:
-  // const { data: x3 } = await app.t3(function (x, k) {
-  //   k(null, 21 + x);
-  // });
 
   // new syntax:
   const { data: x3 } = await app.t3(async (x) => 21 + x);
@@ -241,12 +240,12 @@ const ocapTest = async () => {
   const progBar = new SingleBar({}, Presets.shades_classic);
   progBar.start(100, 0);
 
-  // const { data: longresult } = await app.longjob(async (x) =>
-  //   progBar.update(x)
-  // );
+  const { data: longresult } = await app.longjob(async (x) =>
+    progBar.update(x)
+  );
 
   progBar.stop();
-  // console.log("Long job result:", longresult);
+  console.log("Long job result:", longresult);
 
   // // some random numbers
   // const { data: xrand } = await app.randomNumbers();

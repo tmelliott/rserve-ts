@@ -144,23 +144,7 @@ const createRserve = async (
           if (err) {
             reject(err);
           } else {
-            const ocapFuns = Object.fromEntries(
-              Object.entries(data.data).map(([key, fun]) => [
-                key,
-                (...args: any[]) => {
-                  return new Promise((resolve, reject) => {
-                    fun(...args, (err: string, data: unknown) => {
-                      if (err) {
-                        reject(err);
-                      } else {
-                        resolve(data);
-                      }
-                    });
-                  });
-                },
-              ])
-            );
-            // resolve(ocapFuns as any);
+            const ocapFuns = data.data;
             if (schema) resolve(z.object(schema).parse(ocapFuns));
             else resolve(ocapFuns as any);
           }

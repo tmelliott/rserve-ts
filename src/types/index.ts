@@ -531,6 +531,8 @@ type Ocap<
   >
 >;
 
+const R_SERVER_ERROR = z.tuple([z.string(), z.number()]);
+
 function ocap<
   TArgs extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [],
   TRes extends z.ZodTypeAny = z.ZodTypeAny
@@ -539,7 +541,7 @@ function ocap<
     .function(
       z.tuple([
         ...args,
-        z.function(z.tuple([character(0).nullish(), res]), z.void()),
+        z.function(z.tuple([R_SERVER_ERROR.nullable(), res]), z.void()),
       ]),
       z.void()
     )
