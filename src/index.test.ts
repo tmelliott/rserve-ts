@@ -59,7 +59,7 @@ test("Rserve connects to OCAP server", async () => {
 
   let x0 = true;
   try {
-    await funs.tfail();
+    await funs.tfail(1);
   } catch (err) {
     x0 = false;
     console.error("Nice.");
@@ -72,9 +72,7 @@ test("Rserve connects to OCAP server", async () => {
   const { data: x2 } = await funs.t2(4);
   expect(x2).toBe(4);
 
-  const { data: x3 } = await funs.t3((x, k) => {
-    k(null, 21 + x);
-  });
+  const { data: x3 } = await funs.t3(async (x) => 21 + x);
   expect(x3).toBe(true);
 
   const { data: x4 } = await funs.t4(5);

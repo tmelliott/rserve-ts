@@ -18,6 +18,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.27.5
         version: 2.27.5
+      '@types/cli-progress':
+        specifier: ^3.11.6
+        version: 3.11.6
       '@types/node':
         specifier: ^20.14.1
         version: 20.14.1
@@ -27,6 +30,9 @@ importers:
       bluebird:
         specifier: ^3.7.2
         version: 3.7.2
+      cli-progress:
+        specifier: ^3.12.0
+        version: 3.12.0
       concurrently:
         specifier: ^8.2.2
         version: 8.2.2
@@ -523,6 +529,9 @@ packages:
   '@sinclair/typebox@0.27.8':
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
 
+  '@types/cli-progress@3.11.6':
+    resolution: {integrity: sha512-cE3+jb9WRlu+uOSAugewNpITJDt1VF8dHOopPO4IABFc3SXYL5WE/+PTz/FCdZRRfIujiWW3n3aMbv1eIGVRWA==}
+
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
 
@@ -704,6 +713,10 @@ packages:
   ci-info@3.9.0:
     resolution: {integrity: sha512-NIxF55hv4nSqQswkAeiOi1r83xy8JldOFDTWiug55KBu9Jnblncd2U6ViHmYgHf01TPZS77NJBhBMKdWj9HQMQ==}
     engines: {node: '>=8'}
+
+  cli-progress@3.12.0:
+    resolution: {integrity: sha512-tRkV3HJ1ASwm19THiiLIXLO7Im7wlTuKnvkYaTkyoAPefqjNg7W7DHKUlGRxy9vxDvbyCYQkQozvptuMkGCg8A==}
+    engines: {node: '>=4'}
 
   cliui@6.0.0:
     resolution: {integrity: sha512-t6wbgtoCXvAzst7QgXxJYqPt0usEfbgQdftEPbLL/cvv6HPE5VgvqCuAIDR0NgU52ds6rFwqrgakNLrHEjCbrQ==}
@@ -2453,6 +2466,10 @@ snapshots:
 
   '@sinclair/typebox@0.27.8': {}
 
+  '@types/cli-progress@3.11.6':
+    dependencies:
+      '@types/node': 20.14.1
+
   '@types/estree@1.0.5': {}
 
   '@types/minimist@1.2.5': {}
@@ -2651,6 +2668,10 @@ snapshots:
       fsevents: 2.3.3
 
   ci-info@3.9.0: {}
+
+  cli-progress@3.12.0:
+    dependencies:
+      string-width: 4.2.3
 
   cliui@6.0.0:
     dependencies:

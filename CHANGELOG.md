@@ -1,5 +1,59 @@
 # rserve-ts
 
+## 0.5.0
+
+### Minor Changes
+
+- c68e06a: Send js functions to R
+
+## 0.4.0
+
+### Minor Changes
+
+- e684849: Add function type support (i.e., ocaps)
+
+## 0.3.2
+
+### Patch Changes
+
+- ec5b485: Export types
+
+## 0.3.1
+
+### Patch Changes
+
+- export types
+
+## 0.3.0
+
+### Minor Changes
+
+- Revert changes
+
+## 0.2.5
+
+### Patch Changes
+
+- 1454721: add everything
+
+## 0.2.7
+
+### Patch Changes
+
+- add dist
+
+## 0.2.6
+
+### Patch Changes
+
+- 4d23bdc: update pkgjson
+
+## 0.2.5
+
+### Patch Changes
+
+- a90b69f: Types subpackage
+
 ## 0.2.4
 
 ### Patch Changes

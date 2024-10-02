@@ -20,14 +20,38 @@ give.first.functions <- function() {
     c(
         lapply(
             list(
+                print_input = function(x) {
+                    x <- capture.output(print(x))
+                    paste(x, collapse = "\n")
+                },
                 add = function(a, b) {
                     a + b
                 },
                 newItem = function(name, price) {
                     list(name = name, price = price, codes = sample(100, 5))
                 },
-                randomNumbers = rnorm(10),
-                iris = function() head(iris)
+                randomNumbers = function() rnorm(10),
+                # automate this on the R end (S3 classes?)
+                sample_num = function(x) sample(x, 1),
+                sample_char = function(x) sample(x, 1),
+                iris = function() head(iris),
+                rng = function() {
+                    list(
+                        rnorm = wrap.r.fun(rnorm),
+                        runif = wrap.r.fun(runif),
+                        flip = wrap.r.fun(function() sample(0:1, 1L))
+                    )
+                },
+                longjob = function(updateProgress) {
+                    update_progress <- wrap.js.fun(updateProgress)
+                    prog <- 0
+                    while (prog < 100) {
+                        Sys.sleep(0.2)
+                        prog <- prog + 5
+                        update_progress(prog)
+                    }
+                    TRUE
+                }
             ),
             wrap.r.fun
         ),

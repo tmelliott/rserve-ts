@@ -3,6 +3,10 @@ import { ocapFuns } from "../tests/r_files/oc";
 import * as RT from "./types";
 import { z } from "zod";
 
+import { Presets, SingleBar } from "cli-progress";
+import { callbackify, promisify } from "util";
+import { as_vector } from "./helpers";
+
 // set global WebSocket
 global.WebSocket = require("ws");
 
@@ -183,19 +187,18 @@ const ocapTest = async () => {
 
   const app = await R.ocap(ocapFuns);
 
+  await app.tfail(1).catch((err) => {
+    console.log("Nice: ", err);
+  });
+
   const { data: x1 } = await app.t1(5);
   console.log("T1:", x1);
 
   const { data: x2 } = await app.t2(4);
   console.log("T2:", x2);
 
-  // this API is tricky - can we improve it? e.g.,
-  // app.t3(function(x) {
-  //   return 21 + x;
-  // })
-  const { data: x3 } = await app.t3(function (x, k) {
-    k(null, 21 + x);
-  });
+  // new syntax:
+  const { data: x3 } = await app.t3(async (x) => 21 + x);
   console.log("T3:", x3);
 
   // T4: 26
@@ -217,11 +220,58 @@ const ocapTest = async () => {
 
   // iris
   const iris = await app.iris();
-  console.log("Iris:", iris);
+  // console.log("Iris:", iris);
+
+  // rng (functions from function)
+  const {
+    data: { rnorm, runif, flip },
+  } = await app.rng();
+
+  // this should happen automatically ....
+  const x = await rnorm(5);
+  console.log("RNG rnorm:", x.data);
+
+  const y = await runif(5);
+  console.log("RNG runif:", y);
+
+  const coin = await flip();
+  console.log("RNG flip:", coin.data === 1 ? "heads" : "tails");
+
+  console.log(await app.sample_num(new Float64Array([1, 2, 3])));
+
+  // const xf: string[] & { r_type: "string_array" } = ["a", "b", "c"] as any;
+  // xf.r_type = "string_array";
+
+  // const sx = as_vector(["a", "b", "c"]);
+  // console.log(sx);
+  // console.log(stringArray.safeParse(sx));
+  // console.log(stringArray.safeParse(new Float64Array([1, 2, 3])));
+  // console.log(stringArray.safeParse(["a", "b", "c"]));
+  // console.log(stringArray.safeParse(as_vector(["a", "b", "c"])));
+
+  console.log(await app.sample_char(as_vector(["a", "b", "c"])));
+
+  // console.log((await app.print_input([1, 2, 3])).data);
+  // console.log((await app.print_input(new Int32Array([1, 2, 3]))).data);
+
+  // sending javascript functions to R
+  // const progBar = new SingleBar({}, Presets.shades_classic);
+  // progBar.start(100, 0);
+
+  // const { data: longresult } = await app.longjob(async (x) =>
+  //   progBar.update(x)
+  // );
+
+  // progBar.stop();
+  // console.log("Long job result:", longresult);
+
+  // // some random numbers
+  // const { data: xrand } = await app.randomNumbers();
+  // console.log("Random numbers:", xrand);
 };
 
 (async () => {
-  await noOcap();
-  // await ocapTest();
+  // await noOcap();
+  await ocapTest();
   process.exit(0);
 })();
