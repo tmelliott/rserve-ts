@@ -2,7 +2,51 @@ import { z } from "zod";
 import * as R from "../../src/types";
 import { callbackify } from "util";
 
+// const sampleSchema = [
+//   z.function(z.tuple([z.number().array()]), z.number()),
+//   z.function(z.tuple([z.string().array()]), z.string()),
+//   z.function(z.tuple([z.boolean().array()]), z.boolean()),
+// ];
+
+// function sample(x: number[]): number;
+// function sample(x: string[]): string;
+// function sample(x: boolean[]): boolean;
+// function sample(x: unknown) {
+//   if (!Array.isArray(x)) {
+//     throw new Error("Invalid input");
+//   }
+//   const x0 = x[0];
+//   if (typeof x0 === "number") {
+//     return sampleSchema[0].parse(x0);
+//   }
+//   if (typeof x0 === "string") {
+//     return sampleSchema[1].parse(x0);
+//   }
+//   if (typeof x0 === "boolean") {
+//     return sampleSchema[2].parse(x0);
+//   }
+//   throw new Error("Invalid input");
+// }
+
+// // const sampleFun = sampleSchema.parse(sample);
+// const num = sample([1, 2, 3]);
+// num / 2;
+
+const stringArray = z.custom<string[] & { r_type: "string_array" }>((data) => {
+  if (
+    typeof data === "object" &&
+    data.hasOwnProperty("r_type") &&
+    data.r_type === "string_array" &&
+    Array.isArray(data) &&
+    typeof data[0] == "string"
+  ) {
+    return true;
+  }
+  return false;
+});
+
 export const ocapFuns = {
+  print_input: R.ocap([z.any()], R.character(1)),
   add: R.ocap([z.number(), z.number()], R.numeric(1)),
   newItem: R.ocap(
     [z.string(), z.number()],
@@ -13,6 +57,8 @@ export const ocapFuns = {
     })
   ),
   randomNumbers: R.ocap([], R.numeric(10)),
+  sample_num: R.ocap([z.instanceof(Float64Array)], R.numeric(1)),
+  sample_char: R.ocap([stringArray], R.character(1)),
   // TODO: dataframe output
   iris: R.ocap([], z.any()),
   rng: R.ocap(

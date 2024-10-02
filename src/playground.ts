@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { Presets, SingleBar } from "cli-progress";
 import { callbackify, promisify } from "util";
+import { as_vector } from "./helpers";
 
 // set global WebSocket
 global.WebSocket = require("ws");
@@ -236,16 +237,33 @@ const ocapTest = async () => {
   const coin = await flip();
   console.log("RNG flip:", coin.data === 1 ? "heads" : "tails");
 
+  console.log(await app.sample_num(new Float64Array([1, 2, 3])));
+
+  // const xf: string[] & { r_type: "string_array" } = ["a", "b", "c"] as any;
+  // xf.r_type = "string_array";
+
+  // const sx = as_vector(["a", "b", "c"]);
+  // console.log(sx);
+  // console.log(stringArray.safeParse(sx));
+  // console.log(stringArray.safeParse(new Float64Array([1, 2, 3])));
+  // console.log(stringArray.safeParse(["a", "b", "c"]));
+  // console.log(stringArray.safeParse(as_vector(["a", "b", "c"])));
+
+  console.log(await app.sample_char(as_vector(["a", "b", "c"])));
+
+  // console.log((await app.print_input([1, 2, 3])).data);
+  // console.log((await app.print_input(new Int32Array([1, 2, 3]))).data);
+
   // sending javascript functions to R
-  const progBar = new SingleBar({}, Presets.shades_classic);
-  progBar.start(100, 0);
+  // const progBar = new SingleBar({}, Presets.shades_classic);
+  // progBar.start(100, 0);
 
-  const { data: longresult } = await app.longjob(async (x) =>
-    progBar.update(x)
-  );
+  // const { data: longresult } = await app.longjob(async (x) =>
+  //   progBar.update(x)
+  // );
 
-  progBar.stop();
-  console.log("Long job result:", longresult);
+  // progBar.stop();
+  // console.log("Long job result:", longresult);
 
   // // some random numbers
   // const { data: xrand } = await app.randomNumbers();

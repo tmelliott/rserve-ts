@@ -20,6 +20,10 @@ give.first.functions <- function() {
     c(
         lapply(
             list(
+                print_input = function(x) {
+                    x <- capture.output(print(x))
+                    paste(x, collapse = "\n")
+                },
                 add = function(a, b) {
                     a + b
                 },
@@ -27,6 +31,9 @@ give.first.functions <- function() {
                     list(name = name, price = price, codes = sample(100, 5))
                 },
                 randomNumbers = function() rnorm(10),
+                # automate this on the R end (S3 classes?)
+                sample_num = function(x) sample(x, 1),
+                sample_char = function(x) sample(x, 1),
                 iris = function() head(iris),
                 rng = function() {
                     list(
