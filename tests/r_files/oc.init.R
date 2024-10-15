@@ -21,6 +21,7 @@ give.first.functions <- function() {
         lapply(
             list(
                 print_input = function(x) {
+                    print(x)
                     x <- capture.output(print(x))
                     paste(x, collapse = "\n")
                 },

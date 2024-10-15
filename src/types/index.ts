@@ -243,7 +243,7 @@ const factorWithAttr = <
 type ArrayToLiteralArray<T extends [any, ...any[]]> = {
   [P in keyof T]: z.ZodLiteral<T[P]>;
 };
-const arrayToTuple = <T extends [any, ...any[]]>(x: T) => {
+export const arrayToTuple = <T extends [any, ...any[]]>(x: T) => {
   return z.tuple(x.map((l) => z.literal(l)) as ArrayToLiteralArray<T>);
 };
 type ArrayToTuple<T extends [any, ...any[]]> = ReturnType<

@@ -13,21 +13,25 @@ var Rserve = (function () {
       var wrapped_proto = {
         json: function (resolver) {
           const res = proto.json.call(this, resolver);
-          var result = res.data
-            ? { ...res, r_type: type }
-            : { data: res, r_type: type };
+          // var result = res.data
+          //   ? { ...res, r_type: type }
+          //   : { data: res, r_type: type };
+          // var result = { ...res, r_type: type };
+
+          if (typeof res !== "object") return res;
 
           try {
+            res.r_type = type;
             if (!_.isUndefined(this.attributes))
-              result.r_attributes = _.object(
+              res.r_attributes = _.object(
                 _.map(this.attributes.value, function (v) {
                   return [v.name, v.value.json(resolver)];
                 })
               );
           } catch (e) {
-            console.log(e);
+            // console.log(e);
           }
-          return result;
+          return res;
         },
       };
       return function (v, attrs) {
@@ -179,12 +183,16 @@ var Rserve = (function () {
             this.attributes.value[0].value.type === "string_array"
           ) {
             var levels = this.attributes.value[0].value.value;
-            var arr = {
-              data: _.map(this.value, function (factor) {
-                return levels[factor - 1];
-              }),
-              levels,
-            };
+            // var arr = {
+            //   data: _.map(this.value, function (factor) {
+            //     return levels[factor - 1];
+            //   }),
+            //   levels,
+            // };
+            var arr = _.map(this.value, function (factor) {
+              return levels[factor - 1];
+            });
+            arr.levels = levels;
             return arr;
           } else {
             // TODO: should this check for undefined attributes too? I've changed it but need to confirm if OK
