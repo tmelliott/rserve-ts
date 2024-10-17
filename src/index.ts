@@ -12,6 +12,8 @@ import {
   dataframe,
 } from "./types";
 
+import Robj from "./types";
+
 export type CallbackFromPromise<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
     ? (args: A, k: (err: string, data: Awaited<R>) => void) => void
@@ -150,14 +152,15 @@ const createRserve = async (
           }
         });
       }),
-    logical,
-    integer,
-    numeric,
-    character,
-    factor,
-    table,
-    list,
-    dataframe,
+    Robj,
+    // logical,
+    // integer,
+    // numeric,
+    // character,
+    // factor,
+    // table,
+    // list,
+    // dataframe,
   };
 };
 
@@ -166,6 +169,6 @@ const RserveClient = {
 };
 
 export default RserveClient;
-export * as Robj from "./types";
+// export * as Robj from "./types";
 export * as Rfmt from "./helpers";
 export type * from "./types";

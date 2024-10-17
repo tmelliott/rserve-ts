@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export type Attributes = any; // tagged_list, when we get there
+
 export const typeWithAttributes = <
   Z extends z.ZodTypeAny,
   R extends string,
@@ -16,14 +18,6 @@ export const typeWithAttributes = <
     return false;
   });
 };
-
-// type TypeWithAttributes<
-//   T,
-//   R extends z.ZodTypeAny,
-//   A extends Attributes
-// > = z.ZodType<T & { r_type: R; r_attributes: A }>;
-
-type Attributes = any; // tagged_list, when we get there
 
 const withAttributes = <T, RType extends string, Attr extends Attributes>(
   type: z.ZodType<T>,
@@ -42,18 +36,12 @@ const withAttributes = <T, RType extends string, Attr extends Attributes>(
     return false;
   });
 };
-type WithAttributes<
+export type WithAttributes<
   T,
   RType extends string,
   Attr extends Attributes = Attributes
 > = z.ZodType<T & { r_type: RType; r_attributes: Attr }>;
 
-// const rnum = withAttributes(z.number(), "double_array");
-// type Rnum = z.infer<typeof rnum>;
-
-// object factory
-// N 'singular' type is only ever returned for plain (scalar) objects
-// without any attributes...
 export const object = <
   TSingular extends z.ZodTypeAny,
   TPlural extends z.ZodTypeAny,
@@ -83,27 +71,13 @@ export const object = <
   return fun;
 };
 
-// const ta = typeWithAttributes(z.boolean().array(), "bool_array", undefined).and(
-//   z.object({
-//     r_attributes: z.object({
-//       some: z.string(),
-//     }),
-//   })
-// );
-// type Ta = z.infer<typeof ta>;
-
-const boolean = object(z.boolean(), z.boolean().array(), "bool_array");
-
-const integer = object(
-  z.number(),
-  typeWithAttributes(z.instanceof(Int32Array), "int_array", undefined),
-  "int_array"
-);
-
-const numeric = object(
-  z.number(),
-  typeWithAttributes(z.instanceof(Float64Array), "double_array", undefined),
-  "double_array"
-);
-
-export { boolean, integer, numeric };
+export const objectWithAttributes = <T, S extends string, A extends {}>(
+  x: T,
+  type: S,
+  attr?: A
+): T & { r_type: S; r_attributes: A } => {
+  const res = x as any;
+  res.r_type = type;
+  res.r_attributes = attr;
+  return res;
+};

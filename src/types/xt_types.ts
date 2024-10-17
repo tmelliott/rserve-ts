@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { object, typeWithAttributes } from "./robject";
-import { arrayToTuple } from "./types";
+import { object, typeWithAttributes } from "./helpers";
 
 // alright let's try this again ...
 
@@ -63,7 +62,8 @@ const _tagged_list = () => z.record(z.string(), z.any());
 // int_array
 const _integer = object(
   z.number(),
-  typeWithAttributes(z.instanceof(Int32Array), "int_array", undefined),
+  z.instanceof(Int32Array),
+  // typeWithAttributes(z.instanceof(Int32Array), "int_array", undefined),
   "int_array"
 );
 
@@ -192,7 +192,8 @@ function _factor(x?: string[] | z.ZodRawShape, y?: z.ZodRawShape) {
 // double_array
 const _double = object(
   z.number(),
-  typeWithAttributes(z.instanceof(Float64Array), "double_array", undefined),
+  z.instanceof(Float64Array),
+  // typeWithAttributes(z.instanceof(Float64Array), "double_array", undefined),
   "double_array"
 );
 
@@ -202,7 +203,7 @@ const _string = object(z.string(), z.string().array(), "string_array");
 // bool_array
 const _boolean = object(z.boolean(), z.boolean().array(), "bool_array");
 
-export default {
+const Robj = {
   null: _null,
   integer: _integer,
   double: _double,
@@ -214,3 +215,5 @@ export default {
   tagged_list: _tagged_list,
   factor: _factor,
 };
+
+export default Robj;

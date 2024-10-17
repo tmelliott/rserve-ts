@@ -603,6 +603,9 @@ function ocap<
 // const rnorm = fn([numeric(1)]), numeric(0));
 // type Rnorm = z.infer<typeof rnorm>;
 
+import Robj from "./xt_types";
+export default Robj;
+
 export {
   logical,
   integer,

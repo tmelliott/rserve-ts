@@ -59,7 +59,7 @@ global.WebSocket = require("ws");
 //   }
 // );
 
-import XT from "./xt_types";
+import XT from "./types/xt_types";
 
 const noOcap = async () => {
   const R = await RserveClient.create({
@@ -98,14 +98,13 @@ const noOcap = async () => {
   console.log(await R.eval("1L", XT.integer(1)));
   console.log(await R.eval("1:5", XT.integer(5)));
   console.log(await R.eval("integer()", XT.integer(0)));
-  console.log(
-    await R.eval(
-      "structure(1L, some = 'thing')",
-      XT.integer({
-        some: "string",
-      })
-    )
+  const i4 = await R.eval(
+    "structure(1L, some = 'thing')",
+    XT.integer({
+      some: "string",
+    })
   );
+  console.log(i4);
 
   console.log("\n\n---- List ----");
   console.log(
