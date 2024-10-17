@@ -3,8 +3,11 @@ import XT from "./xt_types";
 import { z } from "zod";
 import RserveClient from "../index";
 import {
+  clearAttrs,
   ObjectWithAttributes,
   objectWithAttributes,
+  Unify,
+  UnifyOne,
   WithAttributes,
 } from "./helpers";
 
@@ -56,31 +59,36 @@ type StringArray<
   ? RArray<string, "string_array", A> | RArray<string[], "string_array", A>
   : RArray<T, "string_array", A>;
 
-// type FactorArray<
-//   L extends [string, ...string[]] | string[] = string[],
-//   A = {}
-// > = Unify<
-//   RArray<
-//     string[],
-//     "int_array",
-//     Unify<
-//       A & {
-//         levels: {
-//           data: L;
-//           r_type: "string_array";
-//           r_attributes?: unknown;
-//         };
-//         class: {
-//           data: "factor";
-//           r_type: "string_array";
-//           r_attributes?: unknown;
-//         };
-//       }
-//     >
-//   > & {
-//     levels: L;
+type ArrayToUnion<T extends any[]> = T[number];
+
+type FactorArray<
+  L extends [string, ...string[]] | string[] = string[],
+  A = {}
+> = ArrayToUnion<L>[] & {
+  levels: ArrayToUnion<L>[] & {
+    r_type: "string_array";
+  };
+  r_type: "int_array";
+  r_attributes: UnifyOne<
+    {
+      levels: ArrayToUnion<L>[] & { r_type: "string_array" };
+      class: "factor";
+    } & A & {
+        [K in string]: any;
+      }
+  >;
+};
+
+// RArray<
+//   string[] & { levels: string[] },
+//   "int_array",
+//   A & {
+//     levels: L & { r_type: "string_array" };
+//     class: "factor";
 //   }
-// >;
+// > & {
+//   levels: L;
+// };
 
 test("Boolean types", async () => {
   const R = await RserveClient.create({
@@ -377,54 +385,57 @@ test("Character types", async () => {
   expect(r_char6.r_attributes.class).toBe("myclass");
 });
 
-// test("Factor types", async () => {
-//   const R = await RserveClient.create({
-//     host: "http://127.0.0.1:8881",
-//   });
+test("Factor types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8881",
+  });
 
-//   const factor1 = R.factor();
-//   const factor2 = R.factor(["a", "b", "c"]);
-//   const factor3 = R.factor(["a", "b", "c"], { someattr: character(1) });
-//   const factor4 = R.factor(undefined, { someattr: character(1) });
+  const factor1 = XT.factor();
+  const factor2 = XT.factor(["a", "b", "c"]);
+  const factor3 = XT.factor(["a", "b", "c"], { someattr: XT.string(1) });
+  const factor4 = XT.factor({ someattr: XT.string(1) });
 
-//   type T1 = Unify<z.infer<typeof factor1>>;
-//   type T2 = Unify<z.infer<typeof factor2>>;
-//   type T3 = Unify<z.infer<typeof factor3>>;
-//   type T4 = Unify<z.infer<typeof factor4>>;
+  type T1 = z.infer<typeof factor1>;
+  type T2 = z.infer<typeof factor2>;
+  type T3 = z.infer<typeof factor3>;
+  type T4 = z.infer<typeof factor4>;
 
-//   type tests = [
-//     Expect<Equal<T1, FactorArray>>,
-//     Expect<Equal<T2, FactorArray<["a", "b", "c"]>>>,
-//     Expect<
-//       Equal<T3, FactorArray<["a", "b", "c"], { someattr: StringArray<string> }>>
-//     >,
-//     Expect<Equal<T4, FactorArray<string[], { someattr: StringArray<string> }>>>
-//   ];
+  type F1 = FactorArray;
+  type F2 = FactorArray<["a", "b", "c"]>;
+  type F3 = FactorArray<["a", "b", "c"], { someattr: StringArray<string> }>;
+  type F4 = FactorArray<string[], { someattr: StringArray<string> }>;
 
-//   const r_factor1 = await R.eval("factor(c('a', 'b', 'c'))", factor1);
-//   expect(r_factor1.data).toEqual(["a", "b", "c"]);
-//   expect(r_factor1.levels).toEqual(["a", "b", "c"]);
+  type tests = [
+    Expect<Equal<T1, F1>>,
+    Expect<Equal<T2, F2>>,
+    Expect<Equal<T3, F3>>,
+    Expect<Equal<T4, F4>>
+  ];
 
-//   const r_factor2 = await R.eval("factor(c('a', 'b', 'c'))", factor2);
-//   expect(r_factor2.data).toEqual(["a", "b", "c"]);
-//   expect(r_factor2.levels).toEqual(["a", "b", "c"]);
+  const r_factor1 = await R.eval("factor(c('a', 'b', 'c'))", factor1);
+  expect(clearAttrs(r_factor1)).toEqual(["a", "b", "c"]);
+  expect(clearAttrs(r_factor1.levels)).toEqual(["a", "b", "c"]);
 
-//   const r_factor3 = await R.eval(
-//     "structure(factor(c('a', 'b', 'c')), someattr = 'foo')",
-//     factor3
-//   );
-//   expect(r_factor3.data).toEqual(["a", "b", "c"]);
-//   expect(r_factor3.levels).toEqual(["a", "b", "c"]);
-//   expect(r_factor3.r_attributes.someattr.data).toBe("foo");
+  const r_factor2 = await R.eval("factor(c('a', 'b', 'c'))", factor2);
+  expect(clearAttrs(r_factor2)).toEqual(["a", "b", "c"]);
+  expect(clearAttrs(r_factor2.levels)).toEqual(["a", "b", "c"]);
 
-//   const r_factor4 = await R.eval(
-//     "structure(factor(c('a', 'b', 'c')), someattr = 'foo')",
-//     factor4
-//   );
-//   expect(r_factor4.data).toEqual(["a", "b", "c"]);
-//   expect(r_factor4.levels).toEqual(["a", "b", "c"]);
-//   expect(r_factor4.r_attributes.someattr.data).toBe("foo");
-// });
+  const r_factor3 = await R.eval(
+    "structure(factor(c('a', 'b', 'c')), someattr = 'foo')",
+    factor3
+  );
+  expect(clearAttrs(r_factor3)).toEqual(["a", "b", "c"]);
+  expect(clearAttrs(r_factor3.levels)).toEqual(["a", "b", "c"]);
+  expect(r_factor3.r_attributes.someattr).toBe("foo");
+
+  const r_factor4 = await R.eval(
+    "structure(factor(c('a', 'b', 'c')), someattr = 'foo')",
+    factor4
+  );
+  expect(clearAttrs(r_factor4)).toEqual(["a", "b", "c"]);
+  expect(clearAttrs(r_factor4.levels)).toEqual(["a", "b", "c"]);
+  expect(r_factor4.r_attributes.someattr).toBe("foo");
+});
 
 // test("Table types", async () => {
 //   const R = await RserveClient.create({

@@ -21,7 +21,10 @@ export const typeWithAttributes = <
   });
 };
 
-type Unify<T> = {} & {
+export type UnifyOne<T> = {} & {
+  [K in keyof T]: T[K];
+};
+export type Unify<T> = {} & {
   [K in keyof T]: T[K] extends object ? Unify<T[K]> : T[K];
 };
 
@@ -131,3 +134,14 @@ export const objectWithAttributes = <
   }
   return res;
 };
+
+export function clearAttrs<
+  const T extends { r_type?: string; r_attributes?: any; levels?: any }
+>(x: T) {
+  const res = JSON.parse(JSON.stringify(x));
+  if (typeof res !== "object") return res;
+  if (res.hasOwnProperty("r_type")) delete res.r_type;
+  if (res.hasOwnProperty("r_attributes")) delete res.r_attributes;
+  if (res.hasOwnProperty("levels")) delete res.levels;
+  return res as Exclude<T, "r_type" | "r_attributes" | "levels">;
+}

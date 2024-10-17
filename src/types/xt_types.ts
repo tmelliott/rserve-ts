@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { object, typeWithAttributes } from "./helpers";
+import { object, typeWithAttributes, Unify, UnifyOne } from "./helpers";
 
 // alright let's try this again ...
 
@@ -76,10 +76,14 @@ function _factorWithLevels<
     L[] & {
       levels: L[] & { r_type: "string_array" };
       r_type: "int_array";
-      r_attributes: {
-        class: "factor";
-        levels: L[] & { r_type: "string_array" };
-      } & z.infer<z.ZodObject<A>>;
+      r_attributes: UnifyOne<
+        {
+          class: "factor";
+          levels: L[] & { r_type: "string_array" };
+        } & z.infer<z.ZodObject<A>> & {
+            [K in string]: any;
+          }
+      >;
     }
   >((data) => {
     if (typeof data !== "object") return false;
@@ -126,10 +130,14 @@ function _factorWithUnknownLevels<A extends z.ZodRawShape = {}>(attr?: A) {
     string[] & {
       levels: string[] & { r_type: "string_array" };
       r_type: "int_array";
-      r_attributes: {
-        class: "factor";
-        levels: string[] & { r_type: "string_array" };
-      } & z.infer<z.ZodObject<A>>;
+      r_attributes: UnifyOne<
+        {
+          class: "factor";
+          levels: string[] & { r_type: "string_array" };
+        } & z.infer<z.ZodObject<A>> & {
+            [K in string]: any;
+          }
+      >;
     }
   >((data) => {
     if (typeof data !== "object") return false;
