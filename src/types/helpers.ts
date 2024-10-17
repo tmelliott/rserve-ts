@@ -126,6 +126,8 @@ export const objectWithAttributes = <
 ): ObjectWithAttributes<T, S, A> => {
   const res = x as any;
   res.r_type = type;
-  res.r_attributes = attr;
+  if (attr) {
+    res.r_attributes = attr;
+  }
   return res;
 };

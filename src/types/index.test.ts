@@ -93,15 +93,11 @@ test("Boolean types", async () => {
   const bool4 = XT.boolean({
     class: XT.string(1),
   });
-  const bool5 = XT.boolean({ class: XT.string(1) });
-  const bool6 = XT.boolean({ class: XT.string(1) });
 
   type T1 = z.infer<typeof bool1>;
   type T2 = z.infer<typeof bool2>;
   type T3 = z.infer<typeof bool3>;
   type T4 = z.infer<typeof bool4>;
-  type T5 = z.infer<typeof bool5>;
-  type T6 = z.infer<typeof bool6>;
 
   type B1 = BoolArray;
   type B2 = BoolArray<boolean>;
@@ -129,9 +125,7 @@ test("Boolean types", async () => {
     Expect<Equal<T1, B1>>,
     Expect<Equal<T2, B2>>,
     Expect<Equal<T3, B3>>,
-    Expect<Equal<T4, B4>>,
-    Expect<Equal<T5, B5>>,
-    Expect<Equal<T6, B6>>
+    Expect<Equal<T4, B4>>
   ];
 
   const r_bool1 = await R.eval("TRUE", bool1);
@@ -151,7 +145,7 @@ test("Boolean types", async () => {
   );
   expect(r_bool4.r_attributes.class).toBe("mybool");
 
-  const r_bool5 = await R.eval("structure(TRUE, class = 'mybool')", bool5);
+  const r_bool5 = await R.eval("structure(TRUE, class = 'mybool')", bool4);
   expect(r_bool5).toEqual(
     objectWithAttributes([true], "bool_array", { class: "mybool" })
   );
@@ -159,7 +153,7 @@ test("Boolean types", async () => {
 
   const r_bool6 = await R.eval(
     "structure(c(TRUE, FALSE, TRUE), class = 'mybool')",
-    bool6
+    bool4
   );
   expect(r_bool6).toEqual(
     objectWithAttributes([true, false, true], "bool_array", { class: "mybool" })
@@ -167,260 +161,221 @@ test("Boolean types", async () => {
   expect(r_bool6.r_attributes.class).toBe("mybool");
 });
 
-// test("Integer types", async () => {
-//   const R = await RserveClient.create({
-//     host: "http://127.0.0.1:8881",
-//   });
+test("Integer types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8881",
+  });
 
-//   const int1 = integer();
-//   const int2 = integer(1);
-//   const int3 = integer(3);
-//   const int4 = integer({ class: character(1) });
-//   const int5 = integer(1, { class: character(1) });
-//   const int6 = integer(3, { class: character(1) });
+  const int1 = XT.integer();
+  const int2 = XT.integer(1);
+  const int3 = XT.integer(3);
+  const int4 = XT.integer({ class: XT.string(1) });
 
-//   type T1 = z.infer<typeof int1>;
-//   type T2 = z.infer<typeof int2>;
-//   type T3 = z.infer<typeof int3>;
-//   type T4 = z.infer<typeof int4>;
-//   type T5 = z.infer<typeof int5>;
-//   type T6 = z.infer<typeof int6>;
+  type T1 = z.infer<typeof int1>;
+  type T2 = z.infer<typeof int2>;
+  type T3 = z.infer<typeof int3>;
+  type T4 = z.infer<typeof int4>;
 
-//   type tests = [
-//     Expect<Equal<T1, IntArray>>,
-//     Expect<Equal<T2, IntArray<number>>>,
-//     Expect<Equal<T3, IntArray<Int32Array>>>,
-//     Expect<
-//       Equal<
-//         T4,
-//         IntArray<
-//           Int32Array,
-//           {
-//             class: StringArray<string>;
-//           }
-//         >
-//       >
-//     >,
-//     Expect<
-//       Equal<
-//         T5,
-//         IntArray<
-//           Int32Array,
-//           {
-//             class: StringArray<string>;
-//           }
-//         >
-//       >
-//     >,
-//     Expect<
-//       Equal<
-//         T6,
-//         IntArray<
-//           Int32Array,
-//           {
-//             class: StringArray<string>;
-//           }
-//         >
-//       >
-//     >
-//   ];
+  type tests = [
+    Expect<Equal<T1, IntArray>>,
+    Expect<Equal<T2, IntArray<number>>>,
+    Expect<Equal<T3, IntArray<Int32Array>>>,
+    Expect<
+      Equal<
+        T4,
+        IntArray<
+          Int32Array,
+          {
+            class: StringArray<string>;
+          }
+        >
+      >
+    >
+  ];
 
-//   const { data: r_int1 } = await R.eval("1L", int1);
-//   expect(r_int1).toBe(1);
+  const r_int1 = await R.eval("1L", int1);
+  expect(r_int1).toBe(1);
 
-//   const { data: r_int2 } = await R.eval("1L", int2);
-//   expect(r_int2).toBe(1);
+  const r_int2 = await R.eval("1L", int2);
+  expect(r_int2).toBe(1);
 
-//   const { data: r_int3 } = await R.eval("1:3", int3);
-//   expect(r_int3).toEqual(new Int32Array([1, 2, 3]));
+  const r_int3 = await R.eval("1:3", int3);
+  expect(r_int3).toEqual(
+    objectWithAttributes(new Int32Array([1, 2, 3]), "int_array")
+  );
 
-//   const r_int4 = await R.eval("structure(1:3, class = 'myclass')", int4);
-//   expect(r_int4.data).toEqual(new Int32Array([1, 2, 3]));
-//   expect(r_int4.r_attributes.class.data).toBe("myclass");
+  const r_int4 = await R.eval("structure(1:3, class = 'myclass')", int4);
+  expect(r_int4).toEqual(
+    objectWithAttributes(new Int32Array([1, 2, 3]), "int_array", {
+      class: "myclass",
+    })
+  );
+  expect(r_int4.r_attributes.class).toBe("myclass");
 
-//   const r_int5 = await R.eval("structure(1L, class = 'myclass')", int5);
-//   expect(r_int5.data).toEqual(new Int32Array([1]));
-//   expect(r_int5.r_attributes.class.data).toBe("myclass");
+  const r_int5 = await R.eval("structure(1L, class = 'myclass')", int4);
+  expect(r_int5).toEqual(
+    objectWithAttributes(new Int32Array([1]), "int_array", {
+      class: "myclass",
+    })
+  );
+  expect(r_int5.r_attributes.class).toBe("myclass");
 
-//   const r_int6 = await R.eval("structure(1:3, class = 'myclass')", int6);
-//   expect(r_int6.data).toEqual(new Int32Array([1, 2, 3]));
-//   expect(r_int6.r_attributes.class.data).toBe("myclass");
-// });
+  const r_int6 = await R.eval("structure(1:3, class = 'myclass')", int4);
+  expect(r_int6).toEqual(
+    objectWithAttributes(new Int32Array([1, 2, 3]), "int_array", {
+      class: "myclass",
+    })
+  );
+  expect(r_int6.r_attributes.class).toBe("myclass");
+});
 
-// test("Numeric types", async () => {
-//   const R = await RserveClient.create({
-//     host: "http://127.0.0.1:8881",
-//   });
+test("Numeric types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8881",
+  });
 
-//   const num1 = numeric();
-//   const num2 = numeric(1);
-//   const num3 = numeric(3);
-//   const num4 = numeric({ class: character(1) });
-//   const num5 = numeric(1, { class: character(1) });
-//   const num6 = numeric(3, { class: character(1) });
+  const num1 = XT.double();
+  const num2 = XT.double(1);
+  const num3 = XT.double(3);
+  const num4 = XT.double({ class: XT.string(1) });
 
-//   type T1 = z.infer<typeof num1>;
-//   type T2 = z.infer<typeof num2>;
-//   type T3 = z.infer<typeof num3>;
-//   type T4 = z.infer<typeof num4>;
-//   type T5 = z.infer<typeof num5>;
-//   type T6 = z.infer<typeof num6>;
+  type T1 = z.infer<typeof num1>;
+  type T2 = z.infer<typeof num2>;
+  type T3 = z.infer<typeof num3>;
+  type T4 = z.infer<typeof num4>;
 
-//   type tests = [
-//     Expect<Equal<T1, NumArray>>,
-//     Expect<Equal<T2, NumArray<number>>>,
-//     Expect<Equal<T3, NumArray<Float64Array>>>,
-//     Expect<
-//       Equal<
-//         T4,
-//         NumArray<
-//           Float64Array,
-//           {
-//             class: StringArray<string>;
-//           }
-//         >
-//       >
-//     >,
-//     Expect<
-//       Equal<
-//         T5,
-//         NumArray<
-//           Float64Array,
-//           {
-//             class: StringArray<string>;
-//           }
-//         >
-//       >
-//     >,
-//     Expect<
-//       Equal<
-//         T6,
-//         NumArray<
-//           Float64Array,
-//           {
-//             class: StringArray<string>;
-//           }
-//         >
-//       >
-//     >
-//   ];
+  type tests = [
+    Expect<Equal<T1, NumArray>>,
+    Expect<Equal<T2, NumArray<number>>>,
+    Expect<Equal<T3, NumArray<Float64Array>>>,
+    Expect<
+      Equal<
+        T4,
+        NumArray<
+          Float64Array,
+          {
+            class: StringArray<string>;
+          }
+        >
+      >
+    >
+  ];
 
-//   const { data: r_num1 } = await R.eval("1", num1);
-//   expect(r_num1).toBe(1);
+  const r_num1 = await R.eval("1", num1);
+  expect(r_num1).toBe(1);
 
-//   const { data: r_num2 } = await R.eval("1", num2);
-//   expect(r_num2).toBe(1);
+  const r_num2 = await R.eval("1", num2);
+  expect(r_num2).toBe(1);
 
-//   const { data: r_num3 } = await R.eval("c(1, 2, 3)", num3);
-//   expect(r_num3).toEqual(new Float64Array([1, 2, 3]));
+  const r_num3 = await R.eval("c(1, 2, 3)", num3);
+  expect(r_num3).toEqual(
+    objectWithAttributes(new Float64Array([1, 2, 3]), "double_array")
+  );
 
-//   const r_num4 = await R.eval("structure(c(1, 2, 3), class = 'myclass')", num4);
-//   expect(r_num4.data).toEqual(new Float64Array([1, 2, 3]));
-//   expect(r_num4.r_attributes.class.data).toBe("myclass");
+  const r_num4 = await R.eval("structure(c(1, 2, 3), class = 'myclass')", num4);
+  expect(r_num4).toEqual(
+    objectWithAttributes(new Float64Array([1, 2, 3]), "double_array", {
+      class: "myclass",
+    })
+  );
+  expect(r_num4.r_attributes.class).toBe("myclass");
 
-//   const r_num5 = await R.eval("structure(1, class = 'myclass')", num5);
-//   expect(r_num5.data).toEqual(new Float64Array([1]));
-//   expect(r_num5.r_attributes.class.data).toBe("myclass");
+  const r_num5 = await R.eval("structure(1, class = 'myclass')", num4);
+  expect(r_num5).toEqual(
+    objectWithAttributes(new Float64Array([1]), "double_array", {
+      class: "myclass",
+    })
+  );
+  expect(r_num5.r_attributes.class).toBe("myclass");
 
-//   const r_num6 = await R.eval("structure(c(1, 2, 3), class = 'myclass')", num6);
-//   expect(r_num6.data).toEqual(new Float64Array([1, 2, 3]));
-//   expect(r_num6.r_attributes.class.data).toBe("myclass");
-// });
+  const r_num6 = await R.eval("structure(c(1, 2, 3), class = 'myclass')", num4);
+  expect(r_num6).toEqual(
+    objectWithAttributes(new Float64Array([1, 2, 3]), "double_array", {
+      class: "myclass",
+    })
+  );
+  expect(r_num6.r_attributes.class).toBe("myclass");
+});
 
-// test("Character types", async () => {
-//   const R = await RserveClient.create({
-//     host: "http://127.0.0.1:8881",
-//   });
+test("Character types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8881",
+  });
 
-//   const char1 = character();
-//   const char2 = character(1);
-//   const char3 = character(3);
-//   const char4 = character({ class: character(1) });
-//   const char5 = character(1, { class: character(1) });
-//   const char6 = character(3, { class: character(1) });
-//   const char7 = character(["a", "b", "c"]);
+  const char1 = XT.string();
+  const char2 = XT.string(1);
+  const char3 = XT.string(3);
+  const char4 = XT.string({ class: XT.string(1) });
+  // I don't think this is of much - if you know the data before hand, you don't need R to send it to you...!
+  // const char5 = XT.string(["a", "b", "c"]);
 
-//   type T1 = z.infer<typeof char1>;
-//   type T2 = z.infer<typeof char2>;
-//   type T3 = z.infer<typeof char3>;
-//   type T4 = z.infer<typeof char4>;
-//   type T5 = z.infer<typeof char5>;
-//   type T6 = z.infer<typeof char6>;
-//   type T7 = z.infer<typeof char7>;
+  type T1 = z.infer<typeof char1>;
+  type T2 = z.infer<typeof char2>;
+  type T3 = z.infer<typeof char3>;
+  type T4 = z.infer<typeof char4>;
+  // type T5 = z.infer<typeof char5>;
 
-//   type tests = [
-//     Expect<Equal<T1, StringArray>>,
-//     Expect<Equal<T2, StringArray<string>>>,
-//     Expect<Equal<T3, StringArray<string[]>>>,
-//     Expect<
-//       Equal<
-//         T4,
-//         StringArray<
-//           string[],
-//           {
-//             class: StringArray<string>;
-//           }
-//         >
-//       >
-//     >,
-//     Expect<
-//       Equal<
-//         T5,
-//         StringArray<
-//           string[],
-//           {
-//             class: StringArray<string>;
-//           }
-//         >
-//       >
-//     >,
-//     Expect<
-//       Equal<
-//         T6,
-//         StringArray<
-//           string[],
-//           {
-//             class: StringArray<string>;
-//           }
-//         >
-//       >
-//     >,
-//     Expect<
-//       Equal<
-//         T7,
-//         {
-//           data: ["a", "b", "c"];
-//           r_type: "string_array";
-//           r_attributes?: unknown;
-//         }
-//       >
-//     >
-//   ];
+  type tests = [
+    Expect<Equal<T1, StringArray>>,
+    Expect<Equal<T2, StringArray<string>>>,
+    Expect<Equal<T3, StringArray<string[]>>>,
+    Expect<
+      Equal<
+        T4,
+        StringArray<
+          string[],
+          {
+            class: StringArray<string>;
+          }
+        >
+      >
+    >
+    // Expect<
+    //   Equal<
+    //     T5,
+    //     {
+    //       data: ["a", "b", "c"];
+    //       r_type: "string_array";
+    //       r_attributes?: unknown;
+    //     }
+    //   >
+    // >
+  ];
 
-//   const { data: r_char1 } = await R.eval("'hello'", char1);
-//   expect(r_char1).toBe("hello");
+  const r_char1 = await R.eval("'hello'", char1);
+  expect(r_char1).toBe("hello");
 
-//   const { data: r_char2 } = await R.eval("'hello'", char2);
-//   expect(r_char2).toBe("hello");
+  const r_char2 = await R.eval("'hello'", char2);
+  expect(r_char2).toBe("hello");
 
-//   const { data: r_char3 } = await R.eval("c('hello', 'world', 'foo')", char3);
-//   expect(r_char3).toEqual(["hello", "world", "foo"]);
+  const r_char3 = await R.eval("c('hello', 'world', 'foo')", char3);
+  expect(r_char3).toEqual(
+    objectWithAttributes(["hello", "world", "foo"], "string_array")
+  );
 
-//   const r_char4 = await R.eval("structure('hello', class = 'myclass')", char4);
-//   expect(r_char4.data).toEqual(["hello"]);
-//   expect(r_char4.r_attributes.class.data).toBe("myclass");
+  const r_char4 = await R.eval("structure('hello', class = 'myclass')", char4);
+  expect(r_char4).toEqual(
+    objectWithAttributes(["hello"], "string_array", { class: "myclass" })
+  );
+  expect(r_char4.r_attributes.class).toBe("myclass");
 
-//   const r_char5 = await R.eval("structure('hello', class = 'myclass')", char5);
-//   expect(r_char5.data).toEqual(["hello"]);
-//   expect(r_char5.r_attributes.class.data).toBe("myclass");
+  const r_char5 = await R.eval("structure('hello', class = 'myclass')", char4);
+  expect(r_char5).toEqual(
+    objectWithAttributes(["hello"], "string_array", { class: "myclass" })
+  );
+  expect(r_char5.r_attributes.class).toBe("myclass");
 
-//   const r_char6 = await R.eval(
-//     "structure(c('hello', 'world', 'foo'), class = 'myclass')",
-//     char6
-//   );
-//   expect(r_char6.data).toEqual(["hello", "world", "foo"]);
-//   expect(r_char6.r_attributes.class.data).toBe("myclass");
-// });
+  const r_char6 = await R.eval(
+    "structure(c('hello', 'world', 'foo'), class = 'myclass')",
+    char4
+  );
+  expect(r_char6).toEqual(
+    objectWithAttributes(["hello", "world", "foo"], "string_array", {
+      class: "myclass",
+    })
+  );
+  expect(r_char6.r_attributes.class).toBe("myclass");
+});
 
 // test("Factor types", async () => {
 //   const R = await RserveClient.create({
