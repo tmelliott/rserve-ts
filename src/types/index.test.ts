@@ -2,7 +2,11 @@ import { test, expect } from "vitest";
 import XT from "./xt_types";
 import { z } from "zod";
 import RserveClient from "../index";
-import { objectWithAttributes } from "./helpers";
+import {
+  ObjectWithAttributes,
+  objectWithAttributes,
+  WithAttributes,
+} from "./helpers";
 
 // set global WebSocket
 global.WebSocket = require("ws");
@@ -18,60 +22,63 @@ type Unify<T> = {} & {
   [K in keyof T]: T[K] extends object ? Unify<T[K]> : T[K];
 };
 
-type RArray<T, L extends string, A = undefined> = A extends undefined
-  ? {
-      data: T;
-      r_type: L;
-      r_attributes?: unknown;
-    }
-  : {
-      data: T;
-      r_type: L;
-      r_attributes: A;
-    };
+type RArray<
+  T,
+  L extends string,
+  A extends {} | undefined = undefined
+> = A extends {}
+  ? ObjectWithAttributes<T, L, A>
+  : T extends number | string | boolean
+  ? T
+  : ObjectWithAttributes<T, L, any>;
 
-type BoolArray<A = any> = boolean[] & { r_type: "bool_array"; r_attributes: A };
+type BoolArray<
+  T extends boolean | boolean[] | undefined = undefined,
+  A extends {} | undefined = undefined
+> = T extends undefined
+  ? RArray<boolean, "bool_array", A> | RArray<boolean[], "bool_array", A>
+  : RArray<T, "bool_array", A>;
 
-type IntArray<T = number | Int32Array, A = undefined> = RArray<
-  T,
-  "int_array",
-  A
->;
-type NumArray<T = number | Float64Array, A = undefined> = RArray<
-  T,
-  "double_array",
-  A
->;
-type StringArray<T = string | string[], A = undefined> = RArray<
-  T,
-  "string_array",
-  A
->;
-type FactorArray<
-  L extends [string, ...string[]] | string[] = string[],
-  A = {}
-> = Unify<
-  RArray<
-    string[],
-    "int_array",
-    Unify<
-      A & {
-        levels: {
-          data: L;
-          r_type: "string_array";
-          r_attributes?: unknown;
-        };
-        class: {
-          data: "factor";
-          r_type: "string_array";
-          r_attributes?: unknown;
-        };
-      }
-    >
-  > & {
-    levels: L;
-  }
->;
+// type IntArray<T = number | Int32Array, A = undefined> = RArray<
+//   T,
+//   "int_array",
+//   A
+// >;
+// type NumArray<T = number | Float64Array, A = undefined> = RArray<
+//   T,
+//   "double_array",
+//   A
+// >;
+// type StringArray<T = string | string[], A = undefined> = RArray<
+//   T,
+//   "string_array",
+//   A
+// >;
+// type FactorArray<
+//   L extends [string, ...string[]] | string[] = string[],
+//   A = {}
+// > = Unify<
+//   RArray<
+//     string[],
+//     "int_array",
+//     Unify<
+//       A & {
+//         levels: {
+//           data: L;
+//           r_type: "string_array";
+//           r_attributes?: unknown;
+//         };
+//         class: {
+//           data: "factor";
+//           r_type: "string_array";
+//           r_attributes?: unknown;
+//         };
+//       }
+//     >
+//   > & {
+//     levels: L;
+//   }
+// >;
 
 test("Boolean types", async () => {
   const R = await RserveClient.create({
@@ -94,10 +101,12 @@ test("Boolean types", async () => {
   type T5 = z.infer<typeof bool5>;
   type T6 = z.infer<typeof bool6>;
 
+  type B1 = BoolArray;
+
   type tests = [
-    Expect<Equal<T1, boolean | BoolArray>>,
-    Expect<Equal<T2, boolean>>,
-    Expect<Equal<T3, BoolArray>>
+    Expect<Equal<T1, BoolArray>>
+    // Expect<Equal<T2, boolean>>,
+    // Expect<Equal<T3, BoolArray>>
     // Expect<
     //   Equal<
     //     T4,

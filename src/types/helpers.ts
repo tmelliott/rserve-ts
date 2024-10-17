@@ -71,11 +71,15 @@ export const object = <
   return fun;
 };
 
+export type ObjectWithAttributes<T, S extends string, A extends {}> = T & {
+  r_type: S;
+  r_attributes: A;
+};
 export const objectWithAttributes = <T, S extends string, A extends {}>(
   x: T,
   type: S,
   attr?: A
-): T & { r_type: S; r_attributes: A } => {
+): ObjectWithAttributes<T, S, A> => {
   const res = x as any;
   res.r_type = type;
   res.r_attributes = attr;
