@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export type Attributes = any; // tagged_list, when we get there
+export type Attributes = z.ZodRawShape; // tagged_list, when we get there
 
 export const typeWithAttributes = <
   Z extends z.ZodTypeAny,
@@ -11,7 +11,9 @@ export const typeWithAttributes = <
   rtype: R,
   attr?: A
 ) => {
-  return z.custom<z.infer<Z> & { r_type: R; r_attributes: A }>((data) => {
+  return z.custom<
+    z.infer<Z> & { r_type: R; r_attributes: z.infer<z.ZodObject<A>> }
+  >((data) => {
     if (typeof data === "object" && data.hasOwnProperty("r_type")) {
       return data.r_type === rtype;
     }
@@ -19,19 +21,36 @@ export const typeWithAttributes = <
   });
 };
 
+type Unify<T> = {} & {
+  [K in keyof T]: T[K] extends object ? Unify<T[K]> : T[K];
+};
+
 const withAttributes = <T, RType extends string, Attr extends Attributes>(
   type: z.ZodType<T>,
   r_type: RType,
   attributes?: Attr
 ) => {
-  return z.custom<T & { r_type: RType; r_attributes: Attr }>((data) => {
+  return z.custom<
+    T & {
+      r_type: RType;
+      r_attributes: Unify<
+        z.infer<z.ZodObject<Attr>> & {
+          [K in string]: any;
+        }
+      >;
+    }
+  >((data) => {
     if (
       typeof data === "object" &&
       data.hasOwnProperty("r_type") &&
       data.r_type === r_type &&
       (attributes === undefined || data.hasOwnProperty("r_attributes"))
     ) {
-      return true;
+      if (attributes === undefined) {
+        return true;
+      }
+      const attr = z.object(attributes).safeParse(data.r_attributes);
+      return attr.success;
     }
     return false;
   });
@@ -40,7 +59,16 @@ export type WithAttributes<
   T,
   RType extends string,
   Attr extends Attributes = Attributes
-> = z.ZodType<T & { r_type: RType; r_attributes: Attr }>;
+> = z.ZodType<
+  T & {
+    r_type: RType;
+    r_attributes: Unify<
+      z.infer<z.ZodObject<Attr>> & {
+        [K in string]: any;
+      }
+    >;
+  }
+>;
 
 export const object = <
   TSingular extends z.ZodTypeAny,
@@ -71,11 +99,27 @@ export const object = <
   return fun;
 };
 
-export type ObjectWithAttributes<T, S extends string, A extends {}> = T & {
+export type ObjectWithAttributes<
+  T,
+  S extends string,
+  A extends {} | undefined = undefined
+> = T & {
   r_type: S;
-  r_attributes: A;
+  r_attributes: A extends undefined
+    ? {
+        [K in string]: any;
+      }
+    : Unify<
+        (A extends z.ZodRawShape ? z.infer<z.ZodObject<A>> : A) & {
+          [K in string]: any;
+        }
+      >;
 };
-export const objectWithAttributes = <T, S extends string, A extends {}>(
+export const objectWithAttributes = <
+  T,
+  S extends string,
+  A extends {} | undefined = undefined
+>(
   x: T,
   type: S,
   attr?: A

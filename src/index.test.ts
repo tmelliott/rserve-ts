@@ -30,7 +30,7 @@ test("Rserve connects and runs", async () => {
   const numWithAttr = await R.eval(
     "structure(1:3, class = 'myclass')",
     Robj.integer({
-      class: Robj.string(),
+      class: Robj.string(1),
     })
   );
   const expectedNumWithAttr = objectWithAttributes(

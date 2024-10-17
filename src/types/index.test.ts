@@ -18,10 +18,6 @@ type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y
   ? true
   : false;
 
-type Unify<T> = {} & {
-  [K in keyof T]: T[K] extends object ? Unify<T[K]> : T[K];
-};
-
 type RArray<
   T,
   L extends string,
@@ -30,7 +26,7 @@ type RArray<
   ? ObjectWithAttributes<T, L, A>
   : T extends number | string | boolean
   ? T
-  : ObjectWithAttributes<T, L, any>;
+  : ObjectWithAttributes<T, L, undefined>;
 
 type BoolArray<
   T extends boolean | boolean[] | undefined = undefined,
@@ -39,21 +35,27 @@ type BoolArray<
   ? RArray<boolean, "bool_array", A> | RArray<boolean[], "bool_array", A>
   : RArray<T, "bool_array", A>;
 
-// type IntArray<T = number | Int32Array, A = undefined> = RArray<
-//   T,
-//   "int_array",
-//   A
-// >;
-// type NumArray<T = number | Float64Array, A = undefined> = RArray<
-//   T,
-//   "double_array",
-//   A
-// >;
-// type StringArray<T = string | string[], A = undefined> = RArray<
-//   T,
-//   "string_array",
-//   A
-// >;
+type IntArray<
+  T extends number | Int32Array | undefined = undefined,
+  A extends {} | undefined = undefined
+> = T extends undefined
+  ? RArray<number, "int_array", A> | RArray<Int32Array, "int_array", A>
+  : RArray<T, "int_array", A>;
+
+type NumArray<
+  T extends number | Float64Array | undefined = undefined,
+  A extends {} | undefined = undefined
+> = T extends undefined
+  ? RArray<number, "double_array", A> | RArray<Float64Array, "double_array", A>
+  : RArray<T, "double_array", A>;
+
+type StringArray<
+  T extends string | string[] | undefined = undefined,
+  A extends {} | undefined = undefined
+> = T extends undefined
+  ? RArray<string, "string_array", A> | RArray<string[], "string_array", A>
+  : RArray<T, "string_array", A>;
+
 // type FactorArray<
 //   L extends [string, ...string[]] | string[] = string[],
 //   A = {}
@@ -102,43 +104,34 @@ test("Boolean types", async () => {
   type T6 = z.infer<typeof bool6>;
 
   type B1 = BoolArray;
+  type B2 = BoolArray<boolean>;
+  type B3 = BoolArray<boolean[]>;
+  type B4 = BoolArray<
+    boolean[],
+    {
+      class: StringArray<string>;
+    }
+  >;
+  type B5 = BoolArray<
+    boolean[],
+    {
+      class: StringArray<string>;
+    }
+  >;
+  type B6 = BoolArray<
+    boolean[],
+    {
+      class: StringArray<string>;
+    }
+  >;
 
   type tests = [
-    Expect<Equal<T1, BoolArray>>
-    // Expect<Equal<T2, boolean>>,
-    // Expect<Equal<T3, BoolArray>>
-    // Expect<
-    //   Equal<
-    //     T4,
-    //     BoolArray<
-    //       {
-    //         class: XT.string();
-    //       }
-    //     >
-    //   >
-    // >,
-    // Expect<
-    //   Equal<
-    //     T5,
-    //     BoolArray<
-    //       boolean[],
-    //       {
-    //         class: StringArray<string>;
-    //       }
-    //     >
-    //   >
-    // >,
-    // Expect<
-    //   Equal<
-    //     T6,
-    //     BoolArray<
-    //       boolean[],
-    //       {
-    //         class: StringArray<string>;
-    //       }
-    //     >
-    //   >
-    // >
+    Expect<Equal<T1, B1>>,
+    Expect<Equal<T2, B2>>,
+    Expect<Equal<T3, B3>>,
+    Expect<Equal<T4, B4>>,
+    Expect<Equal<T5, B5>>,
+    Expect<Equal<T6, B6>>
   ];
 
   const r_bool1 = await R.eval("TRUE", bool1);

@@ -79,7 +79,7 @@ const noOcap = async () => {
   console.log(
     await R.eval(
       "structure(TRUE, some = 'thing')",
-      XT.boolean({ some: "string" })
+      XT.boolean({ some: z.literal("thing") })
     )
   );
 
@@ -90,7 +90,7 @@ const noOcap = async () => {
   console.log(
     await R.eval(
       "structure(1.0, some = 'thing')",
-      XT.double({ some: "string" })
+      XT.double({ some: z.literal("thing") })
     )
   );
 
@@ -101,7 +101,7 @@ const noOcap = async () => {
   const i4 = await R.eval(
     "structure(1L, some = 'thing')",
     XT.integer({
-      some: "string",
+      some: R.Robj.string(1),
     })
   );
   console.log(i4);
