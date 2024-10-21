@@ -6,9 +6,7 @@ import {
   clearAttrs,
   ObjectWithAttributes,
   objectWithAttributes,
-  Unify,
   UnifyOne,
-  WithAttributes,
 } from "./helpers";
 
 // set global WebSocket
@@ -78,17 +76,6 @@ type FactorArray<
       }
   >;
 };
-
-// RArray<
-//   string[] & { levels: string[] },
-//   "int_array",
-//   A & {
-//     levels: L & { r_type: "string_array" };
-//     class: "factor";
-//   }
-// > & {
-//   levels: L;
-// };
 
 test("Boolean types", async () => {
   const R = await RserveClient.create({
@@ -540,82 +527,86 @@ test("Factor types", async () => {
 //   expect(r_tab2.r_attributes.dim.data).toEqual([3, 2]);
 // });
 
-// test("List types", async () => {
-//   const R = await RserveClient.create({
-//     host: "http://127.0.0.1:8881",
-//   });
+test("List types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8881",
+  });
 
-//   const list1 = R.list();
-//   const list2 = R.list({ x: R.numeric(1), y: R.factor(["one", "two"]) });
-//   const list3 = R.list([R.numeric(5), R.factor(["one", "two"])]);
+  const list1 = XT.vector();
+  const list2 = XT.vector({ x: XT.double(1), y: XT.factor(["one", "two"]) });
+  const list3 = XT.vector([XT.double(5), XT.factor(["one", "two"])]);
 
-//   type List1 = z.infer<typeof list1>;
-//   type List2 = z.infer<typeof list2>;
-//   type List3 = z.infer<typeof list3>;
+  type List1 = z.infer<typeof list1>;
+  type List2 = z.infer<typeof list2>;
+  type List3 = z.infer<typeof list3>;
 
-//   type List1X = List1["data"];
+  type L0 = any[] & {
+    r_type: "vector";
+    r_attributes: {
+      [x: string]: any;
+    };
+  };
+  type L1 = Record<string, any> & {
+    r_type: "vector";
+    r_attributes: {
+      names: string | string[];
+    } & Record<string, any>;
+  };
+  type L2 = {
+    x: NumArray<number>;
+    y: FactorArray<["one", "two"]>;
+    r_type: "vector";
+    r_attributes: {
+      names: StringArray<string[]>;
+    } & Record<string, any>;
+  };
+  type L3 = [NumArray<Float64Array>, FactorArray<["one", "two"]>] & {
+    r_type: "vector";
+    r_attributes: {
+      [x: string]: any;
+    };
+  };
 
-//   type tests = [
-//     Expect<
-//       Equal<
-//         List1,
-//         {
-//           data: Record<string, RTypes>;
-//           r_type: "vector";
-//           r_attributes: {
-//             [x: string]: any;
-//             names?: unknown;
-//           };
-//         }
-//       >
-//     >,
-//     Expect<
-//       Equal<
-//         List2,
-//         {
-//           data: {
-//             x: NumArray<number>;
-//             y: FactorArray<["one", "two"]>;
-//           };
-//           r_type: "vector";
-//           r_attributes: {
-//             [x: string]: any;
-//             names?: unknown;
-//           };
-//         }
-//       >
-//     >,
-//     Expect<
-//       Equal<
-//         List3,
-//         {
-//           data: [NumArray<Float64Array>, FactorArray<["one", "two"]>];
-//           r_type: "vector";
-//           r_attributes: {
-//             [x: string]: any;
-//           };
-//         }
-//       >
-//     >
-//   ];
+  type tests = [
+    Expect<Equal<List1, L1 | L0>>,
+    Expect<Equal<List2["r_attributes"], L2["r_attributes"]>>,
+    Expect<Equal<List3, L3>>
+  ];
 
-//   const r_list1 = await R.eval(
-//     "list(x = 5.3, y = factor(c('one', 'two')))",
-//     list1
-//   );
-//   expect(r_list1.data.x.data).toEqual(5.3);
-//   expect(r_list1.data.y.data).toEqual(["one", "two"]);
+  const isNamed = (x: unknown): x is L1 => {
+    if (!x) return false;
+    if (typeof x !== "object") return false;
 
-//   const r_list2 = await R.eval(
-//     "list(x = 5.3, y = factor(c('one', 'two')))",
-//     list2
-//   );
-//   expect(r_list2.data.x.data).toEqual(5.3);
-//   expect(r_list2.data.y.data).toEqual(["one", "two"]);
-//   // if (r_list2.r_attributes.names)
-//   //   expect(r_list2.r_attributes.names.data).toEqual(["x", "y"]);
+    if (x.hasOwnProperty("r_attributes")) {
+      return (x as L1).r_attributes.names != undefined;
+    }
+    return false;
+  };
 
-//   const r_list3 = await R.eval("list(1:5/2, factor(c('one', 'two')))", list3);
-//   expect(r_list3.data[0].data).toEqual(new Float64Array([0.5, 1, 1.5, 2, 2.5]));
-//   expect(r_list3.data[1].data).toEqual(["one", "two"]);
-// });
+  const r_list1 = await R.eval(
+    "list(x = 5.3, y = factor(c('one', 'two')))",
+    list1
+  );
+  if (!isNamed(r_list1)) throw new Error("not named");
+  expect(r_list1.x).toEqual(5.3);
+  expect(clearAttrs(r_list1.y)).toEqual(["one", "two"]);
+
+  const r_list2 = await R.eval(
+    "list(x = 5.3, y = factor(c('one', 'two')))",
+    list2
+  );
+  expect(r_list2.x).toEqual(5.3);
+  expect(clearAttrs(r_list2.y)).toEqual(["one", "two"]);
+  expect(clearAttrs(r_list2.r_attributes.names)).toEqual(["x", "y"]);
+
+  const r_list3 = await R.eval("list(1:5/2, factor(c('one', 'two')))", list3);
+  console.log(r_list3[0]);
+  expect(r_list3[0]).toEqual(
+    objectWithAttributes(
+      new Float64Array([0.5, 1, 1.5, 2, 2.5]),
+      "double_array"
+    )
+  );
+
+  expect(clearAttrs(r_list3[1])).toEqual(["one", "two"]);
+});

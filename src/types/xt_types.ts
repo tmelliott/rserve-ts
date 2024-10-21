@@ -18,7 +18,7 @@ const _vector_noargs = () =>
     .and(
       z.object({
         r_type: z.literal("vector"),
-        r_attributes: attributes({ names: z.array(z.string()) }).optional(),
+        r_attributes: attributes({ names: z.array(z.string()).or(z.string()) }),
       })
     )
     .or(typeWithAttributes(z.array(z.any()), "vector", undefined));
