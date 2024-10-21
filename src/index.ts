@@ -1,15 +1,15 @@
 import { z } from "zod";
 import Rserve from "./Rserve";
 import {
-  logical,
-  character,
-  factor,
-  integer,
-  numeric,
+  // logical,
+  // character,
+  // factor,
+  // integer,
+  // numeric,
   sexp,
-  table,
-  list,
-  dataframe,
+  // table,
+  // list,
+  // dataframe,
 } from "./types";
 
 import Robj from "./types";
@@ -142,13 +142,20 @@ const createRserve = async (
       }),
     ocap: <TFuns extends z.ZodRawShape>(schema?: TFuns) =>
       new Promise<z.infer<z.ZodObject<TFuns, "strip">>>((resolve, reject) => {
-        client.ocap((err: string, data: { data: Record<string, Function> }) => {
+        client.ocap((err: string, data: Record<string, Function>) => {
           if (err) {
             reject(err);
           } else {
-            const ocapFuns = data.data;
-            if (schema) resolve(z.object(schema).parse(ocapFuns));
-            else resolve(ocapFuns as any);
+            const ocapFuns = data;
+            if (schema) {
+              const res = z.object(schema).safeParse(ocapFuns);
+              if (res.success) resolve(res.data);
+              else {
+                console.error(res.error);
+                console.log(res.data);
+                reject(res.error);
+              }
+            } else resolve(ocapFuns as any);
           }
         });
       }),

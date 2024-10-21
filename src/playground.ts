@@ -337,108 +337,105 @@ const noOcap = async () => {
   // // console.log(z);
 };
 
-// const ocapTest = async () => {
-//   const R = await RserveClient.create({
-//     host: "http://127.0.0.1:8781",
-//   });
+const ocapTest = async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8781",
+  });
 
-//   const oc = await R.ocap();
+  // const oc = await R.ocap();
 
-//   const app = await R.ocap(ocapFuns);
+  const app = await R.ocap(ocapFuns);
 
-//   await app.tfail(1).catch((err) => {
-//     console.log("Nice: ", err);
-//   });
+  await app.tfail(1).catch((err) => {
+    console.log("Nice: ", err);
+  });
 
-//   const { data: x1 } = await app.t1(5);
-//   console.log("T1:", x1);
+  const x1 = await app.t1(5);
+  console.log("T1:", x1);
 
-//   const { data: x2 } = await app.t2(4);
-//   console.log("T2:", x2);
+  const x2 = await app.t2(4);
+  console.log("T2:", x2);
 
-//   // new syntax:
-//   const { data: x3 } = await app.t3(async (x) => 21 + x);
-//   console.log("T3:", x3);
+  // new syntax:
+  const x3 = await app.t3(async (x) => 21 + x);
+  console.log("T3:", x3);
 
-//   // T4: 26
-//   const { data: x4 } = await app.t4(5);
-//   console.log("T4:", x4);
+  // T4: 26
+  const x4 = await app.t4(5);
+  console.log("T4:", x4);
 
-//   // T5: null
-//   const x5 = await app.t5(function (i) {
-//     return i * i;
-//   });
-//   console.log("T5:", x5);
+  // T5: null
+  const x5 = await app.t5(function (i) {
+    return i * i;
+  });
+  console.log("T5:", x5);
 
-//   // T6: 25
-//   const {
-//     data: [{ data: f6 }, { data: i6 }],
-//   } = await app.t6(5);
-//   const x6 = f6(i6);
-//   console.log("T6:", x6);
+  // T6: 25
+  const [f6, i6] = await app.t6(5);
+  const x6 = f6(i6);
+  console.log("T6:", x6);
 
-//   // iris
-//   const iris = await app.iris();
-//   // console.log("Iris:", iris);
+  // iris
+  const iris = await app.iris();
+  // console.log("Iris:", iris);
 
-//   // rng (functions from function)
-//   const {
-//     data: { rnorm, runif, flip },
-//   } = await app.rng();
+  // rng (functions from function)
+  const { rnorm, runif, flip } = await app.rng();
 
-//   // this should happen automatically ....
-//   const x = await rnorm(5);
-//   console.log("RNG rnorm:", x.data);
+  // this should happen automatically ....
+  const x = await rnorm(5);
+  console.log("RNG rnorm:", x);
 
-//   const y = await runif(5);
-//   console.log("RNG runif:", y);
+  const y = await runif(5);
+  console.log("RNG runif:", y);
 
-//   const coin = await flip();
-//   console.log("RNG flip:", coin.data === 1 ? "heads" : "tails");
+  const coin = await flip();
+  console.log("RNG flip:", coin === 1 ? "heads" : "tails");
 
-//   console.log(await app.sample_num(new Float64Array([1, 2, 3])));
+  console.log(await app.sample_num(new Float64Array([1, 2, 3])));
 
-//   // const xf: string[] & { r_type: "string_array" } = ["a", "b", "c"] as any;
-//   // xf.r_type = "string_array";
+  // const xf: string[] & { r_type: "string_array" } = ["a", "b", "c"] as any;
+  // xf.r_type = "string_array";
 
-//   // const sx = as_vector(["a", "b", "c"]);
-//   // console.log(sx);
-//   // console.log(stringArray.safeParse(sx));
-//   // console.log(stringArray.safeParse(new Float64Array([1, 2, 3])));
-//   // console.log(stringArray.safeParse(["a", "b", "c"]));
-//   // console.log(stringArray.safeParse(as_vector(["a", "b", "c"])));
+  // const sx = as_vector(["a", "b", "c"]);
+  // console.log(sx);
+  // console.log(stringArray.safeParse(sx));
+  // console.log(stringArray.safeParse(new Float64Array([1, 2, 3])));
+  // console.log(stringArray.safeParse(["a", "b", "c"]));
+  // console.log(stringArray.safeParse(as_vector(["a", "b", "c"])));
 
-//   console.log(await app.sample_char(as_vector(["a", "b", "c"])));
+  // TODO: is this the right way to do this?
+  // console.log(await app.sample_char(as_vector(["a", "b", "c"])));
 
-//   // console.log((await app.print_input([1, 2, 3])).data);
-//   // console.log((await app.print_input(new Int32Array([1, 2, 3]))).data);
+  console.log(await app.print_input([1, 2, 3]));
+  console.log(await app.print_input(new Int32Array([1, 2, 3])));
 
-//   const fac: string[] & {
-//     r_type: string;
-//     r_attributes: { levels: string[]; class: "factor" };
-//   } = ["a", "a", "b", "c", "b"] as any;
-//   fac.r_type = "int_array";
-//   fac.r_attributes = { levels: ["a", "b", "c"], class: "factor" };
-//   console.log(await app.print_input(fac));
+  const fac: string[] & {
+    r_type: string;
+    r_attributes: { levels: string[]; class: "factor" };
+  } = ["a", "a", "b", "c", "b"] as any;
+  fac.r_type = "int_array";
+  fac.r_attributes = { levels: ["a", "b", "c"], class: "factor" };
+  console.log(await app.print_input(fac));
 
-//   // sending javascript functions to R
-//   // const progBar = new SingleBar({}, Presets.shades_classic);
-//   // progBar.start(100, 0);
+  // sending javascript functions to R
+  // const progBar = new SingleBar({}, Presets.shades_classic);
+  // progBar.start(100, 0);
 
-//   // const { data: longresult } = await app.longjob(async (x) =>
-//   //   progBar.update(x)
-//   // );
+  // const { data: longresult } = await app.longjob(async (x) =>
+  //   progBar.update(x)
+  // );
 
-//   // progBar.stop();
-//   // console.log("Long job result:", longresult);
+  // progBar.stop();
+  // console.log("Long job result:", longresult);
 
-//   // // some random numbers
-//   // const { data: xrand } = await app.randomNumbers();
-//   // console.log("Random numbers:", xrand);
-// };
+  // // some random numbers
+  // const { data: xrand } = await app.randomNumbers();
+  // console.log("Random numbers:", xrand);
+};
 
 (async () => {
-  await noOcap();
-  // await ocapTest();
+  // await noOcap();
+  await ocapTest();
   process.exit(0);
 })();

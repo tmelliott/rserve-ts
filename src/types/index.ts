@@ -607,13 +607,13 @@ import Robj from "./xt_types";
 export default Robj;
 
 export {
-  logical,
-  integer,
-  numeric,
-  character,
-  factor,
-  table,
-  list,
-  dataframe,
+  // logical,
+  // integer,
+  // numeric,
+  // character,
+  // factor,
+  // table,
+  // list,
+  // dataframe,
   ocap,
 };
