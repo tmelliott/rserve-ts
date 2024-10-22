@@ -25,7 +25,10 @@ const _vector_noargs = () =>
 
 const _vector_array = <T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
   schema: T
-) => typeWithAttributes(schema, "vector", undefined);
+) =>
+  typeWithAttributes(schema, "vector", {
+    names: z.array(z.string()).or(z.string()),
+  });
 
 const _vector_tuple = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
   schema: T

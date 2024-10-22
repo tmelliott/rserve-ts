@@ -60,13 +60,16 @@ oc.init <- function() {
 
 ```typescript
 // ocap.ts
-import { function, number, list, ocap } from "rserve-ts/types";
+import { double, vector, ocap } from "rserve-ts/types";
 
 export const appFuns = {
-  add: ocap([z.number(), z.number()], number()),
-  dist: ocap([z.enum(["normal", "uniform"])], list({
-    sample: ocap([z.number()], numeric()),
-  })),
+  add: ocap([z.number(), z.number()], double()),
+  dist: ocap(
+    [z.enum(["normal", "uniform"])],
+    vector({
+      sample: ocap([z.number()], double()),
+    })
+  ),
 };
 ```
 
@@ -81,11 +84,11 @@ import { appFuns } from "./ocap";
 
   const app = await R.ocap(appFuns);
 
-  const { data: sum } = await app.add(1, 2);
+  const sum = await app.add(1, 2);
   console.log("1 + 2 = ", sum);
 
-  const { data: chosenDist } = await app.dist("normal");
-  const { data: sample } = await chosenDist.sample(5);
+  const chosenDist = await app.dist("normal");
+  const sample = await chosenDist.sample(5);
   console.log("Normal sample: ", sample);
 })();
 ```

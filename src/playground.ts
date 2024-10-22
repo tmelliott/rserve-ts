@@ -448,7 +448,12 @@ const ocapTest = async () => {
 
   console.log("\n-------------- fit models --------------");
   const fit = await app.car_lm("mpg", "hp");
-  console.log(await fit.coef());
+  const coefs = await fit.coef();
+  if (typeof coefs.r_attributes.names === "object") {
+    coefs.r_attributes.names.forEach((name) => {
+      console.log(name, ": ", coefs[name]);
+    });
+  }
   console.log(await fit.rsq());
 };
 
