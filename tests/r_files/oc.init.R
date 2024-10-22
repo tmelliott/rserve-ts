@@ -64,7 +64,7 @@ give.first.functions <- function() {
                         text = sprintf("lm(%s ~ %s, data = mtcars)", y, x)
                     ))
                     list(
-                        coef = wrap.r.fun(function() coef(fit)),
+                        coef = wrap.r.fun(function() as.list(coef(fit))),
                         rsq = wrap.r.fun(function() summary(fit)$r.squared)
                     )
                 }

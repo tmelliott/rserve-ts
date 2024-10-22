@@ -101,7 +101,7 @@ export const ocapFuns = {
       ]),
     ],
     Robj.vector({
-      coef: R.ocap([], Robj.double(0)),
+      coef: R.ocap([], Robj.vector()),
       rsq: R.ocap([], Robj.double(1)),
     })
   ),
