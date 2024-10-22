@@ -1450,6 +1450,7 @@ var Rserve = (function () {
           return Rserve.wrap_ocap(s, obj);
         } else if (_.isArray(obj)) {
           result = _.map(obj, replace);
+          if (obj.levels) result.levels = obj.levels;
           result.r_type = obj.r_type;
           result.r_attributes = obj.r_attributes;
         } else if (_.isTypedArray(obj)) {
@@ -1470,8 +1471,8 @@ var Rserve = (function () {
               return [k, replace(v)];
             })
           );
-          result.r_type = obj.r_type;
-          result.r_attributes = replace(obj.r_attributes);
+          // result.r_type = obj.r_type;
+          // result.r_attributes = replace(obj.r_attributes);
         }
         return result;
       }

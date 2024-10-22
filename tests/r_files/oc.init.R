@@ -52,6 +52,21 @@ give.first.functions <- function() {
                         update_progress(prog)
                     }
                     TRUE
+                },
+                car_lm = function(y, x) {
+                    if (!y %in% names(mtcars)) {
+                        stop("y must be a column name in mtcars")
+                    }
+                    if (!x %in% names(mtcars)) {
+                        stop("x must be a column name in mtcars")
+                    }
+                    fit <- eval(parse(
+                        text = sprintf("lm(%s ~ %s, data = mtcars)", y, x)
+                    ))
+                    list(
+                        coef = wrap.r.fun(function() coef(fit)),
+                        rsq = wrap.r.fun(function() summary(fit)$r.squared)
+                    )
                 }
             ),
             wrap.r.fun

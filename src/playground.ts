@@ -60,6 +60,7 @@ global.WebSocket = require("ws");
 // );
 
 import XT from "./types/xt_types";
+import { Presets, SingleBar } from "cli-progress";
 
 const noOcap = async () => {
   const R = await RserveClient.create({
@@ -165,6 +166,9 @@ const noOcap = async () => {
       XT.factor({ some: XT.string(1) })
     )
   );
+
+  // console.log(await R.eval("iris$Species[1:5]"));
+  // console.log(((await R.eval("iris[1:5,]")) as any).Species);
 
   // const y = z
   //   .array(z.boolean())
@@ -410,32 +414,40 @@ const ocapTest = async () => {
   console.log(await app.print_input([1, 2, 3]));
   console.log(await app.print_input(new Int32Array([1, 2, 3])));
 
-  const fac: string[] & {
-    r_type: string;
-    r_attributes: { levels: string[]; class: "factor" };
-  } = ["a", "a", "b", "c", "b"] as any;
-  fac.r_type = "int_array";
-  fac.r_attributes = { levels: ["a", "b", "c"], class: "factor" };
-  console.log(await app.print_input(fac));
+  console.log("\n----------DATAFRAME----------");
+  // const { Robj } = R;
+  // const irisDf = Robj.vector({
+  //   "Sepal.Length": Robj.double(0),
+  //   "Sepal.Width": Robj.double(0),
+  //   "Petal.Length": Robj.double(0),
+  //   "Petal.Width": Robj.double(0),
+  //   Species: Robj.factor(["setosa", "versicolor", "virginica"]),
+  // });
+  // type IrisDf = z.infer<typeof irisDf>;
+
+  const fac = await app.iris();
+  console.log(fac.Species);
+  console.log("Result...\n ", await app.print_input(fac.Species));
 
   // sending javascript functions to R
   // const progBar = new SingleBar({}, Presets.shades_classic);
   // progBar.start(100, 0);
-
-  // const { data: longresult } = await app.longjob(async (x) =>
-  //   progBar.update(x)
-  // );
-
+  // const longresult = await app.longjob(async (x) => progBar.update(x));
   // progBar.stop();
   // console.log("Long job result:", longresult);
 
   // // some random numbers
-  // const { data: xrand } = await app.randomNumbers();
+  // const xrand = await app.randomNumbers();
   // console.log("Random numbers:", xrand);
+
+  console.log("\n-------------- fit models --------------");
+  const fit = await app.car_lm("mpg", "hp");
+  console.log(await fit.coef());
+  console.log(await fit.rsq());
 };
 
 (async () => {
-  // await noOcap();
+  await noOcap();
   await ocapTest();
   process.exit(0);
 })();

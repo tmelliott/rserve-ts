@@ -60,7 +60,51 @@ export const ocapFuns = {
   sample_num: R.ocap([z.instanceof(Float64Array)], Robj.double(1)),
   sample_char: R.ocap([stringArray], Robj.string(1)),
   // TODO: dataframe output
-  iris: R.ocap([], z.any()),
+  iris: R.ocap(
+    [],
+    z.any()
+    // Robj.vector({
+    //   "Sepal.Length": Robj.double(0),
+    //   "Sepal.Width": Robj.double(0),
+    //   "Petal.Length": Robj.double(0),
+    //   "Petal.Width": Robj.double(0),
+    //   Species: Robj.factor(["setosa", "versicolor", "virginica"]),
+    // })
+  ),
+  car_lm: R.ocap(
+    [
+      z.enum([
+        "mpg",
+        "cyl",
+        "disp",
+        "hp",
+        "drat",
+        "wt",
+        "qsec",
+        "vs",
+        "am",
+        "gear",
+        "carb",
+      ]),
+      z.enum([
+        "mpg",
+        "cyl",
+        "disp",
+        "hp",
+        "drat",
+        "wt",
+        "qsec",
+        "vs",
+        "am",
+        "gear",
+        "carb",
+      ]),
+    ],
+    Robj.vector({
+      coef: R.ocap([], Robj.double(0)),
+      rsq: R.ocap([], Robj.double(1)),
+    })
+  ),
   rng: R.ocap(
     [],
     Robj.vector({
