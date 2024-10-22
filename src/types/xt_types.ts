@@ -23,7 +23,11 @@ const _vector_noargs = () =>
     )
     .or(typeWithAttributes(z.array(z.any()), "vector", undefined));
 
-const _vector_array = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
+const _vector_array = <T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
+  schema: T
+) => typeWithAttributes(schema, "vector", undefined);
+
+const _vector_tuple = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
   schema: T
 ) => typeWithAttributes(z.tuple(schema), "vector", undefined);
 
@@ -36,17 +40,27 @@ const _vector_object = <T extends z.ZodRawShape>(schema: T) =>
   );
 
 function _vector(): ReturnType<typeof _vector_noargs>;
-function _vector<T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
+function _vector<T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
   schema: T
 ): ReturnType<typeof _vector_array<T>>;
+function _vector<T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
+  schema: T
+): ReturnType<typeof _vector_tuple<T>>;
 function _vector<T extends z.ZodRawShape>(
   schema: T
 ): ReturnType<typeof _vector_object<T>>;
-function _vector(schema?: z.ZodRawShape | [z.ZodTypeAny, ...z.ZodTypeAny[]]) {
+function _vector(
+  schema?:
+    | z.ZodRawShape
+    | [z.ZodTypeAny, ...z.ZodTypeAny[]]
+    | z.ZodRecord<z.ZodString, z.ZodTypeAny>
+) {
   return schema === undefined
     ? _vector_noargs()
     : Array.isArray(schema)
-    ? (_vector_array(schema) as any)
+    ? (_vector_tuple(schema) as any)
+    : schema instanceof z.ZodRecord
+    ? _vector_array(schema)
     : _vector_object(schema);
 }
 

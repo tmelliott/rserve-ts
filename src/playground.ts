@@ -131,6 +131,12 @@ const noOcap = async () => {
   );
   console.log(v3.r_attributes.names);
 
+  const v4 = await R.eval(
+    "list(a = 1:5, b = 1:5)",
+    XT.vector(z.record(z.string(), XT.integer(5)))
+  );
+  console.log(v4);
+
   console.log("\n\n---- Tagged List ----");
   console.log(await R.eval("formals(lm)", XT.tagged_list()));
   console.log(await R.eval("pairlist(a = 1, b = 2)", XT.tagged_list()));
