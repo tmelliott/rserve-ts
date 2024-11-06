@@ -74,24 +74,24 @@ const noOcap = async () => {
   console.log(await R.eval("NULL", XT.null()));
 
   console.log("\n\n---- Boolean ----");
-  console.log(await R.eval("TRUE", XT.boolean(1)));
-  console.log(await R.eval("c(TRUE, FALSE, TRUE)", XT.boolean(3)));
-  console.log(await R.eval("logical()", XT.boolean(0)));
+  console.log(await R.eval("TRUE", XT.logical(1)));
+  console.log(await R.eval("c(TRUE, FALSE, TRUE)", XT.logical(3)));
+  console.log(await R.eval("logical()", XT.logical(0)));
   console.log(
     await R.eval(
       "structure(TRUE, some = 'thing')",
-      XT.boolean({ some: z.literal("thing") })
+      XT.logical({ some: z.literal("thing") })
     )
   );
 
   console.log("\n\n---- Double ----");
-  console.log(await R.eval("1.0", XT.double(1)));
-  console.log(await R.eval("c(1, 2, 3)", XT.double(3)));
-  console.log(await R.eval("numeric()", XT.double(0)));
+  console.log(await R.eval("1.0", XT.numeric(1)));
+  console.log(await R.eval("c(1, 2, 3)", XT.numeric(3)));
+  console.log(await R.eval("numeric()", XT.numeric(0)));
   console.log(
     await R.eval(
       "structure(1.0, some = 'thing')",
-      XT.double({ some: z.literal("thing") })
+      XT.numeric({ some: z.literal("thing") })
     )
   );
 
@@ -102,7 +102,7 @@ const noOcap = async () => {
   const i4 = await R.eval(
     "structure(1L, some = 'thing')",
     XT.integer({
-      some: R.Robj.string(1),
+      some: R.Robj.character(1),
     })
   );
   console.log(i4);
@@ -118,15 +118,15 @@ const noOcap = async () => {
   console.log(
     await R.eval(
       "list(1, 1:10, 'hello')",
-      XT.vector([XT.double(1), XT.integer(10), XT.string(1)])
+      XT.vector([XT.numeric(1), XT.integer(10), XT.character(1)])
     )
   );
   const v3 = await R.eval(
     "list(a = 1, b = 2, c = 3)",
     XT.vector({
-      a: XT.double(1),
-      b: XT.double(1),
-      c: XT.double(1),
+      a: XT.numeric(1),
+      b: XT.numeric(1),
+      c: XT.numeric(1),
     })
   );
   console.log(v3.r_attributes.names);
@@ -169,7 +169,7 @@ const noOcap = async () => {
   console.log(
     await R.eval(
       "structure(factor(sample(LETTERS, 5)), some = 'thing')",
-      XT.factor({ some: XT.string(1) })
+      XT.factor({ some: XT.character(1) })
     )
   );
 

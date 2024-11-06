@@ -17,10 +17,10 @@ test("Rserve connects and runs", async () => {
 
   expect(R.is_running()).toBe(true);
 
-  const x = await R.eval("1 + 1", Robj.double(1));
+  const x = await R.eval("1 + 1", Robj.numeric(1));
   expect(x).toBe(2);
 
-  const irisNames = await R.eval("names(iris)", Robj.string(0));
+  const irisNames = await R.eval("names(iris)", Robj.character(0));
   const expectedNames = objectWithAttributes(
     ["Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width", "Species"],
     "string_array"
@@ -30,7 +30,7 @@ test("Rserve connects and runs", async () => {
   const numWithAttr = await R.eval(
     "structure(1:3, class = 'myclass')",
     Robj.integer({
-      class: Robj.string(1),
+      class: Robj.character(1),
     })
   );
   const expectedNumWithAttr = objectWithAttributes(

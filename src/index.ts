@@ -1,16 +1,6 @@
 import { z } from "zod";
 import Rserve from "./Rserve";
-import {
-  // logical,
-  // character,
-  // factor,
-  // integer,
-  // numeric,
-  sexp,
-  // table,
-  // list,
-  // dataframe,
-} from "./types";
+import { sexp } from "./types";
 
 import Robj from "./types";
 
@@ -160,14 +150,6 @@ const createRserve = async (
         });
       }),
     Robj,
-    // logical,
-    // integer,
-    // numeric,
-    // character,
-    // factor,
-    // table,
-    // list,
-    // dataframe,
   };
 };
 

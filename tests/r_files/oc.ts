@@ -46,19 +46,19 @@ const stringArray = z.custom<string[] & { r_type: "string_array" }>((data) => {
 });
 
 export const ocapFuns = {
-  print_input: R.ocap([z.any()], Robj.string(1)),
-  add: R.ocap([z.number(), z.number()], Robj.double(1)),
+  print_input: R.ocap([z.any()], Robj.character(1)),
+  add: R.ocap([z.number(), z.number()], Robj.numeric(1)),
   newItem: R.ocap(
     [z.string(), z.number()],
     Robj.vector({
-      name: Robj.string(1),
-      price: Robj.double(1),
-      codes: Robj.double(5),
+      name: Robj.character(1),
+      price: Robj.numeric(1),
+      codes: Robj.numeric(5),
     })
   ),
-  randomNumbers: R.ocap([], Robj.double(10)),
-  sample_num: R.ocap([z.instanceof(Float64Array)], Robj.double(1)),
-  sample_char: R.ocap([stringArray], Robj.string(1)),
+  randomNumbers: R.ocap([], Robj.numeric(10)),
+  sample_num: R.ocap([z.instanceof(Float64Array)], Robj.numeric(1)),
+  sample_char: R.ocap([stringArray], Robj.character(1)),
   // TODO: dataframe output
   iris: R.ocap(
     [],
@@ -102,14 +102,14 @@ export const ocapFuns = {
     ],
     Robj.vector({
       coef: R.ocap([], Robj.vector(z.record(z.string(), z.number()))),
-      rsq: R.ocap([], Robj.double(1)),
+      rsq: R.ocap([], Robj.numeric(1)),
     })
   ),
   rng: R.ocap(
     [],
     Robj.vector({
-      rnorm: R.ocap([z.number()], Robj.double()),
-      runif: R.ocap([z.number()], Robj.double()),
+      rnorm: R.ocap([z.number()], Robj.numeric()),
+      runif: R.ocap([z.number()], Robj.numeric()),
       flip: R.ocap([], Robj.integer(1)),
     })
   ),
@@ -122,11 +122,11 @@ export const ocapFuns = {
         .returns(z.promise(z.void()))
         .transform((f) => callbackify(f)),
     ],
-    Robj.boolean(1)
+    Robj.logical(1)
   ),
   tfail: R.ocap([z.number()], z.unknown()),
-  t1: R.ocap([z.number()], Robj.double(1)),
-  t2: R.ocap([z.number()], Robj.double(1)),
+  t1: R.ocap([z.number()], Robj.numeric(1)),
+  t2: R.ocap([z.number()], Robj.numeric(1)),
   t3: R.ocap(
     [
       z
@@ -135,12 +135,12 @@ export const ocapFuns = {
         .returns(z.promise(z.number()))
         .transform((f) => callbackify(f)),
     ],
-    Robj.boolean(1)
+    Robj.logical(1)
   ),
-  t4: R.ocap([z.number()], Robj.double(1)),
+  t4: R.ocap([z.number()], Robj.numeric(1)),
   t5: R.ocap([z.function(z.tuple([z.number()])).returns(z.number())], z.null()),
   t6: R.ocap(
     [z.number()],
-    Robj.vector([z.function(z.tuple([z.number()])), Robj.double(1)])
+    Robj.vector([z.function(z.tuple([z.number()])), Robj.numeric(1)])
   ),
 };

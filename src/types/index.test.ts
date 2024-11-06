@@ -82,11 +82,11 @@ test("Boolean types", async () => {
     host: "http://127.0.0.1:8881",
   });
 
-  const bool1 = XT.boolean();
-  const bool2 = XT.boolean(1);
-  const bool3 = XT.boolean(3);
-  const bool4 = XT.boolean({
-    class: XT.string(1),
+  const bool1 = XT.logical();
+  const bool2 = XT.logical(1);
+  const bool3 = XT.logical(3);
+  const bool4 = XT.logical({
+    class: XT.character(1),
   });
 
   type T1 = z.infer<typeof bool1>;
@@ -164,7 +164,7 @@ test("Integer types", async () => {
   const int1 = XT.integer();
   const int2 = XT.integer(1);
   const int3 = XT.integer(3);
-  const int4 = XT.integer({ class: XT.string(1) });
+  const int4 = XT.integer({ class: XT.character(1) });
 
   type T1 = z.infer<typeof int1>;
   type T2 = z.infer<typeof int2>;
@@ -229,10 +229,10 @@ test("Numeric types", async () => {
     host: "http://127.0.0.1:8881",
   });
 
-  const num1 = XT.double();
-  const num2 = XT.double(1);
-  const num3 = XT.double(3);
-  const num4 = XT.double({ class: XT.string(1) });
+  const num1 = XT.numeric();
+  const num2 = XT.numeric(1);
+  const num3 = XT.numeric(3);
+  const num4 = XT.numeric({ class: XT.character(1) });
 
   type T1 = z.infer<typeof num1>;
   type T2 = z.infer<typeof num2>;
@@ -297,12 +297,12 @@ test("Character types", async () => {
     host: "http://127.0.0.1:8881",
   });
 
-  const char1 = XT.string();
-  const char2 = XT.string(1);
-  const char3 = XT.string(3);
-  const char4 = XT.string({ class: XT.string(1) });
+  const char1 = XT.character();
+  const char2 = XT.character(1);
+  const char3 = XT.character(3);
+  const char4 = XT.character({ class: XT.character(1) });
   // I don't think this is of much - if you know the data before hand, you don't need R to send it to you...!
-  // const char5 = XT.string(["a", "b", "c"]);
+  // const char5 = XT.character(["a", "b", "c"]);
 
   type T1 = z.infer<typeof char1>;
   type T2 = z.infer<typeof char2>;
@@ -379,8 +379,8 @@ test("Factor types", async () => {
 
   const factor1 = XT.factor();
   const factor2 = XT.factor(["a", "b", "c"]);
-  const factor3 = XT.factor(["a", "b", "c"], { someattr: XT.string(1) });
-  const factor4 = XT.factor({ someattr: XT.string(1) });
+  const factor3 = XT.factor(["a", "b", "c"], { someattr: XT.character(1) });
+  const factor4 = XT.factor({ someattr: XT.character(1) });
 
   type T1 = z.infer<typeof factor1>;
   type T2 = z.infer<typeof factor2>;
@@ -533,8 +533,8 @@ test("List types", async () => {
   });
 
   const list1 = XT.vector();
-  const list2 = XT.vector({ x: XT.double(1), y: XT.factor(["one", "two"]) });
-  const list3 = XT.vector([XT.double(5), XT.factor(["one", "two"])]);
+  const list2 = XT.vector({ x: XT.numeric(1), y: XT.factor(["one", "two"]) });
+  const list3 = XT.vector([XT.numeric(5), XT.factor(["one", "two"])]);
 
   type List1 = z.infer<typeof list1>;
   type List2 = z.infer<typeof list2>;
