@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import XT from "./xt_types";
+import XT from ".";
 import { z } from "zod";
 import RserveClient from "../index";
 import {

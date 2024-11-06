@@ -1,5 +1,5 @@
 import { z } from "zod";
-import Robj from "./types/xt_types";
+import Robj from "./types";
 
 function as_vector(x: number[]): Float64Array;
 function as_vector(x: string[]): string[] & { r_type: "string_array" };

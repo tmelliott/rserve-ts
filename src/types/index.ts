@@ -1,7 +1,8 @@
-import { promisify } from "util";
 import { z } from "zod";
+import { object, typeWithAttributes, UnifyOne } from "./helpers";
+import { promisify } from "util";
 
-export const sexp = <T extends z.ZodTypeAny>(json: T) => {
+const sexp = <T extends z.ZodTypeAny>(json: T) => {
   return z.object({
     type: z.literal("sexp"),
     value: z.object({
@@ -10,526 +11,228 @@ export const sexp = <T extends z.ZodTypeAny>(json: T) => {
   });
 };
 
-function robject<TData extends z.ZodTypeAny, TType extends string>(
-  data: TData,
-  type: TType
-): z.ZodObject<{
-  data: TData;
-  r_type: z.ZodLiteral<TType>;
-  r_attributes: z.ZodUnknown;
-}>;
-function robject<
-  TData extends z.ZodTypeAny,
-  TType extends string,
-  TAttr extends z.ZodTypeAny
->(
-  data: TData,
-  type: TType,
-  attr: TAttr
-): z.ZodObject<{
-  data: TData;
-  r_type: z.ZodLiteral<TType>;
-  r_attributes: TAttr;
-}>;
-function robject<
-  TData extends z.ZodTypeAny,
-  TType extends string,
-  TAttr extends z.ZodTypeAny
->(data: TData, type: TType, attr?: TAttr) {
-  return z.object({
-    data: data,
-    r_type: z.literal(type),
-    r_attributes: attr ? attr : z.unknown(),
-  });
-}
-type Robject<
-  TData extends z.ZodTypeAny,
-  TType extends string,
-  TAttr extends z.ZodTypeAny = z.ZodUnknown
-> = ReturnType<typeof robject<TData, TType, TAttr>>;
+const attributes = <T extends z.ZodRawShape>(schema: T) =>
+  z.object(schema).and(z.record(z.string(), z.any()));
 
-type ZVector<
-  V extends string = string,
-  L extends number | undefined = undefined,
-  A extends z.ZodRawShape | undefined = undefined,
-  TSingle extends z.ZodTypeAny = z.ZodTypeAny,
-  TMulti extends z.ZodTypeAny = z.ZodArray<TSingle>
-> = A extends z.ZodRawShape
-  ? Robject<TMulti, V, z.ZodObject<A, "strip">>
-  : Robject<
-      L extends undefined
-        ? z.ZodUnion<[TSingle, TMulti]>
-        : L extends 1
-        ? TSingle
-        : TMulti,
-      V,
-      z.ZodUnknown
-    >;
-export type Vector = z.infer<ZVector>;
+// null
+const _null = () => z.null();
 
-type ZLogical<
-  L extends number | undefined = undefined,
-  A extends z.ZodRawShape | undefined = undefined
-> = ZVector<"bool_array", L, A, z.ZodBoolean>;
-export type Logical<
-  L extends number | undefined = undefined,
-  A extends z.ZodRawShape | undefined = undefined
-> = z.infer<ZLogical<L, A>>;
-
-function logical(): ZLogical;
-function logical<L extends number>(len: L): ZLogical<L>;
-function logical<T extends z.ZodRawShape>(attr: T): ZLogical<undefined, T>;
-function logical<L extends number, T extends z.ZodRawShape>(
-  len: L,
-  attr: T
-): ZLogical<L, T>;
-function logical(a?: number | z.ZodRawShape, b?: z.ZodRawShape) {
-  const len = typeof a === "number" ? a : undefined;
-  const attr = typeof a === "number" ? b : a;
-
-  return robject(
-    attr
-      ? z.array(z.boolean())
-      : len
-      ? len === 1
-        ? z.boolean()
-        : z.array(z.boolean())
-      : z.union([z.boolean(), z.array(z.boolean())]),
-    "bool_array",
-    attr ? z.object(attr) : z.unknown()
-  );
-}
-
-type ZodInt32Array = z.ZodType<Int32Array, z.ZodTypeDef, Int32Array>;
-
-type ZInteger<
-  L extends number | undefined = undefined,
-  A extends z.ZodRawShape | undefined = undefined
-> = ZVector<"int_array", L, A, z.ZodNumber, ZodInt32Array>;
-export type Integer<
-  L extends number | undefined = undefined,
-  A extends z.ZodRawShape | undefined = undefined
-> = z.infer<ZInteger<L, A>>;
-
-function integer(): ZInteger;
-function integer<L extends number>(len: L): ZInteger<L>;
-function integer<T extends z.ZodRawShape>(attr: T): ZInteger<undefined, T>;
-function integer<L extends number, T extends z.ZodRawShape>(
-  len: L,
-  attr: T
-): ZInteger<L, T>;
-function integer(a?: number | z.ZodRawShape, b?: z.ZodRawShape) {
-  const len = typeof a === "number" ? a : undefined;
-  const attr = typeof a === "number" ? b : a;
-
-  return robject(
-    attr
-      ? z.instanceof(Int32Array)
-      : len
-      ? len === 1
-        ? z.number()
-        : z.instanceof(Int32Array)
-      : z.union([z.number(), z.instanceof(Int32Array)]),
-    "int_array",
-    attr ? z.object(attr) : z.unknown()
-  );
-}
-
-type ZodFloat64Array = z.ZodType<Float64Array, z.ZodTypeDef, Float64Array>;
-
-type ZNumeric<
-  L extends number | undefined = undefined,
-  A extends z.ZodRawShape | undefined = undefined
-> = ZVector<"double_array", L, A, z.ZodNumber, ZodFloat64Array>;
-export type Numeric<
-  L extends number | undefined = undefined,
-  A extends z.ZodRawShape | undefined = undefined
-> = z.infer<ZNumeric<L, A>>;
-
-function numeric(): ZNumeric;
-function numeric<L extends number>(len: L): ZNumeric<L>;
-function numeric<T extends z.ZodRawShape>(attr: T): ZNumeric<undefined, T>;
-function numeric<L extends number, T extends z.ZodRawShape>(
-  len: L,
-  attr: T
-): ZNumeric<L, T>;
-function numeric(a?: number | z.ZodRawShape, b?: z.ZodRawShape) {
-  const len = typeof a === "number" ? a : undefined;
-  const attr = typeof a === "number" ? b : a;
-
-  return robject(
-    attr
-      ? z.instanceof(Float64Array)
-      : len
-      ? len === 1
-        ? z.number()
-        : z.instanceof(Float64Array)
-      : z.union([z.number(), z.instanceof(Float64Array)]),
-    "double_array",
-    attr ? z.object(attr) : z.unknown()
-  );
-}
-
-type ZCharacter<
-  L extends number | undefined = undefined,
-  A extends z.ZodRawShape | undefined = undefined
-> = ZVector<"string_array", L, A, z.ZodString>;
-export type Character<
-  L extends number | undefined = undefined,
-  A extends z.ZodRawShape | undefined = undefined
-> = z.infer<ZCharacter<L, A>>;
-
-function character(): ZCharacter;
-function character<L extends number>(len: L): ZCharacter<L>;
-function character<T extends z.ZodRawShape>(attr: T): ZCharacter<undefined, T>;
-function character<L extends number, T extends z.ZodRawShape>(
-  len: L,
-  attr: T
-): ZCharacter<L, T>;
-// TODO: Can this be a generic ZCharacter too?
-function character<
-  const V extends [string, ...string[]],
-  T extends z.ZodRawShape
->(values: V, attr?: T): Robject<ArrayToTuple<V>, "string_array">;
-function character(
-  a?: [string, ...string[]] | number | z.ZodRawShape,
-  b?: z.ZodRawShape
-) {
-  const attr = typeof a === "number" || Array.isArray(a) ? b : a;
-
-  if (Array.isArray(a)) {
-    return robject(arrayToTuple(a) as any, "string_array");
-  }
-
-  const len = typeof a === "number" ? a : undefined;
-
-  return robject(
-    attr
-      ? z.array(z.string())
-      : len
-      ? len === 1
-        ? z.string()
-        : z.array(z.string())
-      : z.union([z.string(), z.array(z.string())]),
-    "string_array",
-    attr ? z.object(attr) : z.unknown()
-  );
-}
-
-const factorWithAttr = <
-  L extends z.ZodTuple | z.ZodArray<z.ZodString>,
-  T extends z.ZodTypeAny
->(
-  levels: L,
-  attr: T
-) => {
-  return z.object({
-    data: z.array(z.string()),
-    levels: levels,
-    r_type: z.literal("int_array"),
-    r_attributes: attr.and(
+// vector (i.e., an R list)
+const _vector_noargs = () =>
+  z
+    .record(z.string(), z.any())
+    .and(
       z.object({
-        levels: character(2).extend({
-          data: levels,
-        }),
-        class: character(1).extend({
-          data: z.literal("factor"),
-        }),
+        r_type: z.literal("vector"),
+        r_attributes: attributes({ names: z.array(z.string()).or(z.string()) }),
       })
-    ),
+    )
+    .or(typeWithAttributes(z.array(z.any()), "vector", undefined));
+
+const _vector_array = <T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
+  schema: T
+) =>
+  typeWithAttributes(schema, "vector", {
+    names: z.array(z.string()).or(z.string()),
   });
-};
 
-type ArrayToLiteralArray<T extends [any, ...any[]]> = {
-  [P in keyof T]: z.ZodLiteral<T[P]>;
-};
-export const arrayToTuple = <T extends [any, ...any[]]>(x: T) => {
-  return z.tuple(x.map((l) => z.literal(l)) as ArrayToLiteralArray<T>);
-};
-type ArrayToTuple<T extends [any, ...any[]]> = ReturnType<
-  typeof arrayToTuple<T>
->;
+const _vector_tuple = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
+  schema: T
+) => typeWithAttributes(z.tuple(schema), "vector", undefined);
 
-type FactorWithAttr<
-  L extends z.ZodTuple | z.ZodArray<z.ZodString>,
-  T extends z.ZodTypeAny
-> = ReturnType<typeof factorWithAttr<L, T>>;
-
-type ZFactor<L extends [string, ...string[]] | undefined = undefined> =
-  FactorWithAttr<
-    L extends [string, ...string[]] ? ArrayToTuple<L> : z.ZodArray<z.ZodString>,
-    z.ZodUnknown
-  >;
-export type Factor<L extends [string, ...string[]] | undefined = undefined> =
-  z.infer<ZFactor<L>>;
-
-function factor(): FactorWithAttr<z.ZodArray<z.ZodString>, z.ZodUnknown>;
-function factor<const L extends [string, ...string[]]>(
-  levels: L
-): FactorWithAttr<ArrayToTuple<L>, z.ZodUnknown>;
-function factor<const L extends [string, ...string[]], T extends z.ZodRawShape>(
-  levels: L,
-  attr: T
-): FactorWithAttr<ArrayToTuple<L>, z.ZodObject<T, "strip">>;
-function factor<T extends z.ZodRawShape>(
-  levels: undefined,
-  attr: T
-): FactorWithAttr<z.ZodArray<z.ZodString>, z.ZodObject<T, "strip">>;
-
-function factor<
-  const L extends [string, ...string[]] | undefined,
-  T extends z.ZodRawShape
->(lvls?: L, attr?: T) {
-  if (lvls) {
-    return factorWithAttr(
-      arrayToTuple(lvls),
-      attr ? z.object(attr) : z.unknown()
-    );
-  }
-  return factorWithAttr(
-    z.string().array(),
-    attr ? z.object(attr) : z.unknown()
-  );
-}
-
-export type TupleOf<T, N extends number> = N extends N
-  ? number extends N
-    ? T[]
-    : _TupleOf<T, N, []>
-  : never;
-type _TupleOf<T, N extends number, R extends unknown[]> = R["length"] extends N
-  ? R
-  : _TupleOf<T, N, [T, ...R]>;
-
-const tupleOf = <T, N extends number>(t: T, n: N) => {
-  return Array(n).fill(t) as TupleOf<T, N>;
-};
-
-type ZTable<D extends number | number[] | [number, ...number[]] = number[]> =
-  Robject<
-    ZodInt32Array,
-    "int_array",
-    z.ZodObject<
-      {
-        dim: D extends [number, ...number[]]
-          ? Robject<ArrayToTuple<D>, "int_array">
-          : Robject<z.ZodLiteral<D>, "int_array">;
-        dimnames: z.ZodObject<{
-          data: z.ZodRecord<z.ZodString, ZCharacter>;
-        }>;
-      },
-      "strip"
-    >
-  >;
-export type Table<
-  D extends number | number[] | [number, ...number[]] = number[]
-> = z.infer<ZTable<D>>;
-
-type XTable<D extends [number, ...number[]]> = D extends [number]
-  ? _Table<D[0]>
-  : D extends [...infer T, infer K]
-  ? T extends [number, ...number[]]
-    ? _Table<K extends number ? K : never, XTable<T>>
-    : never
-  : never;
-type _Table<
-  D extends number,
-  T extends number | _Table<any, any> = number
-> = TupleOf<T, D>;
-
-export function asTable<const D extends [number, ...number[]]>(
-  x: number[] | Int32Array,
-  dim: D
-): XTable<D> {
-  let result: any = x;
-  if (x instanceof Int32Array) {
-    result = Array.from(x);
-  }
-  for (let j = 0; j < dim.length; j++) {
-    const idx = Array.from({ length: dim[j] }, (_, i) => i + 1);
-    let x0 = [];
-    while (result.length) {
-      x0.push(idx.map((j) => result.shift()));
-    }
-    result = x0;
-  }
-  return result[0];
-}
-
-function table<const D extends number>(
-  dim: D
-): D extends 1 ? ZTable<number> : ZTable<TupleOf<number, D>>;
-function table<const D extends [number, ...number[]]>(
-  dim: D
-): ZTable<D extends [number] ? D[0] : D>;
-function table(x: number | [number, ...number[]]) {
-  const dim = Array.isArray(x) ? x : tupleOf(x, 1);
-
-  return robject(
-    z.instanceof(Int32Array),
-    "int_array",
+const _vector_object = <T extends z.ZodRawShape>(schema: T) =>
+  z.object(schema).and(
     z.object({
-      dim: robject(
-        dim.length === 1
-          ? z.literal(dim[0])
-          : z.instanceof(Int32Array).transform((x) => Array.from(x)),
-        "int_array"
-      ),
-      dimnames: z.object({
-        data: z.record(z.string(), character()),
-      }),
+      r_type: z.literal("vector"),
+      r_attributes: attributes({ names: _string(Object.keys(schema).length) }),
     })
-  ) as any;
-}
+  );
 
-export type ZTypes =
-  | ZLogical
-  | ZInteger
-  | ZNumeric
-  | ZCharacter
-  | ZFactor
-  | ZTable;
-export type RTypes = z.infer<ZTypes>;
-
-type ZList<
-  T extends z.ZodRawShape | z.ZodTuple | z.ZodTypeAny | undefined = undefined,
-  A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
-> = Robject<
-  T extends undefined
-    ? z.ZodRecord<z.ZodString, ZTypes>
-    : T extends z.ZodRawShape
-    ? z.ZodObject<T, "strip">
-    : T extends z.ZodTuple
-    ? T
-    : T extends z.ZodRecord
-    ? T
-    : T extends z.ZodTypeAny
-    ? z.ZodArray<T>
-    : never,
-  "vector",
-  z.ZodObject<
-    (T extends z.ZodRawShape
-      ? {
-          names: Robject<z.ZodArray<z.ZodString>, "string_array">;
-        }
-      : T extends z.ZodTuple
-      ? {}
-      : {
-          names?: Robject<z.ZodArray<z.ZodString>, "string_array">;
-        }) &
-      A,
-    "strip"
-  >
->;
-export type List<
-  T extends Record<string, RTypes> = Record<string, RTypes>,
-  A extends Record<string, RTypes> = Record<string, RTypes>
-> = {
-  data: T;
-  r_type: "vector";
-  r_attributes: A;
-};
-
-const isZTypes = (x: any): x is ZTypes => {
-  return x instanceof z.ZodObject && x.shape.r_type instanceof z.ZodLiteral;
-};
-
-function list(): ZList;
-function list<
-  T extends z.ZodTypeAny,
-  const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
->(schema: T, attr?: A): ZList<T, A>;
-function list<
-  const T extends z.ZodRawShape,
-  const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
->(schema: T, attr?: A): ZList<T, A>;
-function list<
-  const T extends [z.ZodTypeAny, ...z.ZodTypeAny[]],
-  const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
->(schema: T, attr?: A): ZList<z.ZodTuple<T>, A>;
-function list(
+function _vector(): ReturnType<typeof _vector_noargs>;
+function _vector<T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
+  schema: T
+): ReturnType<typeof _vector_array<T>>;
+function _vector<T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
+  schema: T
+): ReturnType<typeof _vector_tuple<T>>;
+function _vector<T extends z.ZodRawShape>(
+  schema: T
+): ReturnType<typeof _vector_object<T>>;
+function _vector(
   schema?:
     | z.ZodRawShape
     | [z.ZodTypeAny, ...z.ZodTypeAny[]]
-    | ZTypes
-    | z.ZodRecord,
-  attr?: z.ZodRawShape
+    | z.ZodRecord<z.ZodString, z.ZodTypeAny>
 ) {
-  return robject(
-    schema
-      ? Array.isArray(schema)
-        ? z.tuple(schema)
-        : isZTypes(schema)
-        ? z.array(schema)
-        : schema instanceof z.ZodRecord
-        ? schema
-        : z.object(schema)
-      : z.record(
-          z.string(),
-          z.object({
-            data: z.any(),
-            r_type: z.string(),
-            r_attributes: z.any(),
-          })
-        ),
-    "vector",
-    attr
-      ? z.object({
-          ...attr,
-          names: schema ? character(Object.keys(schema).length) : character(),
-        })
-      : z.any()
-  ) as any;
+  return schema === undefined
+    ? _vector_noargs()
+    : Array.isArray(schema)
+    ? (_vector_tuple(schema) as any)
+    : schema instanceof z.ZodRecord
+    ? _vector_array(schema)
+    : _vector_object(schema);
 }
 
-function dataframe(): ZList<z.ZodRecord<z.ZodString, ZTypes>>;
-function dataframe<
-  const T extends z.ZodRawShape,
-  const A extends z.ZodRawShape = Record<string, z.ZodTypeAny>
->(schema: T, attr?: A): ZList<T, A>;
-function dataframe(schema?: z.ZodRawShape, attr?: z.ZodRawShape) {
-  return robject(
-    schema ? z.object(schema) : z.record(z.string(), z.any()),
-    "vector",
-    z.object({
-      ...attr,
-      class: z.object({
-        data: z.literal("data.frame"),
-        r_type: z.literal("string_array"),
-      }),
-      names: schema ? character(Object.keys(schema).length) : character(),
-      "row.names": z.union([character(), integer()]),
-    })
-  ) as any;
+// symbol
+const _symbol = () => z.string();
+
+// lang
+const _lang = () => typeWithAttributes(z.array(z.any()), "lang", undefined);
+
+// tagged_list (plain_list, plain_object, or mixed_list)
+const _tagged_list = () => z.record(z.string(), z.any());
+
+// int_array
+const _integer = object(
+  z.number(),
+  z.instanceof(Int32Array),
+  // typeWithAttributes(z.instanceof(Int32Array), "int_array", undefined),
+  "int_array"
+);
+
+// special case of int array is 'factor'
+function _factorWithLevels<
+  const L extends string,
+  A extends z.ZodRawShape = {}
+>(levels: L[], attr?: A) {
+  return z.custom<
+    L[] & {
+      levels: L[] & { r_type: "string_array" };
+      r_type: "int_array";
+      r_attributes: UnifyOne<
+        {
+          class: "factor";
+          levels: L[] & { r_type: "string_array" };
+        } & z.infer<z.ZodObject<A>> & {
+            [K in string]: any;
+          }
+      >;
+    }
+  >((data) => {
+    if (typeof data !== "object") return false;
+    if (!data.hasOwnProperty("r_type") || data.r_type !== "int_array")
+      return false;
+    if (!data.hasOwnProperty("levels")) return false;
+    if (typeof data.levels !== "object") return false;
+    if (
+      !data.levels.hasOwnProperty("r_type") ||
+      data.levels.r_type !== "string_array"
+    )
+      return false;
+
+    // all of the levels must be present, and only once
+    if (levels.map((l) => data.levels.includes(l)).includes(false))
+      return false;
+    if (levels.length !== data.levels.length) return false;
+
+    // r_attributes - levels and class
+    if (!data.hasOwnProperty("r_attributes")) return false;
+    if (typeof data.r_attributes !== "object") return false;
+    if (!data.r_attributes.hasOwnProperty("levels")) return false;
+    if (typeof data.r_attributes.levels !== "object") return false;
+    if (
+      !data.r_attributes.levels.hasOwnProperty("r_type") ||
+      data.r_attributes.levels.r_type !== "string_array"
+    )
+      return false;
+    if (!data.r_attributes.hasOwnProperty("class")) return false;
+    if (typeof data.r_attributes.class !== "string") return false;
+    if (data.r_attributes.class !== "factor") return false;
+    if (data.r_attributes.levels.length !== levels.length) return false;
+    if (levels.map((l) => data.r_attributes.levels.includes(l)).includes(false))
+      return false;
+
+    // all values in data must be in levels
+    if (data.map((d: L) => levels.includes(d)).includes(false)) return false;
+
+    return true;
+  });
+}
+function _factorWithUnknownLevels<A extends z.ZodRawShape = {}>(attr?: A) {
+  return z.custom<
+    string[] & {
+      levels: string[] & { r_type: "string_array" };
+      r_type: "int_array";
+      r_attributes: UnifyOne<
+        {
+          class: "factor";
+          levels: string[] & { r_type: "string_array" };
+        } & z.infer<z.ZodObject<A>> & {
+            [K in string]: any;
+          }
+      >;
+    }
+  >((data) => {
+    if (typeof data !== "object") return false;
+    if (!data.hasOwnProperty("r_type") || data.r_type !== "int_array")
+      return false;
+    if (!data.hasOwnProperty("levels")) return false;
+    if (typeof data.levels !== "object") return false;
+    if (
+      !data.levels.hasOwnProperty("r_type") ||
+      data.levels.r_type !== "string_array"
+    )
+      return false;
+
+    // data.levels are unique strings
+    if (new Set(data.levels).size !== data.levels.length) return false;
+    if (data.levels.length === 0) return false;
+    if (data.levels.some((l: unknown) => typeof l !== "string")) return false;
+
+    // r_attributes - levels and class
+    if (!data.hasOwnProperty("r_attributes")) return false;
+    if (typeof data.r_attributes !== "object") return false;
+    if (!data.r_attributes.hasOwnProperty("levels")) return false;
+    if (typeof data.r_attributes.levels !== "object") return false;
+    if (
+      !data.r_attributes.levels.hasOwnProperty("r_type") ||
+      data.r_attributes.levels.r_type !== "string_array"
+    )
+      return false;
+    if (!data.r_attributes.hasOwnProperty("class")) return false;
+    if (typeof data.r_attributes.class !== "string") return false;
+    if (data.r_attributes.class !== "factor") return false;
+    if (data.r_attributes.levels.length !== data.levels.length) return false;
+    if (
+      data.levels
+        .map((l: string) => data.r_attributes.levels.includes(l))
+        .includes(false)
+    )
+      return false;
+
+    // all values in data must be in levels
+    if (data.map((d: string) => data.levels.includes(d)).includes(false))
+      return false;
+
+    return true;
+  });
 }
 
-// Defining a function that returns a promise
-// (but actually on the R end it's a callback)
+function _factor<A extends z.ZodRawShape>(
+  attr?: A
+): ReturnType<typeof _factorWithUnknownLevels<A>>;
+function _factor<const L extends string, A extends z.ZodRawShape>(
+  levels: L[],
+  attr?: A
+): ReturnType<typeof _factorWithLevels<L, A>>;
+function _factor(x?: string[] | z.ZodRawShape, y?: z.ZodRawShape) {
+  if (Array.isArray(x)) return _factorWithLevels(x, y);
+  return _factorWithUnknownLevels(x);
+}
 
-type Ocap<
-  TArgs extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [],
-  TRes extends z.ZodTypeAny = z.ZodTypeAny
-> = z.ZodEffects<
-  z.ZodTypeAny,
-  z.ZodFunction<
-    TArgs extends [z.ZodTypeAny, ...z.ZodTypeAny[]]
-      ? z.ZodTuple<[...TArgs]>
-      : z.ZodTuple<[]>,
-    z.ZodPromise<TRes>
-  >,
-  z.ZodFunction<
-    z.ZodTuple<
-      [
-        ...TArgs,
-        z.ZodFunction<
-          z.ZodTuple<[z.ZodOptional<z.ZodNullable<ZCharacter<0>>>, TRes]>,
-          z.ZodVoid
-        >
-      ]
-    >,
-    z.ZodVoid
-  >
->;
+// double_array
+const _double = object(
+  z.number(),
+  z.instanceof(Float64Array),
+  // typeWithAttributes(z.instanceof(Float64Array), "double_array", undefined),
+  "double_array"
+);
+
+// string_array
+const _string = object(z.string(), z.string().array(), "string_array");
+
+// bool_array
+const _boolean = object(z.boolean(), z.boolean().array(), "bool_array");
 
 const R_SERVER_ERROR = z.tuple([z.string(), z.number()]);
 
@@ -555,65 +258,20 @@ function ocap<
     );
 }
 
-// const cb_rnorm = cb_fn([numeric(1)], numeric(0));
-
-// const fff = (x: number, cb: (err: string | null, data: number) => void) => {};
-
-// const rnorm = cb_rnorm;
-// type Rnorm = z.infer<typeof rnorm>;
-
-// const myf = rnorm.parse(fff);
-
-// // const f = promisify(myf);
-
-// const X = rnorm.parse((x: unknown) => {
-//   console.log(x);
-// });
-// async () => {
-//   const r = await X({ data: 5, r_type: "double_array" });
-// };
-
-// function fn<
-//   A extends [z.ZodTypeAny, ...z.ZodTypeAny[]],
-//   R extends z.ZodTypeAny
-// >(args: A, ret: R) {
-//   const cb = z
-//     .function()
-//     .args<[z.ZodNullable<Character<1>>, z.ZodTypeAny[]]>(
-//       character(1).nullable(),
-//       ret
-//     )
-//     .returns(z.void());
-
-//   return z
-//     .function()
-//     .args<[...A, typeof cb]>(...args, cb)
-//     .returns(z.void());
-
-//   // .transform(
-//   //   (f) => (x: A) =>
-//   //     new Promise<R>((res, rej) => {
-//   //       f(x, (err: z.ZodNullable<ZCharacter<1>>, data: R) =>
-//   //         err ? rej(err) : res(data)
-//   //       );
-//   //     })
-//   // );
-// }
-
-// const rnorm = fn([numeric(1)]), numeric(0));
-// type Rnorm = z.infer<typeof rnorm>;
-
-import Robj from "./xt_types";
-export default Robj;
-
-export {
-  // logical,
-  // integer,
-  // numeric,
-  // character,
-  // factor,
-  // table,
-  // list,
-  // dataframe,
+const Robj = {
+  null: _null,
+  integer: _integer,
+  numeric: _double,
+  character: _string,
+  logical: _boolean,
+  vector: _vector,
+  list: _vector,
+  symbol: _symbol,
+  lang: _lang,
+  tagged_list: _tagged_list,
+  factor: _factor,
   ocap,
+  sexp,
 };
+
+export default Robj;

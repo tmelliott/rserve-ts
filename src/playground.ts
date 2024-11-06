@@ -59,7 +59,7 @@ global.WebSocket = require("ws");
 //   }
 // );
 
-import XT from "./types/xt_types";
+import XT from "./types";
 import { Presets, SingleBar } from "cli-progress";
 
 const noOcap = async () => {

@@ -1,6 +1,5 @@
 import { z } from "zod";
 import Rserve from "./Rserve";
-import { sexp } from "./types";
 
 import Robj from "./types";
 
@@ -10,11 +9,9 @@ export type CallbackFromPromise<T> = {
     : never;
 };
 
-type SEXP<
-  // T extends z.ZodTypeAny = z.ZodTypeAny,
-  // A extends z.ZodTypeAny = z.ZodTypeAny,
-  T extends z.ZodTypeAny = z.ZodTypeAny
-> = ReturnType<typeof sexp<T>>;
+type SEXP<T extends z.ZodTypeAny = z.ZodTypeAny> = ReturnType<
+  typeof Robj.sexp<T>
+>;
 
 const createRserve = async (
   options: Omit<Rserve.RserveOptions, "on_connect" | "on_error">
@@ -26,20 +23,6 @@ const createRserve = async (
       on_error: (err) => reject(err),
     });
   });
-
-  // const parseAttr = (attr: Record<string, any>) => {
-  //   if (!attr) return;
-  //   const attrs = Object.entries(attr).map(([key, value]) => {
-  //     if (value.data) {
-  //       const r: any = value.data;
-  //       r.r_type = value.r_type;
-  //       r.r_attributes = parseAttr(value.r_attributes);
-  //       value = r;
-  //     }
-  //     return [key, value];
-  //   });
-  //   return Object.fromEntries(attrs);
-  // };
 
   async function evalX<T extends z.ZodTypeAny>(
     command: string,
@@ -57,12 +40,6 @@ const createRserve = async (
               resolve(schema.parse(data.value.json()));
             } else {
               const x = (data as any).value.json();
-              // if (typeof x === "object" && x.data) {
-              //   const r: any = x.data;
-              //   r.r_type = x.r_type;
-              //   r.r_attributes = parseAttr(x.r_attributes);
-              //   resolve(r);
-              // }
               resolve(x);
             }
           } catch (err) {
@@ -158,6 +135,5 @@ const RserveClient = {
 };
 
 export default RserveClient;
-// export * as Robj from "./types";
 export * as Rfmt from "./helpers";
 export type * from "./types";
