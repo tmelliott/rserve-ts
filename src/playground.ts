@@ -352,8 +352,6 @@ const ocapTest = async () => {
     host: "http://127.0.0.1:8781",
   });
 
-  // const oc = await R.ocap();
-
   const app = await R.ocap(ocapFuns);
 
   await app.tfail(1).catch((err) => {
@@ -403,20 +401,6 @@ const ocapTest = async () => {
   console.log("RNG flip:", coin === 1 ? "heads" : "tails");
 
   console.log(await app.sample_num(new Float64Array([1, 2, 3])));
-
-  // const xf: string[] & { r_type: "string_array" } = ["a", "b", "c"] as any;
-  // xf.r_type = "string_array";
-
-  // const sx = as_vector(["a", "b", "c"]);
-  // console.log(sx);
-  // console.log(stringArray.safeParse(sx));
-  // console.log(stringArray.safeParse(new Float64Array([1, 2, 3])));
-  // console.log(stringArray.safeParse(["a", "b", "c"]));
-  // console.log(stringArray.safeParse(as_vector(["a", "b", "c"])));
-
-  // TODO: is this the right way to do this?
-  // console.log(await app.sample_char(as_vector(["a", "b", "c"])));
-
   console.log(await app.print_input([1, 2, 3]));
   console.log(await app.print_input(new Int32Array([1, 2, 3])));
 
@@ -436,15 +420,15 @@ const ocapTest = async () => {
   console.log("Result...\n ", await app.print_input(fac.Species));
 
   // sending javascript functions to R
-  // const progBar = new SingleBar({}, Presets.shades_classic);
-  // progBar.start(100, 0);
-  // const longresult = await app.longjob(async (x) => progBar.update(x));
-  // progBar.stop();
-  // console.log("Long job result:", longresult);
+  const progBar = new SingleBar({}, Presets.shades_classic);
+  progBar.start(100, 0);
+  const longresult = await app.longjob(async (x) => progBar.update(x));
+  progBar.stop();
+  console.log("Long job result:", longresult);
 
   // // some random numbers
-  // const xrand = await app.randomNumbers();
-  // console.log("Random numbers:", xrand);
+  const xrand = await app.randomNumbers();
+  console.log("Random numbers:", xrand);
 
   console.log("\n-------------- fit models --------------");
   const fit = await app.car_lm("mpg", "hp");
@@ -455,6 +439,40 @@ const ocapTest = async () => {
     });
   }
   console.log(await fit.rsq());
+
+  console.log("\n-------------- overloads --------------");
+
+  // const randomNumber = await app.sampler([1, 2, 3]); // number
+  // const randomString = await app.sampler(["a", "b", "c"]); // string
+
+  // const sampleSchema = [
+  //   z.function(z.tuple([z.number().array()]), z.number()),
+  //   z.function(z.tuple([z.string().array()]), z.string()),
+  //   z.function(z.tuple([z.boolean().array()]), z.boolean()),
+  // ];
+
+  // function sample(x: number[]): number;
+  // function sample(x: string[]): string;
+  // function sample(x: boolean[]): boolean;
+  // function sample(x: unknown) {
+  //   if (!Array.isArray(x)) {
+  //     throw new Error("Invalid input");
+  //   }
+  //   const x0 = x[0];
+  //   if (typeof x0 === "number") {
+  //     return sampleSchema[0].parse(x0);
+  //   }
+  //   if (typeof x0 === "string") {
+  //     return sampleSchema[1].parse(x0);
+  //   }
+  //   if (typeof x0 === "boolean") {
+  //     return sampleSchema[2].parse(x0);
+  //   }
+  //   throw new Error("Invalid input");
+  // }
+
+  // oc = R.ocap(sampleSchema);
+  // const sample =
 };
 
 (async () => {

@@ -2,36 +2,6 @@ import { z } from "zod";
 import Robj, * as R from "../../src/types";
 import { callbackify } from "util";
 
-// const sampleSchema = [
-//   z.function(z.tuple([z.number().array()]), z.number()),
-//   z.function(z.tuple([z.string().array()]), z.string()),
-//   z.function(z.tuple([z.boolean().array()]), z.boolean()),
-// ];
-
-// function sample(x: number[]): number;
-// function sample(x: string[]): string;
-// function sample(x: boolean[]): boolean;
-// function sample(x: unknown) {
-//   if (!Array.isArray(x)) {
-//     throw new Error("Invalid input");
-//   }
-//   const x0 = x[0];
-//   if (typeof x0 === "number") {
-//     return sampleSchema[0].parse(x0);
-//   }
-//   if (typeof x0 === "string") {
-//     return sampleSchema[1].parse(x0);
-//   }
-//   if (typeof x0 === "boolean") {
-//     return sampleSchema[2].parse(x0);
-//   }
-//   throw new Error("Invalid input");
-// }
-
-// // const sampleFun = sampleSchema.parse(sample);
-// const num = sample([1, 2, 3]);
-// num / 2;
-
 const stringArray = z.custom<string[] & { r_type: "string_array" }>((data) => {
   if (
     typeof data === "object" &&
@@ -44,6 +14,9 @@ const stringArray = z.custom<string[] & { r_type: "string_array" }>((data) => {
   }
   return false;
 });
+
+const samplerNum = Robj.ocap([z.number()], Robj.numeric(1));
+const samplerChar = Robj.ocap([stringArray], Robj.character(1));
 
 export const ocapFuns = {
   print_input: Robj.ocap([z.any()], Robj.character(1)),
@@ -124,6 +97,7 @@ export const ocapFuns = {
     ],
     Robj.logical(1)
   ),
+  // sampler: samplerFun,
   tfail: Robj.ocap([z.number()], z.unknown()),
   t1: Robj.ocap([z.number()], Robj.numeric(1)),
   t2: Robj.ocap([z.number()], Robj.numeric(1)),
