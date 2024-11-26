@@ -6,8 +6,7 @@ global.WebSocket = require("ws");
 import { test, expect } from "vitest";
 
 import { ocapFuns } from "../tests/r_files/oc";
-import { objectWithAttributes, typeWithAttributes } from "./types/helpers";
-import { z } from "zod";
+import { objectWithAttributes } from "./types/helpers";
 
 test("Rserve connects and runs", async () => {
   const R = await RserveClient.create({
@@ -56,7 +55,6 @@ test("Rserve connects to OCAP server", async () => {
     await funs.tfail(1);
   } catch (err) {
     x0 = false;
-    // console.error("Nice.");
   }
   expect(x0).toBe(false);
 
