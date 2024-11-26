@@ -59,36 +59,39 @@ oc.init <- function() {
 ```
 
 ```typescript
-// ocap.ts
-import { numeric, list, ocap } from "rserve-ts/types";
+// app.ts
+import { z } from "zod";
+import { Robj } from "../index";
 
-export const appFuns = {
-  add: ocap([z.number(), z.number()], numeric()),
-  dist: ocap(
+export const appSchema = {
+  add: Robj.ocap([z.number(), z.number()], Robj.numeric(1)),
+  dist: Robj.ocap(
     [z.enum(["normal", "uniform"])],
-    list({
-      sample: ocap([z.number()], numeric()),
+    Robj.list({
+      sample: Robj.ocap([z.number()], Robj.numeric()),
     })
   ),
 };
 ```
 
 ```typescript
-import { RserveClient } from "rserve-ts";
-import { appFuns } from "./ocap";
+// app.ts
+import R from "../index";
+import { appSchema } from "./app";
 
 (async () => {
-  const R = await RserveClient.create({
-    host: "http://127.0.0.1:8081",
-  });
+  const s = await R.create({ host: "ws://localhost:8181" });
+  const app = await s.ocap(appSchema);
 
-  const app = await R.ocap(appFuns);
+  const sum = await app.add(16, 32);
+  const cart = { total: sum };
+  cart.total;
 
-  const sum = await app.add(1, 2);
-  console.log("1 + 2 = ", sum);
-
-  const chosenDist = await app.dist("normal");
-  const sample = await chosenDist.sample(5);
-  console.log("Normal sample: ", sample);
+  const { sample } = await app.dist("uniform");
+  const x = await sample(235);
+  if (typeof x === "number") x + 5;
+  else {
+    // deal with an array
+  }
 })();
 ```
