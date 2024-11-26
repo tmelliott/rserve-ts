@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.6.0
+
+### Minor Changes
+
+- 458ba4d: Refactor object shape (remove 'data')
+
 ## 0.5.0
 
 ### Minor Changes
