@@ -173,7 +173,7 @@ const noOcap = async () => {
     )
   );
 
-  // console.log(await R.eval("iris$Species[1:5]"));
+  console.log(await R.eval("table(iris$Species)", XT.integer(3)));
   // console.log(((await R.eval("iris[1:5,]")) as any).Species);
 
   // const y = z
