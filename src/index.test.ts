@@ -44,42 +44,40 @@ test("Rserve connects and runs", async () => {
   expect(numWithAttr.r_attributes.class).toBe("myclass");
 });
 
-// test("Rserve connects to OCAP server", async () => {
-//   const R = await RserveClient.create({
-//     host: "http://127.0.0.1:8781",
-//   });
+test("Rserve connects to OCAP server", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8781",
+  });
 
-//   const funs = await R.ocap(ocapFuns);
+  const funs = await R.ocap(ocapFuns);
 
-//   let x0 = true;
-//   try {
-//     await funs.tfail(1);
-//   } catch (err) {
-//     x0 = false;
-//     console.error("Nice.");
-//   }
-//   expect(x0).toBe(false);
+  let x0 = true;
+  try {
+    await funs.tfail(1);
+  } catch (err) {
+    x0 = false;
+    // console.error("Nice.");
+  }
+  expect(x0).toBe(false);
 
-//   const { data: x1 } = await funs.t1(5);
-//   expect(x1).toBe(8);
+  const x1 = await funs.t1(5);
+  expect(x1).toBe(8);
 
-//   const { data: x2 } = await funs.t2(4);
-//   expect(x2).toBe(4);
+  const x2 = await funs.t2(4);
+  expect(x2).toBe(4);
 
-//   const { data: x3 } = await funs.t3(async (x) => 21 + x);
-//   expect(x3).toBe(true);
+  const x3 = await funs.t3(async (x) => 21 + x);
+  expect(x3).toBe(true);
 
-//   const { data: x4 } = await funs.t4(5);
-//   expect(x4).toBe(26);
+  const x4 = await funs.t4(5);
+  expect(x4).toBe(26);
 
-//   const x5 = await funs.t5(function (i) {
-//     return i * i;
-//   });
-//   expect(x5).toBe(null);
+  const x5 = await funs.t5(function (i) {
+    return i * i;
+  });
+  expect(x5).toBe(null);
 
-//   const {
-//     data: [{ data: f6 }, { data: i6 }],
-//   } = await funs.t6(5);
-//   const x6 = f6(i6);
-//   expect(x6).toBe(25);
-// });
+  const [f6, i6] = await funs.t6(5);
+  const x6 = f6(i6);
+  expect(x6).toBe(25);
+});
