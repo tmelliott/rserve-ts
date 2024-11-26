@@ -13,21 +13,25 @@ var Rserve = (function () {
       var wrapped_proto = {
         json: function (resolver) {
           const res = proto.json.call(this, resolver);
-          var result = res.data
-            ? { ...res, r_type: type }
-            : { data: res, r_type: type };
+          // var result = res.data
+          //   ? { ...res, r_type: type }
+          //   : { data: res, r_type: type };
+          // var result = { ...res, r_type: type };
+
+          if (typeof res !== "object") return res;
 
           try {
+            res.r_type = type;
             if (!_.isUndefined(this.attributes))
-              result.r_attributes = _.object(
+              res.r_attributes = _.object(
                 _.map(this.attributes.value, function (v) {
                   return [v.name, v.value.json(resolver)];
                 })
               );
           } catch (e) {
-            console.log(e);
+            // console.log(e);
           }
-          return result;
+          return res;
         },
       };
       return function (v, attrs) {
@@ -179,12 +183,16 @@ var Rserve = (function () {
             this.attributes.value[0].value.type === "string_array"
           ) {
             var levels = this.attributes.value[0].value.value;
-            var arr = {
-              data: _.map(this.value, function (factor) {
-                return levels[factor - 1];
-              }),
-              levels,
-            };
+            // var arr = {
+            //   data: _.map(this.value, function (factor) {
+            //     return levels[factor - 1];
+            //   }),
+            //   levels,
+            // };
+            var arr = _.map(this.value, function (factor) {
+              return levels[factor - 1];
+            });
+            arr.levels = levels;
             return arr;
           } else {
             // TODO: should this check for undefined attributes too? I've changed it but need to confirm if OK
@@ -1160,7 +1168,7 @@ var Rserve = (function () {
           // console.log("OOB MSG result on queue "+ queue.name);
           var p;
           try {
-            p = Rserve.wrap_all_ocaps(result, v.payload).data; // .value.json(result.resolve_hash);
+            p = Rserve.wrap_all_ocaps(result, v.payload); // .value.json(result.resolve_hash);
           } catch (e) {
             _send_cmd_now(
               Rserve.Rsrv.RESP_ERR | cmd,
@@ -1169,7 +1177,7 @@ var Rserve = (function () {
             );
             return;
           }
-          if (_.isString(p[0].data)) {
+          if (_.isString(p[0])) {
             if (_.isUndefined(opts.on_oob_message)) {
               _send_cmd_now(
                 Rserve.Rsrv.RESP_ERR | cmd,
@@ -1205,7 +1213,7 @@ var Rserve = (function () {
                 bump_queues();
               });
             }
-          } else if (_.isFunction(p[0].data)) {
+          } else if (_.isFunction(p[0])) {
             if (!result.ocap_mode) {
               _send_cmd_now(
                 Rserve.Rsrv.RESP_ERROR | cmd,
@@ -1215,9 +1223,9 @@ var Rserve = (function () {
                 msg_id
               );
             } else {
-              var captured_function = p[0].data,
+              var captured_function = p[0],
                 params = _.map(p.slice(1), function (p) {
-                  return p.data;
+                  return p;
                 });
               params.push(function (err, result) {
                 if (err) {
@@ -1366,13 +1374,13 @@ var Rserve = (function () {
           var is_ocap = false,
             str;
           try {
-            is_ocap |= ocap.r_attributes["class"].data === "OCref";
-            str = ocap.data ? ocap.data[0] : ocap.value;
+            is_ocap |= ocap.r_attributes["class"] === "OCref";
+            str = ocap ? ocap[0] : ocap.value;
           } catch (e) {}
           if (!is_ocap) {
             try {
               is_ocap |= ocap.attributes.value[0].value.value[0] === "OCref";
-              str = ocap.data ? ocap.data.value[0] : ocap.value[0];
+              str = ocap ? ocap.value[0] : ocap.value[0];
             } catch (e) {}
           }
           if (!is_ocap) {
@@ -1405,28 +1413,28 @@ var Rserve = (function () {
       return result;
     };
 
-    const unData = (x) => {
-      if (!x) return x;
-      if (x.data) {
-        let result = unData(x.data);
-        try {
-          if (x.r_type) result.r_type = x.r_type;
-          if (x.r_attributes) result.r_attributes = unData(x.r_attributes);
-        } catch (e) {}
-        return unData(result);
-      }
+    // const unData = (x) => {
+    //   if (!x) return x;
+    //   if (x.data) {
+    //     let result = unData(x.data);
+    //     try {
+    //       if (x.r_type) result.r_type = x.r_type;
+    //       if (x.r_attributes) result.r_attributes = unData(x.r_attributes);
+    //     } catch (e) {}
+    //     return unData(result);
+    //   }
 
-      if (_.isObject(x) && !_.isArray(x)) {
-        let result = _.object(_.map(x, (v, k) => [k, unData(v)]));
-        try {
-          if (x.r_type) result.r_type = x.r_type;
-          if (x.r_attributes) result.r_attributes = unData(x.r_attributes);
-        } catch (e) {}
-        return result;
-      }
+    //   if (_.isObject(x) && !_.isArray(x)) {
+    //     let result = _.object(_.map(x, (v, k) => [k, unData(v)]));
+    //     try {
+    //       if (x.r_type) result.r_type = x.r_type;
+    //       if (x.r_attributes) result.r_attributes = unData(x.r_attributes);
+    //     } catch (e) {}
+    //     return result;
+    //   }
 
-      return x;
-    };
+    //   return x;
+    // };
 
     Rserve.wrap_all_ocaps = function (s, v) {
       v = v.value.json(s.resolve_hash);
@@ -1434,38 +1442,37 @@ var Rserve = (function () {
         var result = obj;
         if (_.isUndefined(obj) || _.isNull(obj)) return obj;
         if (
-          _.isArray(obj.data) &&
+          _.isArray(obj) &&
           obj.r_attributes &&
           obj.r_attributes["class"] &&
-          obj.r_attributes["class"].data == "OCref"
+          obj.r_attributes["class"] == "OCref"
         ) {
           return Rserve.wrap_ocap(s, obj);
-        } else if (_.isArray(obj.data)) {
-          result = { data: _.map(obj.data, replace) };
+        } else if (_.isArray(obj)) {
+          result = _.map(obj, replace);
+          if (obj.levels) result.levels = obj.levels;
           result.r_type = obj.r_type;
           result.r_attributes = obj.r_attributes;
-        } else if (_.isTypedArray(obj.data)) {
+        } else if (_.isTypedArray(obj)) {
           return obj;
-        } else if (_.isFunction(obj.data)) {
+        } else if (_.isFunction(obj)) {
           return obj;
         } else if (
           obj &&
-          obj.data &&
-          !_.isUndefined(obj.data.byteLength) &&
-          !_.isUndefined(obj.data.slice)
+          obj &&
+          !_.isUndefined(obj.byteLength) &&
+          !_.isUndefined(obj.slice)
         ) {
           // ArrayBuffer
           return obj;
-        } else if (_.isObject(obj.data)) {
-          result = {
-            data: _.object(
-              _.map(obj.data, function (v, k) {
-                return [k, replace(v)];
-              })
-            ),
-            r_type: obj.r_type,
-            r_attributes: replace(obj.r_attributes),
-          };
+        } else if (_.isObject(obj)) {
+          result = _.object(
+            _.map(obj, function (v, k) {
+              return [k, replace(v)];
+            })
+          );
+          // result.r_type = obj.r_type;
+          // result.r_attributes = replace(obj.r_attributes);
         }
         return result;
       }
