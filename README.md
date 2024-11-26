@@ -60,14 +60,14 @@ oc.init <- function() {
 
 ```typescript
 // ocap.ts
-import { double, vector, ocap } from "rserve-ts/types";
+import { numeric, list, ocap } from "rserve-ts/types";
 
 export const appFuns = {
-  add: ocap([z.number(), z.number()], double()),
+  add: ocap([z.number(), z.number()], numeric()),
   dist: ocap(
     [z.enum(["normal", "uniform"])],
-    vector({
-      sample: ocap([z.number()], double()),
+    list({
+      sample: ocap([z.number()], numeric()),
     })
   ),
 };
