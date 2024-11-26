@@ -600,7 +600,6 @@ test("List types", async () => {
   expect(clearAttrs(r_list2.r_attributes.names)).toEqual(["x", "y"]);
 
   const r_list3 = await R.eval("list(1:5/2, factor(c('one', 'two')))", list3);
-  console.log(r_list3[0]);
   expect(r_list3[0]).toEqual(
     objectWithAttributes(
       new Float64Array([0.5, 1, 1.5, 2, 2.5]),
@@ -609,4 +608,42 @@ test("List types", async () => {
   );
 
   expect(clearAttrs(r_list3[1])).toEqual(["one", "two"]);
+});
+
+test("Data frame types", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8881",
+  });
+
+  const df0 = XT.dataframe();
+  const df1 = XT.dataframe({
+    x: XT.integer(3),
+  });
+  const df2 = XT.dataframe({
+    x: XT.numeric(3),
+    y: XT.factor(["a", "b", "c"]),
+  });
+
+  const x0 = await R.eval("data.frame(a = 1:5, b = LETTERS[1:5])", df0);
+  expect(x0.a).toEqual(
+    objectWithAttributes(new Int32Array([1, 2, 3, 4, 5]), "int_array")
+  );
+  expect(clearAttrs(x0.b)).toEqual(["A", "B", "C", "D", "E"]);
+
+  const x1 = await R.eval(
+    "data.frame(x = 1:3, row.names = c('one', 'two', 'three'))",
+    df1
+  );
+  expect(x1.x).toEqual(
+    objectWithAttributes(new Int32Array([1, 2, 3]), "int_array")
+  );
+
+  const x2 = await R.eval(
+    "data.frame(x = c(3.2, 1.2, 51), y = factor(c('a', 'b', 'c')))",
+    df2
+  );
+  expect(x2.x).toEqual(
+    objectWithAttributes(new Float64Array([3.2, 1.2, 51]), "double_array")
+  );
+  expect(clearAttrs(x2.y)).toEqual(["a", "b", "c"]);
 });

@@ -82,7 +82,6 @@ export const object = <
   plural: TPlural,
   type: TString
 ) => {
-  function fun(): TSingular | WithAttributes<z.infer<typeof plural>, TString>;
   function fun<N extends 1>(n: N): TSingular;
   function fun<N extends Exclude<number, 1>>(
     n: N
@@ -90,6 +89,7 @@ export const object = <
   function fun<A extends Attributes>(
     a: A
   ): WithAttributes<z.infer<typeof plural>, TString, A>;
+  function fun(): TSingular | WithAttributes<z.infer<typeof plural>, TString>;
   function fun(x?: number | Attributes) {
     if (x === undefined) {
       return z.union([singular, plural]);

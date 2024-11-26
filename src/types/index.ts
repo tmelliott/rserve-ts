@@ -11,7 +11,11 @@ const sexp = <T extends z.ZodTypeAny>(json: T) => {
   });
 };
 
-const attributes = <T extends z.ZodRawShape>(schema: T) =>
+type Attributes<T extends z.ZodRawShape> = z.ZodIntersection<
+  z.ZodObject<T>,
+  z.ZodRecord<z.ZodString, z.ZodTypeAny>
+>;
+const attributes = <T extends z.ZodRawShape>(schema: T): Attributes<T> =>
   z.object(schema).and(z.record(z.string(), z.any()));
 
 // null
@@ -258,6 +262,27 @@ function ocap<
     );
 }
 
+const dfAttr = z.object({
+  r_type: z.literal("vector"),
+  r_attributes: attributes({
+    names: z.array(z.string()).or(z.string()),
+    class: z.literal("data.frame"),
+    "row.names": z.union([_string(), _integer(), _double()]).optional(),
+  }),
+});
+
+const _dataframe_unknown = () => z.record(z.any()).and(dfAttr);
+const _dataframe_known = <T extends z.ZodRawShape>(schema: T) =>
+  z.object(schema).and(dfAttr);
+
+function _dataframe(): ReturnType<typeof _dataframe_unknown>;
+function _dataframe<T extends z.ZodRawShape>(
+  schema: T
+): ReturnType<typeof _dataframe_known<T>>;
+function _dataframe(schema?: z.ZodRawShape) {
+  return schema === undefined ? _dataframe_unknown() : _dataframe_known(schema);
+}
+
 const Robj = {
   null: _null,
   integer: _integer,
@@ -270,6 +295,7 @@ const Robj = {
   lang: _lang,
   tagged_list: _tagged_list,
   factor: _factor,
+  dataframe: _dataframe,
   ocap,
   sexp,
 };
