@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.6.1
+
+### Patch Changes
+
+- 75594cf: drop robj from client
+
 ## 0.6.0
 
 ### Minor Changes
