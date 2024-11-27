@@ -126,7 +126,6 @@ const createRserve = async (
           }
         });
       }),
-    Robj,
   };
 };
 

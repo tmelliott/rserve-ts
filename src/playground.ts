@@ -1,6 +1,5 @@
-import RserveClient from "./index";
+import RserveClient, { Robj } from "./index";
 import { ocapFuns } from "../tests/r_files/oc";
-import * as RT from "./types";
 import { z } from "zod";
 
 // import { Presets, SingleBar } from "cli-progress";
@@ -102,7 +101,7 @@ const noOcap = async () => {
   const i4 = await R.eval(
     "structure(1L, some = 'thing')",
     XT.integer({
-      some: R.Robj.character(1),
+      some: Robj.character(1),
     })
   );
   console.log(i4);
