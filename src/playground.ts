@@ -60,6 +60,7 @@ global.WebSocket = require("ws");
 
 import XT from "./types";
 import { Presets, SingleBar } from "cli-progress";
+import { objectWithAttributes } from "./types/helpers";
 
 const noOcap = async () => {
   const R = await RserveClient.create({
@@ -418,28 +419,39 @@ const ocapTest = async () => {
   console.log(fac.Species);
   console.log("Result...\n ", await app.print_input(fac.Species));
 
+  const myfac: Int32Array & {
+    levels?: string[];
+    r_type: "int_array";
+    r_attributes: Record<string, any>;
+  } = objectWithAttributes(new Int32Array([1, 2, 3, 1, 2, 3]), "int_array", {
+    levels: ["setosa", "versicolor", "virginica"],
+    class: "factor",
+  });
+  myfac.levels = ["setosa", "versicolor", "virginica"];
+  console.log("Myfac...\n ", await app.print_input(myfac));
+
   // sending javascript functions to R
-  const progBar = new SingleBar({}, Presets.shades_classic);
-  progBar.start(100, 0);
-  const longresult = await app.longjob(async (x) => progBar.update(x));
-  progBar.stop();
-  console.log("Long job result:", longresult);
+  // const progBar = new SingleBar({}, Presets.shades_classic);
+  // progBar.start(100, 0);
+  // const longresult = await app.longjob(async (x) => progBar.update(x));
+  // progBar.stop();
+  // console.log("Long job result:", longresult);
 
-  // // some random numbers
-  const xrand = await app.randomNumbers();
-  console.log("Random numbers:", xrand);
+  // // // some random numbers
+  // const xrand = await app.randomNumbers();
+  // console.log("Random numbers:", xrand);
 
-  console.log("\n-------------- fit models --------------");
-  const fit = await app.car_lm("mpg", "hp");
-  const coefs = await fit.coef();
-  if (typeof coefs.r_attributes.names === "object") {
-    coefs.r_attributes.names.forEach((name) => {
-      console.log(name, ": ", coefs[name]);
-    });
-  }
-  console.log(await fit.rsq());
+  // console.log("\n-------------- fit models --------------");
+  // const fit = await app.car_lm("mpg", "hp");
+  // const coefs = await fit.coef();
+  // if (typeof coefs.r_attributes.names === "object") {
+  //   coefs.r_attributes.names.forEach((name) => {
+  //     console.log(name, ": ", coefs[name]);
+  //   });
+  // }
+  // console.log(await fit.rsq());
 
-  console.log("\n-------------- overloads --------------");
+  // console.log("\n-------------- overloads --------------");
 
   // const randomNumber = await app.sampler([1, 2, 3]); // number
   // const randomString = await app.sampler(["a", "b", "c"]); // string
