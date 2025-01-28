@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.6.2
+
+### Patch Changes
+
+- 20678a9: Integrate promisify
+
 ## 0.6.1
 
 ### Patch Changes
