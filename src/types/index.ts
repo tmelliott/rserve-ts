@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { object, typeWithAttributes, UnifyOne } from "./helpers";
-import { promisify } from "util";
+import { promisify } from "../helpers";
 
 const sexp = <T extends z.ZodTypeAny>(json: T) => {
   return z.object({

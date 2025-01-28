@@ -1,7 +1,8 @@
+// var _ = require("underscore");
+import _ from "underscore";
+
 var Rserve = (function () {
   var Rserve = {};
-
-  var _ = require("underscore");
 
   (function () {
     function make_basic(type, proto) {

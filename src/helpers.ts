@@ -12,6 +12,15 @@ function as_vector(x: string[] | number[]) {
   return res;
 }
 
+const promisify =
+  (func: Function) =>
+  (...args: any[]) =>
+    new Promise((resolve, reject) =>
+      func(...args, (err: Error, result: any) =>
+        err ? reject(err) : resolve(result)
+      )
+    );
+
 // type ObjectWithDim = {
 //   r_attributes: {
 //     dim: number | z.infer<ReturnType<typeof Robj.integer>>;
@@ -35,4 +44,4 @@ function as_vector(x: string[] | number[]) {
 //   }
 // }
 
-export { as_vector };
+export { as_vector, promisify };
