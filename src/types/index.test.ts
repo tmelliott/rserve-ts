@@ -40,15 +40,19 @@ type IntArray<
   T extends number | Int32Array | undefined = undefined,
   A extends {} | undefined = undefined
 > = T extends undefined
-  ? RArray<number, "int_array", A> | RArray<Int32Array, "int_array", A>
-  : RArray<T, "int_array", A>;
+  ? number | RArray<Int32Array<ArrayBuffer>, "int_array", A>
+  : T extends Int32Array
+  ? RArray<Int32Array<ArrayBuffer>, "int_array", A>
+  : number;
 
 type NumArray<
   T extends number | Float64Array | undefined = undefined,
   A extends {} | undefined = undefined
 > = T extends undefined
-  ? RArray<number, "double_array", A> | RArray<Float64Array, "double_array", A>
-  : RArray<T, "double_array", A>;
+  ? number | RArray<Float64Array<ArrayBuffer>, "double_array", A>
+  : T extends number
+  ? number
+  : RArray<Float64Array<ArrayBuffer>, "double_array", A>;
 
 type StringArray<
   T extends string | string[] | undefined = undefined,

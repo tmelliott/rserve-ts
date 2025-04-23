@@ -67,6 +67,13 @@ give.first.functions <- function() {
                         coef = wrap.r.fun(function() as.list(coef(fit))),
                         rsq = wrap.r.fun(function() summary(fit)$r.squared)
                     )
+                },
+                optional = function(x) {
+                    cat("---optional fun:\n")
+                    print(match.call())
+                    print(x)
+                    if (missing(x) || is.null(x)) return(FALSE)
+                    TRUE
                 }
             ),
             wrap.r.fun

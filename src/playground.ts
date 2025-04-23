@@ -484,6 +484,12 @@ const ocapTest = async () => {
 
   // oc = R.ocap(sampleSchema);
   // const sample =
+
+  // function with optional arguments
+  const optGiven = await app.optional(1);
+  const optMissing = await app.optional(undefined);
+  console.log("OptGiven: ", optGiven);
+  console.log("OptMissing: ", optMissing);
 };
 
 (async () => {

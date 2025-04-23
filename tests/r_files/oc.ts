@@ -97,6 +97,7 @@ export const ocapFuns = {
     ],
     Robj.logical(1)
   ),
+  optional: Robj.ocap([z.number().optional()], Robj.logical(1)),
   // sampler: samplerFun,
   tfail: Robj.ocap([z.number()], z.unknown()),
   t1: Robj.ocap([z.number()], Robj.numeric(1)),
