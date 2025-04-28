@@ -28,7 +28,7 @@ const _vector_noargs = () =>
     .and(
       z.object({
         r_type: z.literal("vector"),
-        r_attributes: attributes({ names: z.array(z.string()).or(z.string()) }),
+        r_attributes: attributes({ names: _string() }),
       })
     )
     .or(typeWithAttributes(z.array(z.any()), "vector", undefined));
@@ -37,7 +37,7 @@ const _vector_array = <T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
   schema: T
 ) =>
   typeWithAttributes(schema, "vector", {
-    names: z.array(z.string()).or(z.string()),
+    names: _string(),
   });
 
 const _vector_tuple = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(

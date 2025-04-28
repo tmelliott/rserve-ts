@@ -539,10 +539,12 @@ test("List types", async () => {
   const list1 = XT.vector();
   const list2 = XT.vector({ x: XT.numeric(1), y: XT.factor(["one", "two"]) });
   const list3 = XT.vector([XT.numeric(5), XT.factor(["one", "two"])]);
+  const list4 = XT.vector(z.record(z.string(), XT.numeric(1)));
 
   type List1 = z.infer<typeof list1>;
   type List2 = z.infer<typeof list2>;
   type List3 = z.infer<typeof list3>;
+  type List4 = z.infer<typeof list4>;
 
   type L0 = any[] & {
     r_type: "vector";
@@ -553,7 +555,7 @@ test("List types", async () => {
   type L1 = Record<string, any> & {
     r_type: "vector";
     r_attributes: {
-      names: string | string[];
+      names: string | ObjectWithAttributes<string[], "string_array">;
     } & Record<string, any>;
   };
   type L2 = {
@@ -570,11 +572,18 @@ test("List types", async () => {
       [x: string]: any;
     };
   };
+  type L4 = Record<string, number> & {
+    r_type: "vector";
+    r_attributes: {
+      names: string | ObjectWithAttributes<string[], "string_array">;
+    };
+  };
 
   type tests = [
     Expect<Equal<List1, L1 | L0>>,
     Expect<Equal<List2["r_attributes"], L2["r_attributes"]>>,
-    Expect<Equal<List3, L3>>
+    Expect<Equal<List3, L3>>,
+    Expect<Equal<List4, L4>>
   ];
 
   const isNamed = (x: unknown): x is L1 => {

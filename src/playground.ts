@@ -345,6 +345,43 @@ const noOcap = async () => {
   // // }>();
   // // const z = await oc.add(1, 2);
   // // console.log(z);
+
+  // ---------------------------------------------------
+  // Recursive objects
+  console.log("\n----------------------------------------------");
+  console.log("\n--- RECURSIVE OBJECTS ---\n");
+  console.log(await R.eval("list(x = list(x = 1), y = 1)"));
+
+  const obj = {
+    x: { x: 1, r_type: "vector", r_attributes: { names: "x" } },
+    y: 1,
+    z: "hello",
+    r_type: "vector",
+    r_attributes: { names: ["x", "y"] as string[] & { r_type: string } },
+  };
+  obj.r_attributes.names.r_type = "string_array";
+
+  console.log("===== blah");
+  const strtype = XT.character();
+  console.log(strtype.parse(obj.r_attributes.names));
+
+  const recursiveType = XT.list(
+    z.record(
+      z.string(),
+      XT.list(z.record(z.string(), XT.numeric(1))).or(XT.numeric(1))
+    )
+  );
+  // const recursiveType = z.record(z.string(), XT.numeric(1).or(XT.list())).and(
+  //   z.object({
+  //     r_type: z.string(),
+  //     r_attributes: z.any().optional(),
+  //   })
+  // );
+  type RecursiveType = z.infer<typeof recursiveType>;
+
+  console.log(recursiveType.parse(obj));
+
+  // console.log(await R.eval("list(x = list(x = 1), y = 1)", recursiveType));
 };
 
 const ocapTest = async () => {
@@ -494,6 +531,6 @@ const ocapTest = async () => {
 
 (async () => {
   await noOcap();
-  await ocapTest();
+  // await ocapTest();
   process.exit(0);
 })();
