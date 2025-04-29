@@ -14,46 +14,34 @@ export const typeWithAttributes = <
   return z.custom<
     z.infer<Z> & { r_type: R; r_attributes: z.infer<z.ZodObject<A>> }
   >((data) => {
-    try {
-      // console.group("\n===========\n - checking custom type");
-      if (typeof data === "object" && data.hasOwnProperty("r_type")) {
-        // console.log("-- checking object: ");
-        // console.log(data);
-
-        if (data.r_type !== rtype) return false;
-        if (attr) {
-          // console.log("Checking attributes");
-          if (!data.hasOwnProperty("r_attributes")) return false;
-
-          // map over attributes keys
-          const newAttr = Object.fromEntries(
-            Object.keys(attr).map((k) => [
-              k,
-              attr[k].parse(data.r_attributes[k]),
-            ])
-          );
-        }
-
-        // now check the object itself
-        let obj: z.infer<Z>;
-        if (Array.isArray(data)) {
-          // console.log("Checking array: ");
-          obj = ztype.parse(data);
-        } else {
-          // console.log("Checking object: ");
-          const { r_type, r_attributes, ...d } = data;
-          // console.log(d);
-          obj = ztype.parse(d);
-        }
-        // console.log(obj);
-
-        return true;
-      } else {
-        // console.log("-- checking non-object: ");
+    if (typeof data === "object" && data.hasOwnProperty("r_type")) {
+      console.log("-- checking object: ");
+      console.log(data);
+      if (data.r_type !== rtype) return false;
+      if (attr) {
+        // console.log("Checking attributes");
+        if (!data.hasOwnProperty("r_attributes")) return false;
+        // map over attributes keys
+        let attrOk = false;
+        Object.fromEntries(
+          Object.keys(attr).map((k) => attr[k].parse(data.r_attributes[k]))
+        );
       }
-      // TODO: type checking ztype
-    } finally {
-      console.groupEnd();
+      // now check the object itself
+      let obj: z.infer<Z>;
+      if (Array.isArray(data)) {
+        // console.log("Checking array: ");
+        obj = ztype.parse(data);
+      } else {
+        // console.log("Checking object: ");
+        const { r_type, r_attributes, ...d } = data;
+        // console.log(d);
+        obj = ztype.parse(d);
+      }
+      // console.log(obj);
+      return true;
+    } else {
+      // console.log("-- checking non-object: ");
     }
 
     return false;
