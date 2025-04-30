@@ -59,9 +59,9 @@ const _vector_object = <T extends z.ZodRawShape>(schema: T) =>
   z.object(schema).and(
     z.object({
       r_type: z.literal("vector"),
-      // r_attributes: attributes({
-      //   names: _string(Object.keys(schema).length),
-      // }),
+      r_attributes: attributes({
+        names: _string(Object.keys(schema).length),
+      }),
     })
   );
 
@@ -73,28 +73,29 @@ const _vector_object = <T extends z.ZodRawShape>(schema: T) =>
 // >;
 
 function _vector(): ReturnType<typeof _vector_noargs>;
-// function _vector<T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
-//   schema: T
-// ): ReturnType<typeof _vector_array<T>>;
-// function _vector<T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
-//   schema: T
-// ): ReturnType<typeof _vector_tuple<T>>;
+function _vector<T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
+  schema: T
+): ReturnType<typeof _vector_array<T>>;
+function _vector<T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
+  schema: T
+): ReturnType<typeof _vector_tuple<T>>;
 function _vector<T extends z.ZodRawShape>(
   schema: T
 ): ReturnType<typeof _vector_object<T>>;
 function _vector(
-  schema?: z.ZodRawShape // | [z.ZodTypeAny, ...z.ZodTypeAny[]]
-  // | z.ZodRecord<z.ZodString, z.ZodTypeAny>
+  schema?:
+    | z.ZodRawShape
+    | [z.ZodTypeAny, ...z.ZodTypeAny[]]
+    | z.ZodRecord<z.ZodString, z.ZodTypeAny>
 ) {
   if (schema === undefined) return _vector_noargs();
-  // return schema === undefined
-  //   ? _vector_noargs()
-  // : // : Array.isArray(schema)
-  // ? (_vector_tuple(schema) as any)
-  // : schema instanceof z.ZodRecord
-  // ? _vector_array(schema)
-
-  return _vector_object(schema);
+  return schema === undefined
+    ? _vector_noargs()
+    : Array.isArray(schema)
+    ? (_vector_tuple(schema) as any)
+    : schema instanceof z.ZodRecord
+    ? _vector_array(schema)
+    : _vector_object(schema);
 }
 
 // symbol
@@ -310,13 +311,13 @@ const Robj = {
   character: _string,
   logical: _boolean,
   vector: _vector,
-  // list: _vector,
-  // symbol: _symbol,
-  // lang: _lang,
-  // tagged_list: _tagged_list,
-  // factor: _factor,
-  // dataframe: _dataframe,
-  // ocap,
+  list: _vector,
+  symbol: _symbol,
+  lang: _lang,
+  tagged_list: _tagged_list,
+  factor: _factor,
+  dataframe: _dataframe,
+  ocap,
   sexp,
 };
 

@@ -135,6 +135,6 @@ const RserveClient = {
 };
 
 export default RserveClient;
-// export { Robj };
+export { Robj };
 export * as Rfmt from "./helpers";
 export type * from "./types";
