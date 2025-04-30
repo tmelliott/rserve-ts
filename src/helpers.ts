@@ -2,7 +2,7 @@ function isNumArray(array: unknown[]): array is number[] {
   return typeof array[0] === "number";
 }
 
-function as_vector(x: number[]): Float64Array<ArrayBuffer>;
+function as_vector(x: number[]): Float64Array;
 function as_vector(x: string[]): string[] & { r_type: "string_array" };
 function as_vector(x: string[] | number[]) {
   if (isNumArray(x)) {
