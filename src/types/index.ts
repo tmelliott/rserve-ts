@@ -34,15 +34,15 @@ const nameAttr = z.string().or(
 
 // vector (i.e., an R list)
 const _vector_noargs = () =>
-  z
-    .record(z.string(), z.any())
-    .and(
+  z.union([
+    z.record(z.string(), z.any()).and(
       z.object({
         r_type: z.literal("vector"),
         r_attributes: attributes({ names: nameAttr }),
       })
-    )
-    .or(typeWithAttributes(z.array(z.any()), "vector", undefined));
+    ),
+    typeWithAttributes(z.array(z.any()), "vector", undefined),
+  ]);
 
 const _vector_array = <T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
   schema: T

@@ -541,66 +541,75 @@ test("List types", async () => {
   const list3 = XT.vector([XT.numeric(5), XT.factor(["one", "two"])]);
   const list4 = XT.vector(z.record(z.string(), XT.numeric(1)));
 
-  // type List1 = z.infer<typeof list1>;
-  // type List2 = z.infer<typeof list2>;
-  // type List3 = z.infer<typeof list3>;
-  // type List4 = z.infer<typeof list4>;
+  type List1 = z.infer<typeof list1>;
+  type List2 = z.infer<typeof list2>;
+  type List3 = z.infer<typeof list3>;
+  type List4 = z.infer<typeof list4>;
 
-  // type L0 = any[] & {
-  //   r_type: "vector";
-  //   r_attributes: {
-  //     names: string | ObjectWithAttributes<string[], "string_array">;
-  //   } & Record<string, any>;
-  // };
-  // type L1 = Record<string, any> & {
-  //   r_type: "vector";
-  //   r_attributes: {
-  //     names: string | ObjectWithAttributes<string[], "string_array">;
-  //   } & Record<string, any>;
-  // };
-  // type L2 = {
-  //   x: NumArray<number>;
-  //   y: FactorArray<["one", "two"]>;
-  //   r_type: "vector";
-  //   r_attributes: {
-  //     names: StringArray<string[]>;
-  //   } & Record<string, any>;
-  // };
-  // type L3 = [NumArray<Float64Array>, FactorArray<["one", "two"]>] & {
-  //   r_type: "vector";
-  //   r_attributes: {
-  //     [x: string]: any;
-  //   };
-  // };
-  // type L4 = Record<string, number> & {
-  //   r_type: "vector";
-  //   r_attributes: {
-  //     names: string | ObjectWithAttributes<string[], "string_array">;
-  //   };
-  // };
+  type L0 = any[] & {
+    r_type: "vector";
+    r_attributes: {
+      [x: string]: any;
+    };
+  };
+  type L1 = Record<string, any> & {
+    r_type: "vector";
+    r_attributes: {
+      names:
+        | string
+        | (string[] & {
+            r_type: "string_array";
+          });
+    } & Record<string, any>;
+  };
+  type L2 = {
+    x: NumArray<number>;
+    y: FactorArray<["one", "two"]>;
+    r_type: "vector";
+    r_attributes: {
+      names: StringArray<string[]>;
+    } & Record<string, any>;
+  };
+  type L3 = [NumArray<Float64Array>, FactorArray<["one", "two"]>] & {
+    r_type: "vector";
+    r_attributes: {
+      [x: string]: any;
+    };
+  };
+  type L4 = Record<string, number> & {
+    r_type: "vector";
+    r_attributes: {
+      names:
+        | string
+        | (string[] & {
+            r_type: "string_array";
+          });
+    };
+  };
 
-  // // type tests = [
-  // //   Expect<Equal<List1, L1 | L0>>,
-  // //   Expect<Equal<List2["r_attributes"], L2["r_attributes"]>>,
-  // //   Expect<Equal<List3, L3>>,
-  // //   Expect<Equal<List4, L4>>
-  // // ];
+  type tests = [
+    Expect<Equal<List1, L1 | L0>>,
+    Expect<Equal<List2["r_attributes"], L2["r_attributes"]>>,
+    Expect<Equal<List3, L3>>,
+    Expect<Equal<List4, L4>>
+  ];
 
-  // const isNamed = (x: unknown): x is L1 => {
-  //   if (!x) return false;
-  //   if (typeof x !== "object") return false;
+  const isNamed = (x: unknown): x is L1 => {
+    if (!x) return false;
+    if (typeof x !== "object") return false;
 
-  //   if (x.hasOwnProperty("r_attributes")) {
-  //     return (x as L1).r_attributes.names != undefined;
-  //   }
-  //   return false;
-  // };
+    if (x.hasOwnProperty("r_attributes")) {
+      return (x as L1).r_attributes.names != undefined;
+    }
+    return false;
+  };
 
-  // const r_list1 = await R.eval(
-  //   "list(x = 5.3, y = factor(c('one', 'two')))",
-  //   list1
-  // );
-  // if (!isNamed(r_list1)) throw new Error("not named");
+  console.log("\n--------------------\n list1: ", list1);
+  const r_list1 = await R.eval(
+    "list(x = 5.3, y = factor(c('one', 'two')))",
+    list1
+  );
+  if (!isNamed(r_list1)) throw new Error("not named");
   // expect(r_list1.x).toEqual(5.3);
   // expect(clearAttrs(r_list1.y)).toEqual(["one", "two"]);
 

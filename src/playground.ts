@@ -131,6 +131,14 @@ const noOcap = async () => {
   );
   console.log(v3.r_attributes.names);
 
+  // lists blahh
+  console.log("\n\n\n===============================\n\n");
+  const r_list1 = await R.eval(
+    "list(x = 5.3, y = factor(c('one', 'two')))",
+    XT.vector()
+  );
+  console.log(r_list1);
+
   const v4 = await R.eval(
     "list(a = 1:5, b = 1:5)",
     XT.vector(z.record(z.string(), XT.integer(5)))
