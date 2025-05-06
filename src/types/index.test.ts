@@ -604,32 +604,32 @@ test("List types", async () => {
     return false;
   };
 
-  console.log("\n--------------------\n list1: ", list1);
+  // console.log("\n--------------------\n list1: ", list1);
   const r_list1 = await R.eval(
     "list(x = 5.3, y = factor(c('one', 'two')))",
     list1
   );
   if (!isNamed(r_list1)) throw new Error("not named");
-  // expect(r_list1.x).toEqual(5.3);
-  // expect(clearAttrs(r_list1.y)).toEqual(["one", "two"]);
+  expect(r_list1.x).toEqual(5.3);
+  expect(clearAttrs(r_list1.y)).toEqual(["one", "two"]);
 
-  // const r_list2 = await R.eval(
-  //   "list(x = 5.3, y = factor(c('one', 'two')))",
-  //   list2
-  // );
-  // expect(r_list2.x).toEqual(5.3);
-  // expect(clearAttrs(r_list2.y)).toEqual(["one", "two"]);
-  // expect(clearAttrs(r_list2.r_attributes.names)).toEqual(["x", "y"]);
+  const r_list2 = await R.eval(
+    "list(x = 5.3, y = factor(c('one', 'two')))",
+    list2
+  );
+  expect(r_list2.x).toEqual(5.3);
+  expect(clearAttrs(r_list2.y)).toEqual(["one", "two"]);
+  expect(clearAttrs(r_list2.r_attributes.names)).toEqual(["x", "y"]);
 
-  // const r_list3 = await R.eval("list(1:5/2, factor(c('one', 'two')))", list3);
-  // expect(r_list3[0]).toEqual(
-  //   objectWithAttributes(
-  //     new Float64Array([0.5, 1, 1.5, 2, 2.5]),
-  //     "double_array"
-  //   )
-  // );
+  const r_list3 = await R.eval("list(1:5/2, factor(c('one', 'two')))", list3);
+  expect(r_list3[0]).toEqual(
+    objectWithAttributes(
+      new Float64Array([0.5, 1, 1.5, 2, 2.5]),
+      "double_array"
+    )
+  );
 
-  // expect(clearAttrs(r_list3[1])).toEqual(["one", "two"]);
+  expect(clearAttrs(r_list3[1])).toEqual(["one", "two"]);
 });
 
 test("Data frame types", async () => {
