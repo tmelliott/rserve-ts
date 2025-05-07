@@ -7,7 +7,7 @@ import { z } from "zod";
 
 function _recursive_list<T>(
   baseSchema: z.ZodObject<any>,
-  extendFn: (self: z.ZodType<any>) => Record<string, z.ZodTypeAny>
+  extendFn: (self: z.ZodType<any>) => z.ZodRawShape
 ): z.ZodType<T> {
   const lazySchema: z.ZodType<any> = z.lazy(() => {
     const extensions = extendFn(lazySchema);

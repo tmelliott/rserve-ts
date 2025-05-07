@@ -1,38 +1,37 @@
 import { test, expect } from "vitest";
 import { z } from "zod";
 import _recursive_list from "./recursive";
+import Robj from ".";
 
 test("Recursive list with simple nesting", () => {
   const baseRecursiveListSchema = z.object({
     label: z.string(),
+    heading: z.string().optional(),
     r_type: z.literal("vector"),
     r_attributes: z.object({
-      names: z.union([z.string(), z.string().array()]),
+      names: z.string().or(z.string().array()),
     }),
   });
 
-  type RecursiveList = z.infer<typeof baseRecursiveListSchema> &
-    (
-      | {
-          sublist: RecursiveList;
-        }
-      | {
-          heading: string;
-        }
-    );
+  type RecursiveList = z.infer<typeof baseRecursiveListSchema> & {
+    sublist?: RecursiveList;
+  };
 
+  const validList = (x: RecursiveList): boolean => {
+    if (x.heading) return true;
+    if (!x.sublist) return false;
+    return validList(x.sublist);
+  };
   const recursiveListSchema = _recursive_list<RecursiveList>(
     baseRecursiveListSchema,
     (self) => ({
-      sublist: self,
+      sublist: self.optional(),
     })
-  ).or(
-    baseRecursiveListSchema.extend({
-      heading: z.string(),
-    })
-  );
+  ).refine(validList, {
+    message: "One of heading or sublist must be specified",
+  });
 
-  const myList: z.infer<typeof recursiveListSchema> = {
+  const myList = recursiveListSchema.parse({
     label: "hello",
     sublist: {
       label: "hello",
@@ -53,5 +52,5 @@ test("Recursive list with simple nesting", () => {
     r_attributes: {
       names: ["label", "sublist"],
     },
-  };
+  });
 });
