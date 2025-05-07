@@ -61,6 +61,7 @@ global.WebSocket = require("ws");
 import XT from "./types";
 import { Presets, SingleBar } from "cli-progress";
 import { objectWithAttributes } from "./types/helpers";
+import _recursive_list from "./types/recursive";
 
 const noOcap = async () => {
   const R = await RserveClient.create({
@@ -357,38 +358,41 @@ const noOcap = async () => {
   // Recursive objects
   console.log("\n----------------------------------------------");
   console.log("\n--- RECURSIVE OBJECTS ---\n");
-  console.log(await R.eval("list(x = list(x = 1), y = 1)"));
 
   const obj = {
-    x: { x: 1, r_type: "vector", r_attributes: { names: "x" } },
-    y: 1,
-    z: "hello",
+    value: 1,
+    subobj: { value: 1, r_type: "vector", r_attributes: { names: "value" } },
     r_type: "vector",
-    r_attributes: { names: ["x", "y"] as string[] & { r_type: string } },
+    r_attributes: {
+      names: ["value", "subobj"] as string[] & { r_type: string },
+    },
   };
   obj.r_attributes.names.r_type = "string_array";
 
-  console.log("===== blah");
-  const strtype = XT.character();
-  console.log(strtype.parse(obj.r_attributes.names));
+  const baseListType = z.object({
+    value: XT.integer(1),
+    r_type: z.literal("vector"),
+    r_attributes: z.object({
+      names: XT.character(),
+    }),
+  });
+  type ListType = z.infer<typeof baseListType> & {
+    subobj?: ListType;
+  };
 
-  const recursiveType = XT.list(
-    z.record(
-      z.string(),
-      XT.list(z.record(z.string(), XT.numeric(1))).or(XT.numeric(1))
+  const listType = XT.recursive_list<ListType>(baseListType, (self) => ({
+    subobj: self.optional(),
+  }));
+
+  console.log(listType.parse(obj));
+
+  console.log("\nReading from R ...");
+  console.log(
+    await R.eval(
+      "list(value = 1L, subobj = list(value = 2L, subobj = list(value = 3L)))",
+      listType
     )
   );
-  // const recursiveType = z.record(z.string(), XT.numeric(1).or(XT.list())).and(
-  //   z.object({
-  //     r_type: z.string(),
-  //     r_attributes: z.any().optional(),
-  //   })
-  // );
-  type RecursiveType = z.infer<typeof recursiveType>;
-
-  console.log(recursiveType.parse(obj));
-
-  // console.log(await R.eval("list(x = list(x = 1), y = 1)", recursiveType));
 };
 
 const ocapTest = async () => {
