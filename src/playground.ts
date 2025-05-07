@@ -1,6 +1,5 @@
-import RserveClient from "./index";
+import RserveClient, { Robj } from "./index";
 import { ocapFuns } from "../tests/r_files/oc";
-import * as RT from "./types";
 import { z } from "zod";
 
 // import { Presets, SingleBar } from "cli-progress";
@@ -61,6 +60,8 @@ global.WebSocket = require("ws");
 
 import XT from "./types";
 import { Presets, SingleBar } from "cli-progress";
+import { objectWithAttributes } from "./types/helpers";
+import _recursive_list from "./types/recursive";
 
 const noOcap = async () => {
   const R = await RserveClient.create({
@@ -102,7 +103,7 @@ const noOcap = async () => {
   const i4 = await R.eval(
     "structure(1L, some = 'thing')",
     XT.integer({
-      some: R.Robj.character(1),
+      some: Robj.character(1),
     })
   );
   console.log(i4);
@@ -129,7 +130,14 @@ const noOcap = async () => {
       c: XT.numeric(1),
     })
   );
-  console.log(v3.r_attributes.names);
+
+  // lists blahh
+  // console.log("\n\n\n===============================\n\n");
+  const r_list1 = await R.eval(
+    "list(x = 5.3, y = factor(c('one', 'two')))",
+    XT.vector()
+  );
+  // console.log(r_list1);
 
   const v4 = await R.eval(
     "list(a = 1:5, b = 1:5)",
@@ -345,6 +353,46 @@ const noOcap = async () => {
   // // }>();
   // // const z = await oc.add(1, 2);
   // // console.log(z);
+
+  // ---------------------------------------------------
+  // Recursive objects
+  console.log("\n----------------------------------------------");
+  console.log("\n--- RECURSIVE OBJECTS ---\n");
+
+  const obj = {
+    value: 1,
+    subobj: { value: 1, r_type: "vector", r_attributes: { names: "value" } },
+    r_type: "vector",
+    r_attributes: {
+      names: ["value", "subobj"] as string[] & { r_type: string },
+    },
+  };
+  obj.r_attributes.names.r_type = "string_array";
+
+  const baseListType = z.object({
+    value: XT.integer(1),
+    r_type: z.literal("vector"),
+    r_attributes: z.object({
+      names: XT.character(),
+    }),
+  });
+  type ListType = z.infer<typeof baseListType> & {
+    subobj?: ListType;
+  };
+
+  const listType = XT.recursive_list<ListType>(baseListType, (self) => ({
+    subobj: self.optional(),
+  }));
+
+  console.log(listType.parse(obj));
+
+  console.log("\nReading from R ...");
+  console.log(
+    await R.eval(
+      "list(value = 1L, subobj = list(value = 2L, subobj = list(value = 3L)))",
+      listType
+    )
+  );
 };
 
 const ocapTest = async () => {
@@ -419,28 +467,39 @@ const ocapTest = async () => {
   console.log(fac.Species);
   console.log("Result...\n ", await app.print_input(fac.Species));
 
+  const myfac: Int32Array & {
+    levels?: string[];
+    r_type: "int_array";
+    r_attributes: Record<string, any>;
+  } = objectWithAttributes(new Int32Array([1, 2, 3, 1, 2, 3]), "int_array", {
+    levels: ["setosa", "versicolor", "virginica"],
+    class: "factor",
+  });
+  myfac.levels = ["setosa", "versicolor", "virginica"];
+  console.log("Myfac...\n ", await app.print_input(myfac));
+
   // sending javascript functions to R
-  const progBar = new SingleBar({}, Presets.shades_classic);
-  progBar.start(100, 0);
-  const longresult = await app.longjob(async (x) => progBar.update(x));
-  progBar.stop();
-  console.log("Long job result:", longresult);
+  // const progBar = new SingleBar({}, Presets.shades_classic);
+  // progBar.start(100, 0);
+  // const longresult = await app.longjob(async (x) => progBar.update(x));
+  // progBar.stop();
+  // console.log("Long job result:", longresult);
 
-  // // some random numbers
-  const xrand = await app.randomNumbers();
-  console.log("Random numbers:", xrand);
+  // // // some random numbers
+  // const xrand = await app.randomNumbers();
+  // console.log("Random numbers:", xrand);
 
-  console.log("\n-------------- fit models --------------");
-  const fit = await app.car_lm("mpg", "hp");
-  const coefs = await fit.coef();
-  if (typeof coefs.r_attributes.names === "object") {
-    coefs.r_attributes.names.forEach((name) => {
-      console.log(name, ": ", coefs[name]);
-    });
-  }
-  console.log(await fit.rsq());
+  // console.log("\n-------------- fit models --------------");
+  // const fit = await app.car_lm("mpg", "hp");
+  // const coefs = await fit.coef();
+  // if (typeof coefs.r_attributes.names === "object") {
+  //   coefs.r_attributes.names.forEach((name) => {
+  //     console.log(name, ": ", coefs[name]);
+  //   });
+  // }
+  // console.log(await fit.rsq());
 
-  console.log("\n-------------- overloads --------------");
+  // console.log("\n-------------- overloads --------------");
 
   // const randomNumber = await app.sampler([1, 2, 3]); // number
   // const randomString = await app.sampler(["a", "b", "c"]); // string
@@ -473,10 +532,16 @@ const ocapTest = async () => {
 
   // oc = R.ocap(sampleSchema);
   // const sample =
+
+  // function with optional arguments
+  const optGiven = await app.optional(1);
+  const optMissing = await app.optional(undefined);
+  console.log("OptGiven: ", optGiven);
+  console.log("OptMissing: ", optMissing);
 };
 
 (async () => {
   await noOcap();
-  await ocapTest();
+  // await ocapTest();
   process.exit(0);
 })();

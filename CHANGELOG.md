@@ -1,5 +1,23 @@
 # rserve-ts
 
+## 0.6.2
+
+### Patch Changes
+
+- 20678a9: Integrate promisify
+
+## 0.6.1
+
+### Patch Changes
+
+- 75594cf: drop robj from client
+
+## 0.6.0
+
+### Minor Changes
+
+- 458ba4d: Refactor object shape (remove 'data')
+
 ## 0.5.0
 
 ### Minor Changes

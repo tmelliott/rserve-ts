@@ -1,4 +1,4 @@
-import RserveClient from "./index";
+import RserveClient, { Robj } from "./index";
 
 // set global WebSocket
 global.WebSocket = require("ws");
@@ -12,7 +12,6 @@ test("Rserve connects and runs", async () => {
   const R = await RserveClient.create({
     host: "http://127.0.0.1:8881",
   });
-  const Robj = R.Robj;
 
   expect(R.is_running()).toBe(true);
 
