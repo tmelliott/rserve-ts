@@ -61,6 +61,7 @@ global.WebSocket = require("ws");
 import XT from "./types";
 import { Presets, SingleBar } from "cli-progress";
 import { objectWithAttributes } from "./types/helpers";
+import _recursive_list from "./types/recursive";
 
 const noOcap = async () => {
   const R = await RserveClient.create({
@@ -129,7 +130,14 @@ const noOcap = async () => {
       c: XT.numeric(1),
     })
   );
-  console.log(v3.r_attributes.names);
+
+  // lists blahh
+  // console.log("\n\n\n===============================\n\n");
+  const r_list1 = await R.eval(
+    "list(x = 5.3, y = factor(c('one', 'two')))",
+    XT.vector()
+  );
+  // console.log(r_list1);
 
   const v4 = await R.eval(
     "list(a = 1:5, b = 1:5)",
@@ -345,6 +353,46 @@ const noOcap = async () => {
   // // }>();
   // // const z = await oc.add(1, 2);
   // // console.log(z);
+
+  // ---------------------------------------------------
+  // Recursive objects
+  console.log("\n----------------------------------------------");
+  console.log("\n--- RECURSIVE OBJECTS ---\n");
+
+  const obj = {
+    value: 1,
+    subobj: { value: 1, r_type: "vector", r_attributes: { names: "value" } },
+    r_type: "vector",
+    r_attributes: {
+      names: ["value", "subobj"] as string[] & { r_type: string },
+    },
+  };
+  obj.r_attributes.names.r_type = "string_array";
+
+  const baseListType = z.object({
+    value: XT.integer(1),
+    r_type: z.literal("vector"),
+    r_attributes: z.object({
+      names: XT.character(),
+    }),
+  });
+  type ListType = z.infer<typeof baseListType> & {
+    subobj?: ListType;
+  };
+
+  const listType = XT.recursive_list<ListType>(baseListType, (self) => ({
+    subobj: self.optional(),
+  }));
+
+  console.log(listType.parse(obj));
+
+  console.log("\nReading from R ...");
+  console.log(
+    await R.eval(
+      "list(value = 1L, subobj = list(value = 2L, subobj = list(value = 3L)))",
+      listType
+    )
+  );
 };
 
 const ocapTest = async () => {
@@ -494,6 +542,6 @@ const ocapTest = async () => {
 
 (async () => {
   await noOcap();
-  await ocapTest();
+  // await ocapTest();
   process.exit(0);
 })();

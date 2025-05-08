@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { object, typeWithAttributes, UnifyOne } from "./helpers";
 import { promisify } from "../helpers";
+import _recursive_list from "./recursive";
 
 const sexp = <T extends z.ZodTypeAny>(json: T) => {
   return z.object({
@@ -21,23 +22,34 @@ const attributes = <T extends z.ZodRawShape>(schema: T): Attributes<T> =>
 // null
 const _null = () => z.null();
 
-// vector (i.e., an R list)
-const _vector_noargs = () =>
+const nameAttr = z.string().or(
   z
-    .record(z.string(), z.any())
+    .string()
+    .array()
     .and(
       z.object({
-        r_type: z.literal("vector"),
-        r_attributes: attributes({ names: z.array(z.string()).or(z.string()) }),
+        r_type: z.literal("string_array"),
       })
     )
-    .or(typeWithAttributes(z.array(z.any()), "vector", undefined));
+);
+
+// vector (i.e., an R list)
+const _vector_noargs = () =>
+  z.union([
+    z.record(z.string(), z.any()).and(
+      z.object({
+        r_type: z.literal("vector"),
+        r_attributes: attributes({ names: nameAttr }),
+      })
+    ),
+    typeWithAttributes(z.array(z.any()), "vector", undefined),
+  ]);
 
 const _vector_array = <T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
   schema: T
 ) =>
   typeWithAttributes(schema, "vector", {
-    names: z.array(z.string()).or(z.string()),
+    names: nameAttr,
   });
 
 const _vector_tuple = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
@@ -48,9 +60,18 @@ const _vector_object = <T extends z.ZodRawShape>(schema: T) =>
   z.object(schema).and(
     z.object({
       r_type: z.literal("vector"),
-      r_attributes: attributes({ names: _string(Object.keys(schema).length) }),
+      r_attributes: attributes({
+        names: _string(Object.keys(schema).length),
+      }),
     })
   );
+
+// type VectorObject<T extends z.ZodRawShape> = z.ZodIntersection<
+//   z.ZodObject<T, "strip", z.ZodTypeAny>,
+//   z.ZodObject<{
+//     r_type: z.ZodLiteral<"vector">;
+//   }>
+// >;
 
 function _vector(): ReturnType<typeof _vector_noargs>;
 function _vector<T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
@@ -68,6 +89,7 @@ function _vector(
     | [z.ZodTypeAny, ...z.ZodTypeAny[]]
     | z.ZodRecord<z.ZodString, z.ZodTypeAny>
 ) {
+  if (schema === undefined) return _vector_noargs();
   return schema === undefined
     ? _vector_noargs()
     : Array.isArray(schema)
@@ -298,6 +320,7 @@ const Robj = {
   dataframe: _dataframe,
   ocap,
   sexp,
+  recursive_list: _recursive_list,
 };
 
 export default Robj;

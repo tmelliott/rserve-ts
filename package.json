@@ -29,8 +29,8 @@
     "cli-progress": "^3.12.0",
     "concurrently": "^8.2.2",
     "ts-node": "^10.9.2",
-    "tsup": "^8.1.0",
-    "typescript": "^5.4.5",
+    "tsup": "^8.4.0",
+    "typescript": "5.4.4",
     "vitest": "^1.6.0",
     "ws": "^8.18.0"
   },

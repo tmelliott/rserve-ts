@@ -40,19 +40,19 @@ type IntArray<
   T extends number | Int32Array | undefined = undefined,
   A extends {} | undefined = undefined
 > = T extends undefined
-  ? number | RArray<Int32Array<ArrayBuffer>, "int_array", A>
+  ? number | RArray<Int32Array, "int_array", A>
   : T extends Int32Array
-  ? RArray<Int32Array<ArrayBuffer>, "int_array", A>
+  ? RArray<Int32Array, "int_array", A>
   : number;
 
 type NumArray<
   T extends number | Float64Array | undefined = undefined,
   A extends {} | undefined = undefined
 > = T extends undefined
-  ? number | RArray<Float64Array<ArrayBuffer>, "double_array", A>
+  ? number | RArray<Float64Array, "double_array", A>
   : T extends number
   ? number
-  : RArray<Float64Array<ArrayBuffer>, "double_array", A>;
+  : RArray<Float64Array, "double_array", A>;
 
 type StringArray<
   T extends string | string[] | undefined = undefined,
@@ -539,10 +539,12 @@ test("List types", async () => {
   const list1 = XT.vector();
   const list2 = XT.vector({ x: XT.numeric(1), y: XT.factor(["one", "two"]) });
   const list3 = XT.vector([XT.numeric(5), XT.factor(["one", "two"])]);
+  const list4 = XT.vector(z.record(z.string(), XT.numeric(1)));
 
   type List1 = z.infer<typeof list1>;
   type List2 = z.infer<typeof list2>;
   type List3 = z.infer<typeof list3>;
+  type List4 = z.infer<typeof list4>;
 
   type L0 = any[] & {
     r_type: "vector";
@@ -553,7 +555,11 @@ test("List types", async () => {
   type L1 = Record<string, any> & {
     r_type: "vector";
     r_attributes: {
-      names: string | string[];
+      names:
+        | string
+        | (string[] & {
+            r_type: "string_array";
+          });
     } & Record<string, any>;
   };
   type L2 = {
@@ -570,11 +576,22 @@ test("List types", async () => {
       [x: string]: any;
     };
   };
+  type L4 = Record<string, number> & {
+    r_type: "vector";
+    r_attributes: {
+      names:
+        | string
+        | (string[] & {
+            r_type: "string_array";
+          });
+    };
+  };
 
   type tests = [
     Expect<Equal<List1, L1 | L0>>,
     Expect<Equal<List2["r_attributes"], L2["r_attributes"]>>,
-    Expect<Equal<List3, L3>>
+    Expect<Equal<List3, L3>>,
+    Expect<Equal<List4, L4>>
   ];
 
   const isNamed = (x: unknown): x is L1 => {
@@ -587,6 +604,7 @@ test("List types", async () => {
     return false;
   };
 
+  // console.log("\n--------------------\n list1: ", list1);
   const r_list1 = await R.eval(
     "list(x = 5.3, y = factor(c('one', 'two')))",
     list1

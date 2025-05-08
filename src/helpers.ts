@@ -1,11 +1,12 @@
-import { z } from "zod";
-import Robj from "./types";
+function isNumArray(array: unknown[]): array is number[] {
+  return typeof array[0] === "number";
+}
 
 function as_vector(x: number[]): Float64Array;
 function as_vector(x: string[]): string[] & { r_type: "string_array" };
 function as_vector(x: string[] | number[]) {
-  if (typeof x[0] === "number") {
-    return new Float64Array(x as number[]);
+  if (isNumArray(x)) {
+    return new Float64Array(x);
   }
   const res: string[] & { r_type: "string_array" } = x as any;
   res.r_type = "string_array";
