@@ -1,5 +1,15 @@
 # rserve-ts
 
+## 0.7.0
+
+### Minor Changes
+
+- 1872777: Add recursive_list type for defining complicated, recursive structures
+
+### Patch Changes
+
+- d30ee55: Add checking of list types
+
 ## 0.6.2
 
 ### Patch Changes
