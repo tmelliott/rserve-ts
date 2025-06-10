@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.8.0
+
+### Minor Changes
+
+- 74690ab: Add js_function type
+
 ## 0.7.0
 
 ### Minor Changes
