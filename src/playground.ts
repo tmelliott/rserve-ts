@@ -472,11 +472,11 @@ const ocapTest = async () => {
   console.log("Myfac...\n ", await app.print_input(myfac));
 
   // sending javascript functions to R
-  // const progBar = new SingleBar({}, Presets.shades_classic);
-  // progBar.start(100, 0);
-  // const longresult = await app.longjob(async (x) => progBar.update(x));
-  // progBar.stop();
-  // console.log("Long job result:", longresult);
+  const progBar = new SingleBar({}, Presets.shades_classic);
+  progBar.start(100, 0);
+  const longresult = await app.longjob(async (x) => progBar.update(x));
+  progBar.stop();
+  console.log("Long job result:", longresult);
 
   // // // some random numbers
   // const xrand = await app.randomNumbers();
@@ -534,7 +534,7 @@ const ocapTest = async () => {
 };
 
 (async () => {
-  await noOcap();
-  // await ocapTest();
+  // await noOcap();
+  await ocapTest();
   process.exit(0);
 })();
