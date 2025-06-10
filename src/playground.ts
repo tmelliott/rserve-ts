@@ -359,38 +359,31 @@ const noOcap = async () => {
   console.log("\n----------------------------------------------");
   console.log("\n--- RECURSIVE OBJECTS ---\n");
 
-  const obj = {
-    value: 1,
-    subobj: { value: 1, r_type: "vector", r_attributes: { names: "value" } },
-    r_type: "vector",
-    r_attributes: {
-      names: ["value", "subobj"] as string[] & { r_type: string },
-    },
-  };
-  obj.r_attributes.names.r_type = "string_array";
+  // fully self-contained specification
+  const recursiveList = (function () {
+    const baseListType = z.object({
+      value: XT.integer(1),
+      r_type: z.literal("vector"),
+      r_attributes: z.object({
+        names: XT.character(),
+      }),
+    });
+    type ListType = z.infer<typeof baseListType> & {
+      subobj?: ListType;
+    };
 
-  const baseListType = z.object({
-    value: XT.integer(1),
-    r_type: z.literal("vector"),
-    r_attributes: z.object({
-      names: XT.character(),
-    }),
-  });
-  type ListType = z.infer<typeof baseListType> & {
-    subobj?: ListType;
-  };
+    const listType = XT.recursive_list<ListType>(baseListType, (self) => ({
+      subobj: self.optional(),
+    }));
 
-  const listType = XT.recursive_list<ListType>(baseListType, (self) => ({
-    subobj: self.optional(),
-  }));
+    return listType;
+  })();
 
-  console.log(listType.parse(obj));
-
-  console.log("\nReading from R ...");
+  console.log("\nParse from IIFE ...");
   console.log(
     await R.eval(
       "list(value = 1L, subobj = list(value = 2L, subobj = list(value = 3L)))",
-      listType
+      recursiveList
     )
   );
 };
@@ -479,11 +472,11 @@ const ocapTest = async () => {
   console.log("Myfac...\n ", await app.print_input(myfac));
 
   // sending javascript functions to R
-  // const progBar = new SingleBar({}, Presets.shades_classic);
-  // progBar.start(100, 0);
-  // const longresult = await app.longjob(async (x) => progBar.update(x));
-  // progBar.stop();
-  // console.log("Long job result:", longresult);
+  const progBar = new SingleBar({}, Presets.shades_classic);
+  progBar.start(100, 0);
+  const longresult = await app.longjob(async (x) => progBar.update(x));
+  progBar.stop();
+  console.log("Long job result:", longresult);
 
   // // // some random numbers
   // const xrand = await app.randomNumbers();
@@ -541,7 +534,7 @@ const ocapTest = async () => {
 };
 
 (async () => {
-  await noOcap();
-  // await ocapTest();
+  // await noOcap();
+  await ocapTest();
   process.exit(0);
 })();

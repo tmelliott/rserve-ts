@@ -2,6 +2,7 @@ import { z } from "zod";
 import { object, typeWithAttributes, UnifyOne } from "./helpers";
 import { promisify } from "../helpers";
 import _recursive_list from "./recursive";
+import _js_function from "./jstype";
 
 const sexp = <T extends z.ZodTypeAny>(json: T) => {
   return z.object({
@@ -321,6 +322,7 @@ const Robj = {
   ocap,
   sexp,
   recursive_list: _recursive_list,
+  js_function: _js_function,
 };
 
 export default Robj;
