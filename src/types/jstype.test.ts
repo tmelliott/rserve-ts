@@ -4,6 +4,8 @@ import { ocapFuns } from "../../tests/r_files/oc";
 import RserveClient from "..";
 import z from "zod";
 
+global.WebSocket = require("ws");
+
 test("JS functions passed", async () => {
   const longJob = XT.js_function([z.number(), z.string()], z.boolean());
 
