@@ -118,8 +118,6 @@ const createRserve = async (
               const res = z.object(schema).safeParse(ocapFuns);
               if (res.success) resolve(res.data);
               else {
-                console.error(res.error);
-                console.log(res.data);
                 reject(res.error);
               }
             } else resolve(ocapFuns as any);

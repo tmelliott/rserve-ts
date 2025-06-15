@@ -47,7 +47,7 @@ give.first.functions <- function() {
                     update_progress <- wrap.js.fun(updateProgress)
                     prog <- 0
                     while (prog < 100) {
-                        Sys.sleep(0.2)
+                        Sys.sleep(0.1)
                         prog <- prog + 5
                         update_progress(prog)
                     }
@@ -72,7 +72,9 @@ give.first.functions <- function() {
                     cat("---optional fun:\n")
                     print(match.call())
                     print(x)
-                    if (missing(x) || is.null(x)) return(FALSE)
+                    if (missing(x) || is.null(x)) {
+                        return(FALSE)
+                    }
                     TRUE
                 }
             ),
