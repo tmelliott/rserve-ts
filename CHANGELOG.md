@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.8.1
+
+### Patch Changes
+
+- 456ca4f: Fix passing of functions to ocaps
+
 ## 0.8.0
 
 ### Minor Changes
