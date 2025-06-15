@@ -87,14 +87,7 @@ export const ocapFuns = {
     })
   ),
   longjob: Robj.ocap(
-    [
-      // TODO: create fn type for this
-      z
-        .function()
-        .args(z.number())
-        .returns(z.promise(z.void()))
-        .transform((f) => callbackify(f)),
-    ],
+    [Robj.js_function([z.number()], z.void())],
     Robj.logical(1)
   ),
   optional: Robj.ocap([z.number().optional()], Robj.logical(1)),

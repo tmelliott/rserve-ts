@@ -2,11 +2,6 @@ import RserveClient, { Robj } from "./index";
 import { ocapFuns } from "../tests/r_files/oc";
 import { z } from "zod";
 
-// import { Presets, SingleBar } from "cli-progress";
-// import { callbackify, promisify } from "util";
-// import { as_vector } from "./helpers";
-// import { boolean, integer } from "./robject";
-
 // set global WebSocket
 global.WebSocket = require("ws");
 
@@ -471,12 +466,22 @@ const ocapTest = async () => {
   myfac.levels = ["setosa", "versicolor", "virginica"];
   console.log("Myfac...\n ", await app.print_input(myfac));
 
-  // sending javascript functions to R
+  // Passing functions as arguments to ocaps
+  console.log("\n\n------------- functions as arguments --------\n");
+
   const progBar = new SingleBar({}, Presets.shades_classic);
   progBar.start(100, 0);
-  const longresult = await app.longjob(async (x) => progBar.update(x));
+  const longresult = await app.longjob(
+    (x: number, k: (err: any, res: void) => void) => {
+      progBar.update(x);
+      k(null, undefined);
+    }
+  );
+
   progBar.stop();
   console.log("Long job result:", longresult);
+
+  console.log("\n(fin) ---------------------------------------\n");
 
   // // // some random numbers
   // const xrand = await app.randomNumbers();
@@ -527,10 +532,13 @@ const ocapTest = async () => {
   // const sample =
 
   // function with optional arguments
+  console.log("\n\n------------- optional arguments --------\n");
   const optGiven = await app.optional(1);
   const optMissing = await app.optional(undefined);
   console.log("OptGiven: ", optGiven);
   console.log("OptMissing: ", optMissing);
+
+  console.log("\n(fin) ----------------------------------------\n");
 };
 
 (async () => {
