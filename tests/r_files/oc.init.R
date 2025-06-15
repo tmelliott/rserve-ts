@@ -48,7 +48,7 @@ give.first.functions <- function() {
                     prog <- 0
                     while (prog < 100) {
                         Sys.sleep(0.1)
-                        prog <- prog + 5
+                        prog <- prog + 20
                         update_progress(prog)
                     }
                     TRUE

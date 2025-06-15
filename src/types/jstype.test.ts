@@ -3,27 +3,20 @@ import XT from ".";
 import { ocapFuns } from "../../tests/r_files/oc";
 import RserveClient from "..";
 import z from "zod";
-import { callbackify } from "util";
 
 test("JS functions passed", async () => {
   const longJob = XT.js_function([z.number(), z.string()], z.boolean());
 
   const fn = async (x: number, y: string) => {
-    console.log("boing ", x, " - ", y);
     return true;
   };
 
   const fnx = longJob.parse(fn);
 
-  // fnx(5, "string", (err, res) => {
-  //   if (err) console.error(err);
-  //   else expect(res).toBe(true);
-  // });
-
-  // // use in object
-  // const obj = z.object({
-  //   fun: XT.js_function([z.number(), z.string()]),
-  // });
+  fnx(5, "string", (err, res) => {
+    if (err) console.error(err);
+    else expect(res).toBe(true);
+  });
 });
 
 test("JS functions in action", async () => {
@@ -32,17 +25,16 @@ test("JS functions in action", async () => {
   });
 
   const funs = await R.ocap(ocapFuns);
-
-  const prog = (i: number) => {
-    console.log("Progress: ", i);
-    return true;
-  };
-
-  funs.t3;
-
-  void funs.t3(async (i) => i + 10);
+  await funs.t3(async (i) => i + 10);
   const x = await funs.t4(2);
-  console.log(x);
+  expect(x).toBe(12);
 
-  // void funs.longjob((err: any, ));
+  let progSoFar = 0;
+  await funs.longjob((x: number, k: (err: any, res: void) => void) => {
+    progSoFar = x;
+    k(null, undefined);
+  });
+  expect(progSoFar).equals(100);
 });
+
+// TODO: can we use callbackify to pass functions into ocaps?
