@@ -2,6 +2,11 @@ import RserveClient, { Robj } from "./index";
 import { ocapFuns } from "../tests/r_files/oc";
 import { z } from "zod";
 
+import XT from "./types/index";
+import { Presets, SingleBar } from "cli-progress";
+import { objectWithAttributes } from "./types/helpers";
+import _recursive_list from "./types/recursive";
+
 // set global WebSocket
 global.WebSocket = require("ws");
 
@@ -52,11 +57,6 @@ global.WebSocket = require("ws");
 //     return false;
 //   }
 // );
-
-import XT from "./types";
-import { Presets, SingleBar } from "cli-progress";
-import { objectWithAttributes } from "./types/helpers";
-import _recursive_list from "./types/recursive";
 
 const noOcap = async () => {
   const R = await RserveClient.create({

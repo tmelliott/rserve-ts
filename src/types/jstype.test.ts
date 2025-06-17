@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
-import XT from ".";
+import XT from "./index";
 import { ocapFuns } from "../../tests/r_files/oc";
-import RserveClient from "..";
+import RserveClient from "../index";
 import z from "zod";
 
 global.WebSocket = require("ws");

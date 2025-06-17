@@ -1,4 +1,3 @@
-// var _ = require("underscore");
 import _ from "underscore";
 
 var Rserve = (function () {

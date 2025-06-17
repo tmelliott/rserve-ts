@@ -23,19 +23,19 @@
   "devDependencies": {
     "@changesets/cli": "^2.27.5",
     "@types/cli-progress": "^3.11.6",
-    "@types/node": "^20.14.1",
+    "@types/node": "^24.0.1",
     "@types/ws": "^8.5.11",
     "bluebird": "^3.7.2",
     "cli-progress": "^3.12.0",
     "concurrently": "^8.2.2",
     "ts-node": "^10.9.2",
-    "tsup": "^8.4.0",
-    "typescript": "5.4.4",
+    "tsup": "^8.5.0",
+    "typescript": "5.8.3",
     "vitest": "^1.6.0",
     "ws": "^8.18.0"
   },
   "dependencies": {
     "underscore": "^1.13.6",
-    "zod": "^3.25.57"
+    "zod": "^3.25.64"
   }
 }

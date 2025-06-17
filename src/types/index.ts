@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { object, typeWithAttributes, UnifyOne } from "./helpers";
+import {
+  object,
+  typeWithAttributes,
+  UnifyOne,
+  WithAttributes,
+} from "./helpers";
 import { promisify } from "../helpers";
 import _recursive_list from "./recursive";
 import _js_function from "./jstype";
@@ -46,18 +51,48 @@ const _vector_noargs = () =>
     typeWithAttributes(z.array(z.any()), "vector", undefined),
   ]);
 
+// We need to do this otherwise using overloads (with zod??)
+// produces a recursion that breaks DTS compilation ...
+type VectorArray<T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>> = z.ZodType<
+  z.TypeOf<T> & {
+    r_type: "vector";
+    r_attributes: z.TypeOf<z.ZodObject<{ names: typeof nameAttr }>>;
+  }
+>;
+
 const _vector_array = <T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
   schema: T
-) =>
+): VectorArray<T> =>
   typeWithAttributes(schema, "vector", {
     names: nameAttr,
   });
 
+type VectorTuple<T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]> = z.ZodType<
+  z.TypeOf<z.ZodTuple<T>> & {
+    r_type: "vector";
+    r_attributes: {
+      [x: string]: any;
+    };
+  }
+>;
 const _vector_tuple = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
   schema: T
-) => typeWithAttributes(z.tuple(schema), "vector", undefined);
+): VectorTuple<T> => typeWithAttributes(z.tuple(schema), "vector", undefined);
 
-const _vector_object = <T extends z.ZodRawShape>(schema: T) =>
+type VectorObject<T extends z.ZodRawShape> = z.ZodIntersection<
+  z.ZodObject<T, "strip">,
+  z.ZodObject<
+    {
+      r_type: z.ZodLiteral<"vector">;
+      r_attributes: Attributes<{
+        names: WithAttributes<string[], "string_array", z.ZodRawShape>;
+      }>;
+    },
+    "strip"
+  >
+>;
+
+const _vector_object = <T extends z.ZodRawShape>(schema: T): VectorObject<T> =>
   z.object(schema).and(
     z.object({
       r_type: z.literal("vector"),
@@ -67,23 +102,14 @@ const _vector_object = <T extends z.ZodRawShape>(schema: T) =>
     })
   );
 
-// type VectorObject<T extends z.ZodRawShape> = z.ZodIntersection<
-//   z.ZodObject<T, "strip", z.ZodTypeAny>,
-//   z.ZodObject<{
-//     r_type: z.ZodLiteral<"vector">;
-//   }>
-// >;
-
 function _vector(): ReturnType<typeof _vector_noargs>;
 function _vector<T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
   schema: T
-): ReturnType<typeof _vector_array<T>>;
+): VectorArray<T>;
 function _vector<T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
   schema: T
-): ReturnType<typeof _vector_tuple<T>>;
-function _vector<T extends z.ZodRawShape>(
-  schema: T
-): ReturnType<typeof _vector_object<T>>;
+): VectorTuple<T>;
+function _vector<T extends z.ZodRawShape>(schema: T): VectorObject<T>;
 function _vector(
   schema?:
     | z.ZodRawShape
@@ -118,10 +144,30 @@ const _integer = object(
 );
 
 // special case of int array is 'factor'
+type FactorWithLevels<
+  L extends string,
+  A extends z.ZodRawShape = {}
+> = z.ZodType<
+  L[] & {
+    levels: L[] & {
+      r_type: "string_array";
+    };
+    r_type: "int_array";
+    r_attributes: UnifyOne<
+      {
+        class: "factor";
+        levels: L[] & {
+          r_type: "string_array";
+        };
+      } & z.infer<z.ZodObject<A, "strip">> & { [K in string]: any }
+    >;
+  }
+>;
+
 function _factorWithLevels<
   const L extends string,
   A extends z.ZodRawShape = {}
->(levels: L[], attr?: A) {
+>(levels: L[], attr?: A): FactorWithLevels<L, A> {
   return z.custom<
     L[] & {
       levels: L[] & { r_type: "string_array" };
@@ -175,7 +221,27 @@ function _factorWithLevels<
     return true;
   });
 }
-function _factorWithUnknownLevels<A extends z.ZodRawShape = {}>(attr?: A) {
+
+type FactorWithUnknownLevels<A extends z.ZodRawShape = {}> = z.ZodType<
+  string[] & {
+    levels: string[] & {
+      r_type: "string_array";
+    };
+    r_type: "int_array";
+    r_attributes: UnifyOne<
+      {
+        class: "factor";
+        levels: string[] & {
+          r_type: "string_array";
+        };
+      } & z.infer<z.ZodObject<A>> & { [K in string]: any }
+    >;
+  }
+>;
+
+function _factorWithUnknownLevels<A extends z.ZodRawShape = {}>(
+  attr?: A
+): FactorWithUnknownLevels<A> {
   return z.custom<
     string[] & {
       levels: string[] & { r_type: "string_array" };
@@ -235,13 +301,11 @@ function _factorWithUnknownLevels<A extends z.ZodRawShape = {}>(attr?: A) {
   });
 }
 
-function _factor<A extends z.ZodRawShape>(
-  attr?: A
-): ReturnType<typeof _factorWithUnknownLevels<A>>;
+function _factor<A extends z.ZodRawShape>(attr?: A): FactorWithUnknownLevels<A>;
 function _factor<const L extends string, A extends z.ZodRawShape>(
   levels: L[],
   attr?: A
-): ReturnType<typeof _factorWithLevels<L, A>>;
+): FactorWithLevels<L, A>;
 function _factor(x?: string[] | z.ZodRawShape, y?: z.ZodRawShape) {
   if (Array.isArray(x)) return _factorWithLevels(x, y);
   return _factorWithUnknownLevels(x);
@@ -294,14 +358,23 @@ const dfAttr = z.object({
   }),
 });
 
-const _dataframe_unknown = () => z.record(z.any()).and(dfAttr);
-const _dataframe_known = <T extends z.ZodRawShape>(schema: T) =>
-  z.object(schema).and(dfAttr);
+type DataframeUnknown = z.ZodIntersection<
+  z.ZodRecord<z.ZodTypeAny>,
+  typeof dfAttr
+>;
+const _dataframe_unknown = (): DataframeUnknown =>
+  z.record(z.any()).and(dfAttr);
 
-function _dataframe(): ReturnType<typeof _dataframe_unknown>;
-function _dataframe<T extends z.ZodRawShape>(
+type DataframeKnown<T extends z.ZodRawShape> = z.ZodIntersection<
+  z.ZodObject<T>,
+  typeof dfAttr
+>;
+const _dataframe_known = <T extends z.ZodRawShape>(
   schema: T
-): ReturnType<typeof _dataframe_known<T>>;
+): DataframeKnown<T> => z.object(schema).and(dfAttr);
+
+function _dataframe(): DataframeUnknown;
+function _dataframe<T extends z.ZodRawShape>(schema: T): DataframeKnown<T>;
 function _dataframe(schema?: z.ZodRawShape) {
   return schema === undefined ? _dataframe_unknown() : _dataframe_known(schema);
 }
