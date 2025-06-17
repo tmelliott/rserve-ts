@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.8.2
+
+### Patch Changes
+
+- 89fc6f3: Type helpers for overload return types to avoid recursion in newer version of typescript
+
 ## 0.8.1
 
 ### Patch Changes
