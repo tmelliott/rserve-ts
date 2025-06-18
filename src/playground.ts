@@ -472,9 +472,9 @@ const ocapTest = async () => {
   const progBar = new SingleBar({}, Presets.shades_classic);
   progBar.start(100, 0);
   const longresult = await app.longjob(
-    (x: number, k: (err: any, res: void) => void) => {
+    (x: number, k: (err: any, res?: number) => void) => {
       progBar.update(x);
-      k(null, undefined);
+      k(null, x);
     }
   );
 

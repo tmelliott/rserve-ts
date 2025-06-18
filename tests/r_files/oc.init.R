@@ -1,11 +1,10 @@
 library(Rserve)
 
-wrap.js.fun <- function(s) {
+wrap.js.fun <- function(s, cb = TRUE) {
     if (class(s) != "javascript_function") {
         stop("Can only wrap javascript_function s")
     }
     function(...) {
-        # print(list(s, ...))
         self.oobMessage(list(s, ...))
     }
 }
@@ -44,6 +43,7 @@ give.first.functions <- function() {
                     )
                 },
                 longjob = function(updateProgress) {
+                    # update_progress does *not* expect return value
                     update_progress <- wrap.js.fun(updateProgress)
                     prog <- 0
                     while (prog < 100) {

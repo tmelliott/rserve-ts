@@ -1,16 +1,17 @@
 import { expect, test } from "vitest";
 import XT from "./index";
 import { ocapFuns } from "../../tests/r_files/oc";
-import RserveClient from "../index";
+import RserveClient, { Robj } from "../index";
 import z from "zod";
+import { promisify } from "../helpers";
 
 global.WebSocket = require("ws");
 
 test("JS functions passed", async () => {
   const longJob = XT.js_function([z.number(), z.string()], z.boolean());
 
-  const fn = async (x: number, y: string) => {
-    return true;
+  const fn = (x: number, y: string, k: (err: any, res: boolean) => void) => {
+    k(null, true);
   };
 
   const fnx = longJob.parse(fn);
@@ -21,7 +22,7 @@ test("JS functions passed", async () => {
   });
 });
 
-test("JS functions in action", async () => {
+test("JS functions in action - without return value", async () => {
   const R = await RserveClient.create({
     host: "http://127.0.0.1:8781",
   });
@@ -32,9 +33,9 @@ test("JS functions in action", async () => {
   expect(x).toBe(12);
 
   let progSoFar = 0;
-  await funs.longjob((x: number, k: (err: any, res: void) => void) => {
+  await funs.longjob((x, k) => {
     progSoFar = x;
-    k(null, undefined);
+    k(null, x); // <-- pass the data back to R
   });
   expect(progSoFar).equals(100);
 });

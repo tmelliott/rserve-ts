@@ -87,7 +87,7 @@ export const ocapFuns = {
     })
   ),
   longjob: Robj.ocap(
-    [Robj.js_function([z.number()], z.void())],
+    [Robj.js_function([z.number()], z.number())],
     Robj.logical(1)
   ),
   optional: Robj.ocap([z.number().optional()], Robj.logical(1)),

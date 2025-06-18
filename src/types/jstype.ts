@@ -2,26 +2,22 @@
 
 import { z } from "zod";
 
-type Flatten<T extends any[]> = {
-  [K in keyof T]: T[K] extends any[] ? T[K][0] : T[K];
-};
-
-type WithoutRest<T> = T extends [infer U, ...infer H]
-  ? Flatten<[U, WithoutRest<H>]>
-  : unknown;
-
-type X = WithoutRest<[z.ZodNumber, z.ZodString, ...unknown[]]>;
-
-/* Define a type that accepts a PROMISE-style function,
- * and returns a CALLBACK style function, with typed args ...
- */
 function _js_function<
   TArgs extends [z.ZodTypeAny, ...z.ZodTypeAny[]],
-  TResult extends z.ZodTypeAny = z.ZodVoid
+  TResult extends z.ZodTypeAny = z.ZodUndefined
 >(_input: TArgs, _output?: TResult) {
   return z
     .function()
-    .args(...[..._input, z.function().args(z.any(), _output ?? z.undefined())]);
+    .args(
+      ...[
+        ..._input,
+        z
+          .function()
+          .args(z.any(), z.optional(_output ?? z.undefined()))
+          .returns(z.void()),
+      ]
+    )
+    .returns(z.void());
 }
 
 export default _js_function;
