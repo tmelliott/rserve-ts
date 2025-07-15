@@ -540,11 +540,13 @@ test("List types", async () => {
   const list2 = XT.vector({ x: XT.numeric(1), y: XT.factor(["one", "two"]) });
   const list3 = XT.vector([XT.numeric(5), XT.factor(["one", "two"])]);
   const list4 = XT.vector(z.record(z.string(), XT.numeric(1)));
+  const list5 = XT.vector(XT.character()); // [["char"], ["char"], ...]
 
   type List1 = z.infer<typeof list1>;
   type List2 = z.infer<typeof list2>;
   type List3 = z.infer<typeof list3>;
   type List4 = z.infer<typeof list4>;
+  type List5 = z.infer<typeof list5>;
 
   type L0 = any[] & {
     r_type: "vector";
@@ -586,12 +588,19 @@ test("List types", async () => {
           });
     };
   };
+  type L5 = StringArray[] & {
+    r_type: "vector";
+    r_attributes: {
+      [x: string]: any;
+    };
+  };
 
   type tests = [
     Expect<Equal<List1, L1 | L0>>,
     Expect<Equal<List2["r_attributes"], L2["r_attributes"]>>,
     Expect<Equal<List3, L3>>,
-    Expect<Equal<List4, L4>>
+    Expect<Equal<List4, L4>>,
+    Expect<Equal<List5, L5>>
   ];
 
   const isNamed = (x: unknown): x is L1 => {

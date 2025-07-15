@@ -12,7 +12,7 @@ declare namespace Rserve {
       message_out?: (buffer: ArrayBuffer, command: any) => void;
     };
     on_raw_string?: (msg: string) => void;
-    on_data?: <TPayload>(payload: TPayload) => void;
+    on_data?: (payload: unknown) => void;
     on_oob_message?: (
       payload: any,
       callback: (error: string, result: any) => void

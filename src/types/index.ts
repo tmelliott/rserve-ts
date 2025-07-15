@@ -102,6 +102,21 @@ const _vector_object = <T extends z.ZodRawShape>(schema: T): VectorObject<T> =>
     })
   );
 
+// an array-like list of a repeated structure
+type VectorRepArray<T extends z.ZodTypeAny> = z.ZodType<
+  z.TypeOf<z.ZodArray<T>> & {
+    r_type: "vector";
+    r_attributes: {
+      [x: string]: any;
+    };
+  }
+>;
+
+const _vector_reparray = <T extends z.ZodTypeAny>(
+  schema: T
+): VectorRepArray<T> =>
+  typeWithAttributes(z.array(schema), "vector", undefined);
+
 function _vector(): ReturnType<typeof _vector_noargs>;
 function _vector<T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
   schema: T
@@ -110,10 +125,12 @@ function _vector<T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]>(
   schema: T
 ): VectorTuple<T>;
 function _vector<T extends z.ZodRawShape>(schema: T): VectorObject<T>;
+function _vector<T extends z.ZodTypeAny>(schema: T): VectorRepArray<T>;
 function _vector(
   schema?:
     | z.ZodRawShape
     | [z.ZodTypeAny, ...z.ZodTypeAny[]]
+    | z.ZodTypeAny
     | z.ZodRecord<z.ZodString, z.ZodTypeAny>
 ) {
   if (schema === undefined) return _vector_noargs();
@@ -123,6 +140,8 @@ function _vector(
     ? (_vector_tuple(schema) as any)
     : schema instanceof z.ZodRecord
     ? _vector_array(schema)
+    : schema instanceof z.ZodType
+    ? _vector_reparray(schema)
     : _vector_object(schema);
 }
 
