@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.8.3
+
+### Patch Changes
+
+- 0b4f9cb: Add missing list type (array of single types)
+
 ## 0.8.2
 
 ### Patch Changes
