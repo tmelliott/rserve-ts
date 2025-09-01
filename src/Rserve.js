@@ -764,6 +764,28 @@ var Rserve = (function () {
       try {
         result.payload = parse_payload(msg);
         result.ok = true;
+        if (
+          result.payload.value.type === "string_array" &&
+          result.payload.value.attributes &&
+          result.payload.value.attributes.type === "tagged_list"
+        ) {
+          // find class
+          const attrs = Object.fromEntries(
+            result.payload.value.attributes.value.map(({ name, value }) => [
+              name,
+              value,
+            ])
+          );
+          if (attrs.class && attrs.class.value[0] === "try-error") {
+            const err = attrs.condition.value
+              .filter((x) => x.type === "string_array")
+              .at(0).value[0];
+            result.ok = false;
+            result.message = err;
+            result.payload = null;
+            result.status_code = status_code;
+          }
+        }
       } catch (e) {
         result.ok = false;
         result.message = e.message;

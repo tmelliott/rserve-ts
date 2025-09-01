@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   object,
+  objectWithAttributes,
   typeWithAttributes,
   UnifyOne,
   WithAttributes,
@@ -344,7 +345,24 @@ const _string = object(z.string(), z.string().array(), "string_array");
 // bool_array
 const _boolean = object(z.boolean(), z.boolean().array(), "bool_array");
 
+// TRY ERROR: string with attributes class = "try-error", condition = {message: string, call: lang}
 const R_SERVER_ERROR = z.tuple([z.string(), z.number()]);
+
+export type RServeError = z.infer<typeof R_SERVER_ERROR>;
+
+// function _error() {
+//   return objectWithAttributes(
+//     z.string().array(),
+//     "string_array",
+//     z.object({
+//       class: z.literal("try-error"),
+//       condition: _vector_object({
+//         message: z.string(),
+//       }),
+//     })
+//   );
+// }
+// type RError = z.infer<ReturnType<typeof _error>>;
 
 function ocap<
   TArgs extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [],
@@ -354,7 +372,10 @@ function ocap<
     .function(
       z.tuple([
         ...args,
-        z.function(z.tuple([R_SERVER_ERROR.nullable(), res]), z.void()),
+        z.function(
+          z.tuple([R_SERVER_ERROR.nullable(), res.optional()]),
+          z.void()
+        ),
       ]),
       z.void()
     )

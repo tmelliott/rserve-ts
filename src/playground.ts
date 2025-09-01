@@ -1,4 +1,4 @@
-import RserveClient, { Robj } from "./index";
+import RserveClient, { isRServeError, Robj, type RServeError } from "./index";
 import { ocapFuns } from "../tests/r_files/oc";
 import { z } from "zod";
 
@@ -537,6 +537,19 @@ const ocapTest = async () => {
   const optMissing = await app.optional(undefined);
   console.log("OptGiven: ", optGiven);
   console.log("OptMissing: ", optMissing);
+
+  console.log("\n\n------------- runtime errors in R --------\n");
+
+  const dangerousNumber = await app.dangerous(1);
+  console.log("Dangerous number: ", dangerousNumber);
+
+  try {
+    const dangerousString = await app.dangerous("hello");
+    console.log("Dangerous string: ", dangerousString);
+  } catch (e) {
+    if (isRServeError(e)) console.log("Error: ", e[0]);
+    else console.log("Unknown error: ", e);
+  }
 
   console.log("\n(fin) ----------------------------------------\n");
 };

@@ -1,3 +1,5 @@
+import { RServeError } from "./types";
+
 function isNumArray(array: unknown[]): array is number[] {
   return typeof array[0] === "number";
 }
@@ -23,3 +25,13 @@ const promisify =
     );
 
 export { as_vector, promisify };
+
+export function isRServeError(x: unknown): x is RServeError {
+  return (
+    typeof x === "object" &&
+    Array.isArray(x) &&
+    x.length === 2 &&
+    typeof x[0] === "string" &&
+    typeof x[1] === "number"
+  );
+}

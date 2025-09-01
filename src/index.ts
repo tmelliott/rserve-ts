@@ -2,6 +2,7 @@ import { z } from "zod";
 import Rserve from "./Rserve";
 
 import Robj from "./types";
+import { isRServeError } from "./helpers";
 
 export type CallbackFromPromise<T> = {
   [K in keyof T]: T[K] extends (...args: infer A) => infer R
@@ -133,6 +134,6 @@ const RserveClient = {
 };
 
 export default RserveClient;
-export { Robj };
+export { Robj, isRServeError };
 export * as Rfmt from "./helpers";
 export type * from "./types";

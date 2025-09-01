@@ -76,6 +76,9 @@ give.first.functions <- function() {
                         return(FALSE)
                     }
                     TRUE
+                },
+                dangerous = function(x) {
+                    try(x + 12, silent = TRUE)
                 }
             ),
             wrap.r.fun
