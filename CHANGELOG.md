@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.8.4
+
+### Patch Changes
+
+- a6e4d9e: Add error handling to Rserve
+
 ## 0.8.3
 
 ### Patch Changes
