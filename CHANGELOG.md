@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.8.5
+
+### Patch Changes
+
+- 0971cca: Allow missing (NAs) in factors
+
 ## 0.8.4
 
 ### Patch Changes
