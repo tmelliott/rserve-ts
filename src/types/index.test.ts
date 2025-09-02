@@ -66,7 +66,7 @@ type ArrayToUnion<T extends any[]> = T[number];
 type FactorArray<
   L extends [string, ...string[]] | string[] = string[],
   A = {}
-> = ArrayToUnion<L>[] & {
+> = (ArrayToUnion<L> | undefined)[] & {
   levels: ArrayToUnion<L>[] & {
     r_type: "string_array";
   };

@@ -168,7 +168,7 @@ type FactorWithLevels<
   L extends string,
   A extends z.ZodRawShape = {}
 > = z.ZodType<
-  L[] & {
+  (L | undefined)[] & {
     levels: L[] & {
       r_type: "string_array";
     };
@@ -189,7 +189,7 @@ function _factorWithLevels<
   A extends z.ZodRawShape = {}
 >(levels: L[], attr?: A): FactorWithLevels<L, A> {
   return z.custom<
-    L[] & {
+    (L | undefined)[] & {
       levels: L[] & { r_type: "string_array" };
       r_type: "int_array";
       r_attributes: UnifyOne<
@@ -236,14 +236,20 @@ function _factorWithLevels<
       return false;
 
     // all values in data must be in levels
-    if (data.map((d: L) => levels.includes(d)).includes(false)) return false;
+    if (
+      data
+        .filter((d: string) => d) // no need to check undefineds
+        .map((d: L) => levels.includes(d))
+        .includes(false)
+    )
+      return false;
 
     return true;
   });
 }
 
 type FactorWithUnknownLevels<A extends z.ZodRawShape = {}> = z.ZodType<
-  string[] & {
+  (string | undefined)[] & {
     levels: string[] & {
       r_type: "string_array";
     };
@@ -263,7 +269,7 @@ function _factorWithUnknownLevels<A extends z.ZodRawShape = {}>(
   attr?: A
 ): FactorWithUnknownLevels<A> {
   return z.custom<
-    string[] & {
+    (string | undefined)[] & {
       levels: string[] & { r_type: "string_array" };
       r_type: "int_array";
       r_attributes: UnifyOne<
@@ -313,8 +319,13 @@ function _factorWithUnknownLevels<A extends z.ZodRawShape = {}>(
     )
       return false;
 
-    // all values in data must be in levels
-    if (data.map((d: string) => data.levels.includes(d)).includes(false))
+    // all values in data must be in levels OR undefined
+    if (
+      data
+        .filter((d: string) => d) // no need to check undefineds
+        .map((d: string) => data.levels.includes(d))
+        .includes(false)
+    )
       return false;
 
     return true;

@@ -177,6 +177,18 @@ const noOcap = async () => {
   );
 
   console.log(await R.eval("table(iris$Species)", XT.integer(3)));
+
+  // factor with missing values
+  console.log("\n-- Factor with missing values");
+  console.log(
+    await R.eval(
+      "factor(c('a', 'b', NA, 'b'), levels = c('a', 'b'))",
+      XT.factor()
+    )
+  );
+
+  return;
+
   // console.log(((await R.eval("iris[1:5,]")) as any).Species);
 
   // const y = z
@@ -555,7 +567,7 @@ const ocapTest = async () => {
 };
 
 (async () => {
-  // await noOcap();
-  await ocapTest();
+  await noOcap();
+  // await ocapTest();
   process.exit(0);
 })();
