@@ -10,10 +10,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: oven-sh/setup-bun@v2
-      # - uses: actions/setup-node@v3
-      #   with:
-      #     node-version: 20.x
-      #     cache: "pnpm"
 
       - name: Install R
         uses: r-lib/actions/setup-r@v2
