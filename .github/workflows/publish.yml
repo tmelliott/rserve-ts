@@ -31,7 +31,7 @@ jobs:
         run: |
           cd tests && ./r_files/start_no_ocap &
 
-      - run: pnpm install
+      - run: bun install
 
       - name: Start Rserve
         run: bun run rserve &
