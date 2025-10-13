@@ -11,11 +11,11 @@
     "test": "vitest run",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "lint": "tsc",
-    "ci": "pnpm run lint && pnpm run test && pnpm run build",
-    "release": "pnpm run lint && pnpm run test && pnpm run build && changeset publish",
+    "ci": "bun run lint && bun run test && bun run build",
+    "release": "bun run lint && bun run test && bun run build && changeset publish",
     "rserve-no-oc": "Rscript tests/r_files/no_oc_start.R",
     "rserve-oc": "Rscript tests/r_files/oc_start.R",
-    "rserve": "concurrently \"pnpm run rserve-no-oc\" \"pnpm run rserve-oc\""
+    "rserve": "concurrently \"bun run rserve-no-oc\" \"bun run rserve-oc\""
   },
   "keywords": [],
   "author": "Tom Elliott",
