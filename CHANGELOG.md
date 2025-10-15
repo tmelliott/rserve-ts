@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.8.6
+
+### Patch Changes
+
+- 519c047: Add callback helper
+
 ## 0.8.5
 
 ### Patch Changes
