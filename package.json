@@ -37,8 +37,5 @@
   "dependencies": {
     "underscore": "^1.13.6",
     "zod": "^3.25.64"
-  },
-  "publishConfig": {
-    "provenance": true
   }
 }
