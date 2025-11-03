@@ -12,7 +12,7 @@
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "lint": "tsc",
     "ci": "bun run lint && bun run test && bun run build",
-    "release": "bun run lint && bun run test && bun run build && changeset publish",
+    "release": "bun run lint && bun run test && bun run build && npm exec changeset publish",
     "rserve-no-oc": "Rscript tests/r_files/no_oc_start.R",
     "rserve-oc": "Rscript tests/r_files/oc_start.R",
     "rserve": "concurrently \"bun run rserve-no-oc\" \"bun run rserve-oc\""
