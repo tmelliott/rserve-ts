@@ -1,5 +1,11 @@
 # rserve-ts
 
+## 0.8.7
+
+### Patch Changes
+
+- fc67ffa: Tidy up handlers, add debugging
+
 ## 0.8.6
 
 ### Patch Changes
