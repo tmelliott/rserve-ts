@@ -4,23 +4,40 @@ on:
     branches:
       - "main"
 
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+permissions: {}
 
-permissions:
-  id-token: write
-  contents: write
-  pull-requests: write
+concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   publish:
+    environment: release
+    permissions:
+      contents: write # to create release (changesets/action)
+      pull-requests: write # to create pull request (changesets/action)
+      id-token: write #  required for provenance and oidc publish
+    if: github.repository == 'tmelliott/rserve-ts'
+    name: Publish
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v4
+      - name: Checkout Repo
+        uses: actions/checkout@v4
         with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org"
+          fetch-depth: 0
+
       - uses: oven-sh/setup-bun@v2
+
+      # npm OIDC requires Node 22+ and npm 11.5.1+ (bun doesn't support npm OIDC)
+      - name: Setup Node.js & npm for OIDC
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          # Don't set registry-url - it would set token auth, interfering with OIDC
+
+      - name: Update npm & configure for OIDC
+        run: |
+          npm install -g npm@latest
+          npm config set registry https://registry.npmjs.org
+          npm config delete //registry.npmjs.org/:_authToken || true
 
       - name: Install R
         uses: r-lib/actions/setup-r@v2
@@ -36,16 +53,17 @@ jobs:
         run: |
           cd tests && ./r_files/start_no_ocap &
 
-      - run: bun install
+      - name: Install dependencies
+        run: bun install
 
       - name: Start Rserve
         run: bun run rserve &
 
-      - name: Create Release Pull Request or Publish
+      - name: Create Release PR or Publish to npm
         id: changesets
         uses: changesets/action@v1
         with:
           publish: bun run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ env.NODE_AUTH_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
