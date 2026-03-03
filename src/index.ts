@@ -1,6 +1,7 @@
 import { z } from "zod";
 import Rserve from "./Rserve";
 
+import { rtsDebug } from "./debug";
 import Robj from "./types";
 import { isRServeError } from "./helpers";
 
@@ -110,15 +111,22 @@ const createRserve = async (
       }),
     ocap: <TFuns extends z.ZodRawShape>(schema?: TFuns) =>
       new Promise<z.infer<z.ZodObject<TFuns, "strip">>>((resolve, reject) => {
+        rtsDebug("parse", "Requesting OCAP functions...");
         client.ocap((err: string, data: Record<string, Function>) => {
           if (err) {
+            rtsDebug("parse", "OCAP connection error:", err);
             reject(err);
           } else {
             const ocapFuns = data;
+            rtsDebug("parse", "OCAP functions received:", Object.keys(ocapFuns));
             if (schema) {
+              rtsDebug("parse", "Parsing with schema keys:", Object.keys(schema));
               const res = z.object(schema).safeParse(ocapFuns);
-              if (res.success) resolve(res.data);
-              else {
+              if (res.success) {
+                rtsDebug("parse", "Schema parse succeeded");
+                resolve(res.data);
+              } else {
+                rtsDebug("parse", "Schema parse FAILED:", res.error.message);
                 reject(res.error);
               }
             } else resolve(ocapFuns as any);
@@ -135,5 +143,6 @@ const RserveClient = {
 
 export default RserveClient;
 export { Robj, isRServeError };
+export { rtsDebug, rtsDebugEnabled } from "./debug";
 export * as Rfmt from "./helpers";
 export type * from "./types";

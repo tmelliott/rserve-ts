@@ -29,6 +29,24 @@ import RserveClient from "rserve-ts";
 })();
 ```
 
+## Local Development
+
+When using a local build of `rserve-ts` in another project (e.g., `react-rserve` or an app), **do not symlink** the full repo into `node_modules/`. TypeScript's language server will follow the symlink into the source tree and OOM on deeply nested Zod schemas.
+
+Instead, use `npm pack` to create a tarball containing only the published files (`dist/`, `package.json`):
+
+```bash
+# Build and pack
+npm run pack-local
+
+# Install into a consumer project
+rm -rf /path/to/project/node_modules/rserve-ts
+tar xzf /tmp/rserve-ts-*.tgz -C /tmp/rserve-ts-local
+cp -r /tmp/rserve-ts-local/package /path/to/project/node_modules/rserve-ts
+```
+
+Repeat after each rebuild of `rserve-ts`.
+
 ## OCAP mode
 
 In OCAP mode, only pre-defined functions can be called. This is useful for restricting the R code that can be executed on the server, or for developing applications.

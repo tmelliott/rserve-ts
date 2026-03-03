@@ -1,3 +1,4 @@
+import { rtsDebug } from "./debug";
 import { RServeError } from "./types";
 
 function isNumArray(array: unknown[]): array is number[] {
@@ -17,12 +18,20 @@ function as_vector(x: string[] | number[]) {
 
 const promisify =
   (func: Function) =>
-  (...args: any[]) =>
-    new Promise((resolve, reject) =>
-      func(...args, (err: Error, result: any) =>
-        err ? reject(err) : resolve(result)
-      )
+  (...args: any[]) => {
+    rtsDebug("call", "OCAP call with", args.length, "args");
+    return new Promise((resolve, reject) =>
+      func(...args, (err: Error, result: any) => {
+        if (err) {
+          rtsDebug("call", "OCAP error:", err);
+          reject(err);
+        } else {
+          rtsDebug("call", "OCAP result:", typeof result);
+          resolve(result);
+        }
+      })
     );
+  };
 
 export { as_vector, promisify };
 

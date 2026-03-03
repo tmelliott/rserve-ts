@@ -16,7 +16,7 @@ test("JS functions passed", async () => {
 
   const fnx = longJob.parse(fn);
 
-  fnx(5, "string", (err, res) => {
+  fnx(5, "string", (err: any, res: any) => {
     if (err) console.error(err);
     else expect(res).toBe(true);
   });
