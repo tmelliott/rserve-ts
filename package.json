@@ -3,6 +3,10 @@
   "version": "0.8.7",
   "description": "",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tmelliott/rserve-ts.git"
+  },
   "publishConfig": {
     "access": "public"
   },
