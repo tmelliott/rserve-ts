@@ -9,14 +9,14 @@ permissions: {}
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  publish:
+  release:
     environment: release
     permissions:
       contents: write # to create release (changesets/action)
       pull-requests: write # to create pull request (changesets/action)
       id-token: write #  required for provenance and oidc publish
     if: github.repository == 'tmelliott/rserve-ts'
-    name: Publish
+    name: Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
