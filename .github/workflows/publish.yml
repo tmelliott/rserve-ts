@@ -36,8 +36,12 @@ jobs:
       - name: Update npm & configure for OIDC
         run: |
           npm install -g npm@latest
+          npm --version
           npm config set registry https://registry.npmjs.org
           npm config delete //registry.npmjs.org/:_authToken || true
+          # Verify OIDC environment is available
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL=${ACTIONS_ID_TOKEN_REQUEST_URL:-not set}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN=${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-not set}"
 
       - name: Install R
         uses: r-lib/actions/setup-r@v2
