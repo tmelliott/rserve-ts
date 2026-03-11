@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   object,
   objectWithAttributes,
+  stripRMetadata,
   typeWithAttributes,
   UnifyOne,
   WithAttributes,
@@ -54,11 +55,9 @@ const _vector_noargs = () =>
 
 // We need to do this otherwise using overloads (with zod??)
 // produces a recursion that breaks DTS compilation ...
+// Record-like vectors strip r_type/r_attributes so callers get plain Record<K, V>.
 type VectorArray<T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>> = z.ZodType<
-  z.TypeOf<T> & {
-    r_type: "vector";
-    r_attributes: z.TypeOf<z.ZodObject<{ names: typeof nameAttr }>>;
-  }
+  z.TypeOf<T>
 >;
 
 const _vector_array = <T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
@@ -66,7 +65,9 @@ const _vector_array = <T extends z.ZodRecord<z.ZodString, z.ZodTypeAny>>(
 ): VectorArray<T> =>
   typeWithAttributes(schema, "vector", {
     names: nameAttr,
-  });
+  }).transform((data) =>
+    stripRMetadata(data as Record<string, unknown> & { r_type?: string; r_attributes?: unknown })
+  ) as unknown as VectorArray<T>;
 
 type VectorTuple<T extends [z.ZodTypeAny, ...z.ZodTypeAny[]]> = z.ZodType<
   z.TypeOf<z.ZodTuple<T>> & {
@@ -390,14 +391,15 @@ function ocap<
       ]),
       z.void()
     )
-    .transform(
-      (f) =>
-        promisify(f) as (
+    .transform((f) => {
+      const promisified = promisify(f);
+      return ((...args: unknown[]) =>
+        promisified(...args)) as (
           ...args: {
             [K in keyof TArgs]: z.infer<TArgs[K]>;
           }
-        ) => Promise<z.infer<TRes>>
-    );
+        ) => Promise<z.infer<TRes>>;
+    });
 }
 
 const dfAttr = z.object({

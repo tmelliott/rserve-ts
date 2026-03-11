@@ -578,16 +578,7 @@ test("List types", async () => {
       [x: string]: any;
     };
   };
-  type L4 = Record<string, number> & {
-    r_type: "vector";
-    r_attributes: {
-      names:
-        | string
-        | (string[] & {
-            r_type: "string_array";
-          });
-    };
-  };
+  type L4 = Record<string, number>;
   type L5 = StringArray[] & {
     r_type: "vector";
     r_attributes: {
@@ -639,6 +630,41 @@ test("List types", async () => {
   );
 
   expect(clearAttrs(r_list3[1])).toEqual(["one", "two"]);
+
+  // list4: record-like vector — r_type and r_attributes should be stripped
+  const r_list4 = await R.eval("list(a = 1, b = 2, c = 3)", list4);
+  expect(r_list4).toEqual({ a: 1, b: 2, c: 3 });
+  expect(r_list4).not.toHaveProperty("r_type");
+  expect(r_list4).not.toHaveProperty("r_attributes");
+  expect(Object.keys(r_list4)).toEqual(["a", "b", "c"]);
+
+  // list4: single-element record
+  const r_list4b = await R.eval("list(x = 42)", list4);
+  expect(r_list4b).toEqual({ x: 42 });
+  expect(r_list4b).not.toHaveProperty("r_type");
+  expect(r_list4b).not.toHaveProperty("r_attributes");
+});
+
+test("Record with string values strips metadata", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8881",
+  });
+
+  const rec = XT.vector(z.record(z.string(), XT.character(1)));
+  type Rec = z.infer<typeof rec>;
+  type _check = Expect<Equal<Rec, Record<string, string>>>;
+
+  const result = await R.eval(
+    "list(default = 'default', scatter = 'scatter')",
+    rec
+  );
+  expect(result).toEqual({ default: "default", scatter: "scatter" });
+  expect(result).not.toHaveProperty("r_type");
+  expect(result).not.toHaveProperty("r_attributes");
+  expect(Object.entries(result)).toEqual([
+    ["default", "default"],
+    ["scatter", "scatter"],
+  ]);
 });
 
 test("Data frame types", async () => {

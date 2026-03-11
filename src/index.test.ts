@@ -78,3 +78,28 @@ test("Rserve connects to OCAP server", async () => {
   const x6 = f6(i6);
   expect(x6).toBe(25);
 });
+
+test("OCAP record return strips r_type and r_attributes", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8781",
+  });
+
+  const funs = await R.ocap(ocapFuns);
+
+  // car_lm returns { coef, rsq } where coef() returns Record<string, number>
+  const model = await funs.car_lm("mpg", "wt");
+  const coefs = await model.coef();
+
+  // The record should be a plain object with intercept and slope
+  expect(coefs).toHaveProperty("(Intercept)");
+  expect(coefs).toHaveProperty("wt");
+  expect(typeof coefs["(Intercept)"]).toBe("number");
+  expect(typeof coefs["wt"]).toBe("number");
+
+  // r_type and r_attributes must NOT be present — this is the bug
+  expect(coefs).not.toHaveProperty("r_type");
+  expect(coefs).not.toHaveProperty("r_attributes");
+
+  // Object.keys should only contain coefficient names
+  expect(Object.keys(coefs).sort()).toEqual(["(Intercept)", "wt"].sort());
+});

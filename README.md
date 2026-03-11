@@ -113,3 +113,7 @@ import { appSchema } from "./app";
   }
 })();
 ```
+
+## Record return values (named lists)
+
+When an OCAP method return type is a **record** (named list), e.g. `Robj.list(z.record(z.string(), Robj.character(1)))` or the R-side equivalent `ts_record(ts_character(1))`, the value returned to TypeScript is a **plain object** without Rserve metadata. The schema layer strips `r_type` and `r_attributes` so you get a clean `Record<string, T>` suitable for `Object.entries()`, spreading, or use in React etc. Other vector/list shapes (e.g. factors, lists of structs) still include metadata where needed.

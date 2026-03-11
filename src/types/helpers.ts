@@ -168,6 +168,14 @@ export const objectWithAttributes = <
   return res;
 };
 
+/** Shallow copy of object without r_type and r_attributes. Use for record-like vector returns. */
+export function stripRMetadata<
+  T extends Record<string, unknown> & { r_type?: unknown; r_attributes?: unknown }
+>(obj: T): Omit<T, "r_type" | "r_attributes"> {
+  const { r_type, r_attributes, ...rest } = obj;
+  return rest as Omit<T, "r_type" | "r_attributes">;
+}
+
 export function clearAttrs<
   const T extends { r_type?: string; r_attributes?: any; levels?: any }
 >(x: T) {
