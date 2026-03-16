@@ -30,16 +30,19 @@ const attributes = <T extends z.ZodRawShape>(schema: T): Attributes<T> =>
 // null
 const _null = () => z.null();
 
-const nameAttr = z.string().or(
-  z
-    .string()
-    .array()
-    .and(
-      z.object({
-        r_type: z.literal("string_array"),
-      })
-    )
-);
+const nameAttr = z
+  .string()
+  .or(z.string().array())
+  .or(
+    z
+      .string()
+      .array()
+      .and(
+        z.object({
+          r_type: z.literal("string_array"),
+        })
+      )
+  );
 
 // vector (i.e., an R list)
 const _vector_noargs = () =>
@@ -87,7 +90,7 @@ type VectorObject<T extends z.ZodRawShape> = z.ZodIntersection<
     {
       r_type: z.ZodLiteral<"vector">;
       r_attributes: Attributes<{
-        names: WithAttributes<string[], "string_array", z.ZodRawShape>;
+        names: typeof nameAttr;
       }>;
     },
     "strip"
@@ -99,7 +102,7 @@ const _vector_object = <T extends z.ZodRawShape>(schema: T): VectorObject<T> =>
     z.object({
       r_type: z.literal("vector"),
       r_attributes: attributes({
-        names: _string(Object.keys(schema).length),
+        names: nameAttr,
       }),
     })
   );
