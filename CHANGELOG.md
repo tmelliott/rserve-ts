@@ -1,5 +1,13 @@
 # rserve-ts
 
+## 0.9.1
+
+### Patch Changes
+
+- 298d6ad: Fix vector metadata typing for names attributes and helper utilities.
+
+  This updates list/vector metadata handling to support names values returned as plain string arrays and tightens `clearAttrs` typing used by runtime tests.
+
 ## 0.9.0
 
 ### Minor Changes
