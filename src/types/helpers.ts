@@ -176,13 +176,15 @@ export function stripRMetadata<
   return rest as Omit<T, "r_type" | "r_attributes">;
 }
 
-export function clearAttrs<
-  const T extends { r_type?: string; r_attributes?: any; levels?: any }
->(x: T) {
+type ClearedAttrs<T> = T extends object
+  ? Omit<T, "r_type" | "r_attributes" | "levels">
+  : T;
+
+export function clearAttrs<const T>(x: T): ClearedAttrs<T> {
   const res = JSON.parse(JSON.stringify(x));
   if (typeof res !== "object") return res;
   if (res.hasOwnProperty("r_type")) delete res.r_type;
   if (res.hasOwnProperty("r_attributes")) delete res.r_attributes;
   if (res.hasOwnProperty("levels")) delete res.levels;
-  return res as Exclude<T, "r_type" | "r_attributes" | "levels">;
+  return res as ClearedAttrs<T>;
 }

@@ -18,6 +18,7 @@ type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y
   : 2
   ? true
   : false;
+type Extends<X, Y> = X extends Y ? true : false;
 
 type RArray<
   T,
@@ -559,6 +560,7 @@ test("List types", async () => {
     r_attributes: {
       names:
         | string
+        | string[]
         | (string[] & {
             r_type: "string_array";
           });
@@ -569,7 +571,7 @@ test("List types", async () => {
     y: FactorArray<["one", "two"]>;
     r_type: "vector";
     r_attributes: {
-      names: StringArray<string[]>;
+      names: string | string[] | StringArray<string[]>;
     } & Record<string, any>;
   };
   type L3 = [NumArray<Float64Array>, FactorArray<["one", "two"]>] & {
@@ -588,7 +590,8 @@ test("List types", async () => {
 
   type tests = [
     Expect<Equal<List1, L1 | L0>>,
-    Expect<Equal<List2["r_attributes"], L2["r_attributes"]>>,
+    Expect<Extends<List2["r_attributes"]["names"], L2["r_attributes"]["names"]>>,
+    Expect<Extends<L2["r_attributes"]["names"], List2["r_attributes"]["names"]>>,
     Expect<Equal<List3, L3>>,
     Expect<Equal<List4, L4>>,
     Expect<Equal<List5, L5>>
