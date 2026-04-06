@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node.js & npm for OIDC
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           # Don't set registry-url - it would set token auth, interfering with OIDC
 
       - name: Update npm & configure for OIDC
