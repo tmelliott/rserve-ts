@@ -10,6 +10,7 @@ import {
 import { promisify } from "../helpers";
 import _recursive_list from "./recursive";
 import _js_function from "./jstype";
+import { isZodRecordSchema } from "./zod-record";
 
 const sexp = <T extends z.ZodTypeAny>(json: T) => {
   return z.object({
@@ -143,7 +144,7 @@ function _vector(
     ? _vector_noargs()
     : Array.isArray(schema)
     ? (_vector_tuple(schema) as any)
-    : schema instanceof z.ZodRecord
+    : isZodRecordSchema(schema)
     ? _vector_array(schema)
     : schema instanceof z.ZodType
     ? _vector_reparray(schema)
