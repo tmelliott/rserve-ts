@@ -79,6 +79,30 @@ test("Rserve connects to OCAP server", async () => {
   expect(x6).toBe(25);
 });
 
+test("length-1 R vectors are coerced to arrays for array-typed schemas", async () => {
+  const R = await RserveClient.create({
+    host: "http://127.0.0.1:8881",
+  });
+
+  // character(0L) — plain string from Rserve becomes string[]
+  const char1 = await R.eval("c('only-one')", Robj.character(0));
+  expect(char1).toEqual(objectWithAttributes(["only-one"], "string_array"));
+
+  // integer(0L) — plain number from Rserve becomes Int32Array
+  const int1 = await R.eval("1L", Robj.integer(0));
+  expect(int1).toEqual(objectWithAttributes(new Int32Array([1]), "int_array"));
+
+  // numeric(0L) — plain number from Rserve becomes Float64Array
+  const num1 = await R.eval("1.5", Robj.numeric(0));
+  expect(num1).toEqual(
+    objectWithAttributes(new Float64Array([1.5]), "double_array")
+  );
+
+  // logical(0L) — plain boolean from Rserve becomes boolean[]
+  const bool1 = await R.eval("TRUE", Robj.logical(0));
+  expect(bool1).toEqual(objectWithAttributes([true], "bool_array"));
+});
+
 test("OCAP record return strips r_type and r_attributes", async () => {
   const R = await RserveClient.create({
     host: "http://127.0.0.1:8781",

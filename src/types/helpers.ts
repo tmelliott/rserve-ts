@@ -113,7 +113,8 @@ export const object = <
 >(
   singular: TSingular,
   plural: TPlural,
-  type: TString
+  type: TString,
+  coerce?: (data: unknown) => unknown
 ) => {
   function fun<N extends 1>(n: N): TSingular;
   function fun<N extends Exclude<number, 1>>(
@@ -127,10 +128,16 @@ export const object = <
     if (x === undefined) {
       return z.union([singular, withAttributes(plural, type)]);
     }
+    const makePlural = (attr?: Attributes) => {
+      const schema = attr
+        ? withAttributes(plural, type, attr)
+        : withAttributes(plural, type);
+      return (coerce ? z.preprocess(coerce, schema) : schema) as any;
+    };
     if (typeof x === "number") {
-      return x === 1 ? singular : withAttributes(plural, type);
+      return x === 1 ? singular : makePlural();
     }
-    return withAttributes(plural, type, x);
+    return makePlural(x);
   }
   return fun;
 };
