@@ -165,7 +165,15 @@ const _integer = object(
   z.number(),
   z.instanceof(Int32Array),
   // typeWithAttributes(z.instanceof(Int32Array), "int_array", undefined),
-  "int_array"
+  "int_array",
+  (data) => {
+    if (typeof data === "number") {
+      const arr = new Int32Array([data]);
+      (arr as any).r_type = "int_array";
+      return arr;
+    }
+    return data;
+  }
 );
 
 // special case of int array is 'factor'
@@ -352,14 +360,36 @@ const _double = object(
   z.number(),
   z.instanceof(Float64Array),
   // typeWithAttributes(z.instanceof(Float64Array), "double_array", undefined),
-  "double_array"
+  "double_array",
+  (data) => {
+    if (typeof data === "number") {
+      const arr = new Float64Array([data]);
+      (arr as any).r_type = "double_array";
+      return arr;
+    }
+    return data;
+  }
 );
 
 // string_array
-const _string = object(z.string(), z.string().array(), "string_array");
+const _string = object(z.string(), z.string().array(), "string_array", (data) => {
+  if (typeof data === "string") {
+    const arr: string[] = [data];
+    (arr as any).r_type = "string_array";
+    return arr;
+  }
+  return data;
+});
 
 // bool_array
-const _boolean = object(z.boolean(), z.boolean().array(), "bool_array");
+const _boolean = object(z.boolean(), z.boolean().array(), "bool_array", (data) => {
+  if (typeof data === "boolean") {
+    const arr: boolean[] = [data];
+    (arr as any).r_type = "bool_array";
+    return arr;
+  }
+  return data;
+});
 
 // TRY ERROR: string with attributes class = "try-error", condition = {message: string, call: lang}
 const R_SERVER_ERROR = z.tuple([z.string(), z.number()]);
