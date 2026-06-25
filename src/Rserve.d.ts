@@ -7,6 +7,7 @@ declare namespace Rserve {
     on_error?: (message: string, code?: number) => void;
     login?: any;
     on_close?: (event: WebSocket.CloseEvent) => void;
+    on_socket?: (socket: WebSocket) => void;
     debug?: {
       message_in?: (msg: string) => void;
       message_out?: (buffer: ArrayBuffer, command: any) => void;

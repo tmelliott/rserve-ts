@@ -1036,6 +1036,7 @@ var Rserve = (function () {
       var onconnect = opts.on_connect;
       var socket = new WebSocket(host);
       socket.binaryType = "arraybuffer";
+      opts.on_socket && opts.on_socket(socket);
       var handle_error =
         opts.on_error ||
         function (error) {
@@ -1140,9 +1141,22 @@ var Rserve = (function () {
       }
 
       socket.onclose = function (msg) {
+        if (!result) return;
         result.running = false;
         result.closed = true;
         opts.on_close && opts.on_close(msg);
+      };
+
+      socket.onerror = function () {
+        if (!result || result.closed) return;
+        result.running = false;
+        result.closed = true;
+        opts.on_close &&
+          opts.on_close({
+            code: 1006,
+            reason: "WebSocket error",
+            wasClean: false,
+          });
       };
 
       socket.onmessage = function (msg) {
